@@ -45,6 +45,12 @@
         <pointsize>12</pointsize>
        </font>
       </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
       <property name="editTriggers">
        <set>QAbstractItemView::NoEditTriggers</set>
       </property>
@@ -53,6 +59,9 @@
       </property>
       <property name="selectionBehavior">
        <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+      <property name="verticalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
       </property>
       <row>
        <property name="text">
@@ -108,8 +117,8 @@
      <widget class="QPushButton" name="toSearchRecordsButton">
       <property name="geometry">
        <rect>
-        <x>799</x>
-        <y>10</y>
+        <x>800</x>
+        <y>15</y>
         <width>191</width>
         <height>71</height>
        </rect>
@@ -128,7 +137,7 @@
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>660</y>
+        <y>670</y>
         <width>191</width>
         <height>80</height>
        </rect>
@@ -204,7 +213,7 @@ My Collection</string>
       <property name="geometry">
        <rect>
         <x>222</x>
-        <y>10</y>
+        <y>13</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -226,7 +235,7 @@ My Collection</string>
       <property name="geometry">
        <rect>
         <x>470</x>
-        <y>10</y>
+        <y>15</y>
         <width>321</width>
         <height>28</height>
        </rect>
@@ -234,7 +243,7 @@ My Collection</string>
       <property name="font">
        <font>
         <family>Arial</family>
-        <pointsize>10</pointsize>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="placeholderText">
@@ -245,7 +254,7 @@ My Collection</string>
       <property name="geometry">
        <rect>
         <x>310</x>
-        <y>10</y>
+        <y>15</y>
         <width>151</width>
         <height>28</height>
        </rect>
@@ -411,6 +420,26 @@ My Collection</string>
        <string>5   6   7   8   9  10</string>
       </property>
      </widget>
+     <widget class="QLabel" name="myRecordRecordCountLabel">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>755</y>
+        <width>241</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>10</pointsize>
+        <bold>false</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Showing 0/0 Records</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="searchRecordsPage">
      <widget class="QTableWidget" name="searchRecordTable">
@@ -433,6 +462,9 @@ My Collection</string>
       </property>
       <property name="selectionBehavior">
        <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+      <property name="verticalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
       </property>
       <row>
        <property name="text">
@@ -479,7 +511,7 @@ My Collection</string>
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>10</y>
+        <y>15</y>
         <width>191</width>
         <height>71</height>
        </rect>
@@ -499,7 +531,7 @@ Collection</string>
       <property name="geometry">
        <rect>
         <x>470</x>
-        <y>10</y>
+        <y>15</y>
         <width>321</width>
         <height>28</height>
        </rect>
@@ -507,7 +539,7 @@ Collection</string>
       <property name="font">
        <font>
         <family>Arial</family>
-        <pointsize>12</pointsize>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="placeholderText">
@@ -518,7 +550,7 @@ Collection</string>
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>660</y>
+        <y>670</y>
         <width>191</width>
         <height>80</height>
        </rect>

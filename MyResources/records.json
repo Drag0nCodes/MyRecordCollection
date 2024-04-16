@@ -4,7 +4,7 @@
         "artist": "Lorde",
         "cover": "06483355fe8ff1b4eb335c7d9704d84c.png",
         "rating": 10,
-        "tags": ["indie", "pop", "sad"]
+        "tags": ["asd", "indie", "pop", "sad"]
     },
     {
         "name": "Solar Power",
@@ -154,6 +154,13 @@
         "tags": ["bedroom", "indie", "pop", "sad"]
     },
     {
+        "name": "Apricot Princess",
+        "artist": "Rex Orange County",
+        "cover": "c869ac799047020ad305d589f44bbe75.png",
+        "rating": 4,
+        "tags": ["hip hop", "indie", "jazz", "pop", "rock"]
+    },
+    {
         "name": "CRASH",
         "artist": "Charli XCX",
         "cover": "647da295e6e0696ecfcd73229d5816f3.png",
@@ -242,7 +249,7 @@
         "artist": "slayyyter",
         "cover": "fdcc07b57f3570de9d97715b6b8f3358.png",
         "rating": 10,
-        "tags": ["dance", "electronic", "pop"]
+        "tags": ["brad", "dance", "electronic", "pop"]
     },
     {
         "name": "Born to Die",
@@ -325,7 +332,14 @@
         "name": "The Loveliest Time",
         "artist": "Carly Rae Jepsen",
         "cover": "e37b70dbc5dd5e6d2c0e294f98d34135.png",
-        "rating": 9,
+        "rating": 8,
         "tags": ["indie", "pop", "psychedelic", "r&b"]
+    },
+    {
+        "name": "Desire, I Want to Turn Into You",
+        "artist": "Caroline Polachek",
+        "cover": "8efbfdc3ffd98d732a93e75aa5a53852.png",
+        "rating": 9,
+        "tags": ["electronic", "indie", "pop"]
     }
 ]

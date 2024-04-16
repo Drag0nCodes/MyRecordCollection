@@ -1,6 +1,7 @@
 #include "tagswindow.h"
 #include "ui_tagswindow.h"
 #include "json.h"
+#include "QDir"
 
 tagsWindow::tagsWindow(std::vector<QString>* tags, QWidget *parent)
     : QDialog(parent)
@@ -12,6 +13,13 @@ tagsWindow::tagsWindow(std::vector<QString>* tags, QWidget *parent)
     for (int i = 0; i < tags->size(); i++){
         ui->tagsWinList->addItem(new QListWidgetItem(tags->at(i)));
     }
+
+    // Set window theme
+    QDir dir;
+    QFile styleFile(dir.absolutePath() + "/resources/darktheme.qss");
+    styleFile.open(QFile::ReadOnly);
+    QString style(styleFile.readAll());
+    setStyleSheet(style);
 }
 
 tagsWindow::~tagsWindow()

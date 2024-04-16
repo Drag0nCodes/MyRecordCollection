@@ -1,0 +1,65 @@
+QTableWidget {
+	background-color: rgb(43, 43, 43);
+	color: rgb(230, 230, 230);
+	selection-background-color: rgb(89, 89, 89);
+	gridline-color: rgb(89, 89, 89);
+	border: 0px;
+}
+
+QHeaderView::section {
+	background-color: rgb(89, 89, 89);
+	color: rgb(230, 230, 230);
+	border: 0px;
+}
+
+QListWidget {
+	background-color: rgb(43, 43, 43);
+	color: rgb(230, 230, 230);
+}
+
+QPushButton {
+	background-color: rgb(89, 89, 89);
+	color: rgb(230, 230, 230);
+	border-style: outset;
+	border-radius: 14px;
+}
+
+QPushButton:hover, QComboBox:hover, QLineEdit:hover {
+	background-color: rgb(70, 70, 70);
+}
+
+QPushButton:pressed {
+	background-color: rgb(89, 89, 89);
+}
+
+QMainWindow, QDialog {
+	background-color: rgb(43, 43, 43);
+}
+
+QLabel {
+	color: rgb(230, 230, 230);
+}
+
+QLineEdit, QComboBox {
+	background-color: rgb(89, 89, 89);
+	color: rgb(230, 230, 230);
+	border-style: outset;
+	border-radius: 14px;
+	padding: 7px;
+}
+
+QComboBox::drop-down {
+	border: 0px;
+}
+
+QComboBox QListView {
+	background-color: rgb(70, 70, 70);
+	color: rgb(230, 230, 230);
+	border: 0px;
+	padding: 5px;
+}
+
+QComboBox QListView:item {
+	padding-top: 2px;
+	padding-bottom: 2px;
+}

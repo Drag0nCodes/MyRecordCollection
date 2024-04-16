@@ -30,6 +30,17 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowTitle("Vinyl App 1.0");
+
+    // Set the style sheet for the program
+    QFile styleFile(dir.absolutePath() + "/resources/darktheme.qss");
+    styleFile.open(QFile::ReadOnly);
+    QString style(styleFile.readAll());
+    setStyleSheet(style);
+
+    QFont font("Arial");
+    font.setPixelSize(14);
+
+    // Fill the records vectors and tag vector
     allMyRecords = json.getRecords();
     recordsList = allMyRecords;
     tags = json.getTags();
@@ -37,21 +48,15 @@ MainWindow::MainWindow(QWidget *parent)
         tagsSort.push_back(false);
     }
     std::sort(tags.begin(),tags.end());
-    QFont font("Arial");
-    font.setPixelSize(14);
 
-
+    // Set the style of the tables
     ui->myRecordTable->setColumnWidth(0, 135);
     ui->myRecordTable->setColumnWidth(1, 250);
     ui->myRecordTable->setColumnWidth(2, 130);
     ui->myRecordTable->setColumnWidth(3, 50);
-    ui->myRecordTable->setColumnWidth(4, 200);
+    ui->myRecordTable->setColumnWidth(4, 195);
     ui->myRecordTable->verticalHeader()->hide();
     ui->myRecordTable->setFont(font);
-
-    QTimer::singleShot(1, [=](){ emit updateMyRecords(); });
-
-    updateTagsList();
 
     ui->searchRecordTable->setColumnWidth(0, 135);
     ui->searchRecordTable->setColumnWidth(1, 340);
@@ -59,11 +64,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->searchRecordTable->verticalHeader()->hide();
     ui->searchRecordTable->setFont(font);
 
-    ui->removeFromMyRecordButton->setDisabled(true);
-    ui->addToMyRecordButton->setDisabled(true);
-
-    ui->myRecordSortBox->setCurrentIndex(7);
+    ui->myRecordSortBox->setCurrentIndex(7); // Sort by rating decending
     updateRecordsListOrder();
+
+    // Fill tables
+    //QTimer::singleShot(1, [=](){ emit updateMyRecords(); }); // Fill my records table a second after program startup
+    updateTagsList();
+    updateMyRecords();
+
+    // Start off with no record selected and unable to use some buttons
+    ui->removeFromMyRecordButton->setDisabled(true);
+    ui->myRecordRatingSlider->setDisabled(true);
+    ui->addToMyRecordButton->setDisabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -182,6 +194,9 @@ void MainWindow::updateMyRecords(){ // Update my records list
 
         ui->myRecordTable->setRowHeight(recordNum, 130);
     }
+
+    // Set record count label text
+    ui->myRecordRecordCountLabel->setText("Showing " + QString::number(recordsList.size()) + "/" + QString::number(allMyRecords.size()) + " Records");
 }
 
 
@@ -229,7 +244,7 @@ void MainWindow::on_addToMyRecordButton_clicked() // Add searched record to my c
         Record addRecord = results.at(ui->searchRecordTable->currentRow());
         addRecord.setCover(downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
         allMyRecords.push_back(addRecord);
-        on_myRecordSearchBar_returnPressed();
+        on_myRecordSearchBar_textChanged();
         updateMyRecords();
         json.writeRecords(&allMyRecords);
         ui->searchRecordsInfoLabel->setText("Added to My Collection");
@@ -260,6 +275,9 @@ void MainWindow::on_removeFromMyRecordButton_clicked() // Remove record from my 
         }
 
         json.writeRecords(&allMyRecords); // Update saved records
+
+        // Set record count label text
+        ui->myRecordRecordCountLabel->setText("Showing " + QString::number(recordsList.size()) + "/" + QString::number(allMyRecords.size()) + " Records");
     }
 }
 
@@ -313,7 +331,7 @@ void MainWindow::on_myRecordRatingSlider_valueChanged(int value) // Change recor
 }
 
 
-void MainWindow::on_myRecordSearchBar_returnPressed() // Search my records, enter pressed
+void MainWindow::on_myRecordSearchBar_textChanged() // Search my records, enter pressed
 {
     if (ui->myRecordSearchBar->text().isEmpty()){
         recordsList = allMyRecords;

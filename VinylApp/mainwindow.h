@@ -35,7 +35,7 @@ private slots:
 
     void on_myRecordRatingSlider_valueChanged(int value);
 
-    void on_myRecordSearchBar_returnPressed();
+    void on_myRecordSearchBar_textChanged();
 
     void on_myRecordSortBox_activated(int index);
 
