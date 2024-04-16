@@ -1,12 +1,18 @@
 QTableWidget {
-	background-color: rgb(43, 43, 43);
+	background-color: rgb(70, 70, 70);
 	color: rgb(230, 230, 230);
 	selection-background-color: rgb(89, 89, 89);
+	alternate-background-color: rgb(43, 43, 43);
 	gridline-color: rgb(89, 89, 89);
 	border: 0px;
 }
 
-QHeaderView::section {
+QScrollBar {
+	background: rgb(89, 89, 89);
+	color: rgb(230, 230, 230);
+}
+
+QTableWidget QHeaderView::section {
 	background-color: rgb(89, 89, 89);
 	color: rgb(230, 230, 230);
 	border: 0px;
@@ -45,7 +51,7 @@ QLineEdit, QComboBox {
 	color: rgb(230, 230, 230);
 	border-style: outset;
 	border-radius: 14px;
-	padding: 7px;
+	padding-left: 10px;
 }
 
 QComboBox::drop-down {

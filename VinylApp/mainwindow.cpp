@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowTitle("Vinyl App 1.0");
+    setWindowTitle("Vinyl App 1.1");
 
     // Set the style sheet for the program
     QFile styleFile(dir.absolutePath() + "/resources/darktheme.qss");
@@ -54,13 +54,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->myRecordTable->setColumnWidth(1, 250);
     ui->myRecordTable->setColumnWidth(2, 130);
     ui->myRecordTable->setColumnWidth(3, 50);
-    ui->myRecordTable->setColumnWidth(4, 195);
+    ui->myRecordTable->setColumnWidth(4, 199);
     ui->myRecordTable->verticalHeader()->hide();
     ui->myRecordTable->setFont(font);
 
     ui->searchRecordTable->setColumnWidth(0, 135);
-    ui->searchRecordTable->setColumnWidth(1, 340);
-    ui->searchRecordTable->setColumnWidth(2, 200);
+    ui->searchRecordTable->setColumnWidth(1, 385);
+    ui->searchRecordTable->setColumnWidth(2, 244);
     ui->searchRecordTable->verticalHeader()->hide();
     ui->searchRecordTable->setFont(font);
 
@@ -74,8 +74,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Start off with no record selected and unable to use some buttons
     ui->removeFromMyRecordButton->setDisabled(true);
+    ui->myRecordEditTagsList->setDisabled(true);
     ui->myRecordRatingSlider->setDisabled(true);
     ui->addToMyRecordButton->setDisabled(true);
+    ui->myRecordTable->setCurrentCell(-1, -1);
 }
 
 MainWindow::~MainWindow()
@@ -288,19 +290,19 @@ void MainWindow::on_myRecordTable_currentCellChanged(int currentRow, int current
         ui->removeFromMyRecordButton->setDisabled(false);
         ui->myRecordRatingSlider->setDisabled(false);
         ui->myRecordRatingSlider->setSliderPosition(recordsList.at(ui->myRecordTable->currentRow()).getRating());
-        ui->myRecordEditTagsList->setEnabled(true);
+        ui->myRecordEditTagsList->setDisabled(false);
         selectedMyRecord = true;
     }
     else { // Invalid selection made of myRecords
         ui->removeFromMyRecordButton->setDisabled(true);
         ui->myRecordRatingSlider->setDisabled(true);
-        ui->myRecordEditTagsList->setEnabled(false);
+        ui->myRecordEditTagsList->setDisabled(true);
         selectedMyRecord = false;
     }
     if (recordsList.empty()) { // myRecords list empty
         ui->removeFromMyRecordButton->setDisabled(true);
         ui->myRecordRatingSlider->setDisabled(true);
-        ui->myRecordEditTagsList->setEnabled(false);
+        ui->myRecordEditTagsList->setDisabled(true);
         selectedMyRecord = false;
     }
 }
