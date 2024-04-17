@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>390</width>
-    <height>310</height>
+    <height>330</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -96,13 +96,13 @@
     </rect>
    </property>
    <property name="placeholderText">
-    <string>Tag to Add</string>
+    <string>Name of New Tag</string>
    </property>
   </widget>
   <widget class="QLabel" name="tagsWinMessageLabel">
    <property name="geometry">
     <rect>
-     <x>22</x>
+     <x>25</x>
      <y>305</y>
      <width>351</width>
      <height>16</height>

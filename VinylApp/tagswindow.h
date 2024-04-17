@@ -2,6 +2,7 @@
 #define TAGSWINDOW_H
 
 #include <QDialog>
+#include "listtag.h"
 
 namespace Ui {
 class tagsWindow;
@@ -12,7 +13,7 @@ class tagsWindow : public QDialog
     Q_OBJECT
 
 public:
-    explicit tagsWindow(std::vector<QString>* tags, QWidget *parent = nullptr);
+    explicit tagsWindow(std::vector<ListTag>* tags, QWidget *parent = nullptr);
     ~tagsWindow();
 
 private slots:
@@ -26,7 +27,7 @@ private slots:
 
 private:
     Ui::tagsWindow *ui;
-    std::vector<QString> &tagsList;
+    std::vector<ListTag> &tagsList;
 };
 
 #endif // TAGSWINDOW_H

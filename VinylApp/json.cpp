@@ -71,8 +71,6 @@ std::vector<Record> json::searchRecords(QString search) {
 
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray data = reply->readAll();
-
-
         QJsonObject jsonWeb = QJsonDocument::fromJson(data).object();
         QJsonObject results = jsonWeb.value("results").toObject();
         QJsonObject albumMatches = results.value("albummatches").toObject();
@@ -123,8 +121,8 @@ void json::writeRecords(std::vector<Record>* myRecords){
     }
 }
 
-std::vector<QString> json::getTags(){
-    std::vector<QString> allTags;
+std::vector<ListTag> json::getTags(){
+    std::vector<ListTag> allTags;
     try{
         QString jsonStr;
         QDir dir;
@@ -145,7 +143,7 @@ std::vector<QString> json::getTags(){
                     for (int i = 0; i < myArr.size(); i++){
                         QJsonObject val = myArr.at(i).toObject();
                         QString name = val.value("name").toString();
-                        allTags.push_back(name);
+                        allTags.push_back(ListTag(name));
                     }
                 }
             }
@@ -158,7 +156,7 @@ std::vector<QString> json::getTags(){
     return allTags; // Return vector with all Song objects
 }
 
-void json::writeTags(std::vector<QString>* tags){
+void json::writeTags(std::vector<ListTag>* tags){
     QDir dir;
     QFile myFile(dir.absolutePath() + "/resources/tags.json"); // File of playlists JSON
 
@@ -170,14 +168,83 @@ void json::writeTags(std::vector<QString>* tags){
             myFile.write("[\n");
             for (int tagNum = 0; tagNum < tags->size(); tagNum++){
                 if (tagNum != tags->size()-1) { // Not last tag
-                    myFile.write("    {\"name\": \"" + tags->at(tagNum).toUtf8() + "\"},\n");
+                    myFile.write("    {\"name\": \"" + tags->at(tagNum).getName().toUtf8() + "\"},\n");
                 }
                 else { // last tag
-                    myFile.write("    {\"name\": \"" + tags->at(tagNum).toUtf8() + "\"}\n");
+                    myFile.write("    {\"name\": \"" + tags->at(tagNum).getName().toUtf8() + "\"}\n");
                 }
             }
             myFile.write("]");
             myFile.close();
         }
     }
+}
+
+std::vector<ListTag> json::wikiTags(Record record) {
+    QNetworkAccessManager manager;
+    QEventLoop loop;
+    QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
+    std::vector<ListTag> tags;
+
+    QUrl searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=" + record.getName() + "%20" + record.getArtist() + "%20album");
+
+    QNetworkRequest request(searchUrl);
+    QNetworkReply *reply = manager.get(request);
+    loop.exec(); // Wait for the download to finish
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray data = reply->readAll();
+        QJsonObject jsonSearch = QJsonDocument::fromJson(data).object();
+        QJsonObject query = jsonSearch.value("query").toObject();
+
+        if (query.value("searchinfo").toObject().value("totalhits").toInt() > 0){ // Got a result from wikipedia search
+            int pageid = query.value("search").toArray().at(0).toObject().value("pageid").toInt(); // Get the page id of the first search result
+            searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&rvsection=0&pageids=" + QString::number(pageid));
+            QNetworkRequest request(searchUrl);
+            QNetworkReply *reply = manager.get(request);
+            loop.exec(); // Wait for the download to finish
+
+            if (reply->error() == QNetworkReply::NoError) {
+                QByteArray data = reply->readAll();
+                QJsonObject jsonWikiPage = QJsonDocument::fromJson(data).object();
+                QString content = jsonWikiPage.value("query").toObject().value("pages").toObject().value(QString::number(pageid)).toObject().value("revisions").toArray().at(0).toObject().value("*").toString();
+
+                int position = content.indexOf("| genre", 0, Qt::CaseInsensitive); // The start of the genre section
+                position = content.indexOf("[[", position) +2; // Move to position of first single genre
+                int genreSectionEnd = content.indexOf("\n|", position); // The end of the entire genre section
+                int genre = 0;
+                int source = 0;
+                if (position > 0) {
+                    while (position < genreSectionEnd && position != -1) {
+                        int genreEndPos = content.indexOf("]]", position); // End of single genre
+                        int midLine = content.indexOf("|", position) +1; // Find next '|'
+
+                        if (source < position && source > 0) { // See if "genre" is really a link to a reference site
+                            source = content.indexOf("=[[", position);
+                            position = content.indexOf("[[", position) +2;
+                            continue;
+                        }
+
+                        QString genre;
+                        if (midLine < genreEndPos){ // Genre is of the form "Pop music|Pop"
+                            genre = content.mid(midLine, genreEndPos-midLine).toLower();
+                        }
+                        else { // Genre is of the from "Pop" (without middle line '|')
+                            genre = content.mid(position, genreEndPos-position).toLower();
+                        }
+                        source = content.indexOf("=[[", position);
+                        position = content.indexOf("[[", position) +2;
+
+                        if (genre.contains("{") || genre.contains("}") ||  genre.contains("|") || genre.contains("[") || genre.contains("]")) {
+                            continue;
+                        }
+
+                        tags.push_back(ListTag(genre));
+                    }
+                }
+            }
+        }
+    }
+
+    return tags;
 }

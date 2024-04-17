@@ -11,18 +11,18 @@
 #include <QEventLoop>
 #include <iostream>
 #include <QTimer>
+#include "listtag.h"
 #include "tagswindow.h"
-#include "windows.h"
 
 
 json json;
 QDir dir;
-std::vector<Record> results;
-std::vector<Record> allMyRecords;
-std::vector<Record> recordsList;
-std::vector<QString> tags;
-std::vector<bool> tagsSort;
-bool selectedMyRecord = false;
+std::vector<Record> results; // Search records results
+std::vector<Record> allMyRecords; // All records in collection
+std::vector<Record> recordsList; // Records shown on my collection table
+std::vector<ListTag> tags; // All tags
+std::vector<ListTag> suggestedTags; // The list of suggested tags on the search records page
+bool selectedMyRecord = false; // If a record is selected on the my record page
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -44,23 +44,20 @@ MainWindow::MainWindow(QWidget *parent)
     allMyRecords = json.getRecords();
     recordsList = allMyRecords;
     tags = json.getTags();
-    for (int i = 0; i < tags.size(); i++){
-        tagsSort.push_back(false);
-    }
-    std::sort(tags.begin(),tags.end());
+    sortTagsAlpha(&tags);
 
     // Set the style of the tables
-    ui->myRecordTable->setColumnWidth(0, 135);
+    ui->myRecordTable->setColumnWidth(0, 140);
     ui->myRecordTable->setColumnWidth(1, 250);
     ui->myRecordTable->setColumnWidth(2, 130);
     ui->myRecordTable->setColumnWidth(3, 50);
-    ui->myRecordTable->setColumnWidth(4, 199);
+    ui->myRecordTable->setColumnWidth(4, 194);
     ui->myRecordTable->verticalHeader()->hide();
     ui->myRecordTable->setFont(font);
 
-    ui->searchRecordTable->setColumnWidth(0, 135);
+    ui->searchRecordTable->setColumnWidth(0, 140);
     ui->searchRecordTable->setColumnWidth(1, 385);
-    ui->searchRecordTable->setColumnWidth(2, 244);
+    ui->searchRecordTable->setColumnWidth(2, 239);
     ui->searchRecordTable->verticalHeader()->hide();
     ui->searchRecordTable->setFont(font);
 
@@ -84,6 +81,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
 
 QPixmap MainWindow::getPixmapFromUrl(const QUrl& imageUrl) { // Get Qt pixmap from image URL
     QNetworkAccessManager manager;
@@ -128,11 +126,15 @@ void MainWindow::on_toMyRecordsButton_clicked() // change screen to my records
 void MainWindow::on_toSearchRecordsButton_clicked() // Change screen to search records
 {
     ui->pages->setCurrentIndex(1);
+    ui->searchRecordSuggestedTagsList->clear();
+    suggestedTags.clear();
     ui->searchRecordsInfoLabel->setText("");
 }
 
+
 void MainWindow::on_searchRecordSearchBar_returnPressed() // Search last.fm records
 {
+    ui->searchRecordsInfoLabel->setText("");
     ui->searchRecordTable->clear();
     ui->searchRecordTable->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
     results = json.searchRecords(ui->searchRecordSearchBar->text());
@@ -157,9 +159,8 @@ void MainWindow::on_searchRecordSearchBar_returnPressed() // Search last.fm reco
         item->setData(Qt::DecorationRole, image);
         ui->searchRecordTable->setItem(recordNum, 0, item);
     }
-
-    ui->searchRecordsInfoLabel->setText("");
 }
+
 
 void MainWindow::updateMyRecords(){ // Update my records list
     ui->myRecordTable->clear();
@@ -243,8 +244,40 @@ void MainWindow::on_addToMyRecordButton_clicked() // Add searched record to my c
     }
     if (!copy){ // Record is new, add to allMyRecords
         ui->searchRecordsInfoLabel->setText("");
-        Record addRecord = results.at(ui->searchRecordTable->currentRow());
+        Record addRecord = results.at(ui->searchRecordTable->currentRow()); // Get the selected record to add
         addRecord.setCover(downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
+        addRecord.setRating(ui->searchRecordRatingSlider->sliderPosition()); // Set records rating
+
+        for (int i = 0; i < suggestedTags.size(); i++){
+            if (suggestedTags.at(i).getChecked()) {
+                addRecord.addTag(ui->searchRecordSuggestedTagsList->item(i)->text());
+            }
+        }
+
+        // Create new tags if they don't exist
+        for (QString newTag : addRecord.getTags()){
+            if (newTag.isEmpty()){ // Don't add a blank tag
+                // nothing
+            }
+            else {
+                bool dup = false;
+                for (ListTag oldTag : tags){ // check if tag already exists
+                    if (oldTag.getName().compare(newTag) == 0){
+                        dup = true;
+                        break;
+                    }
+                }
+                if (!dup) { // Add tag
+                    tags.push_back(ListTag(newTag));
+                    sortTagsAlpha(&tags);
+                    json.writeTags(&tags);
+                }
+            }
+        }
+
+        updateTagsList();
+        json.writeTags(&tags);
+
         allMyRecords.push_back(addRecord);
         on_myRecordSearchBar_textChanged();
         updateMyRecords();
@@ -370,14 +403,15 @@ void MainWindow::on_myRecordSortBox_activated(int index) // Sort my records base
 void MainWindow::updateTagsList(){ // Update the edit and sort tag lists
     ui->myRecordEditTagsList->clear();
     ui->myRecordSortTagsList->clear();
-    for (int i = 0; i < tags.size(); i++){
-        ui->myRecordEditTagsList->addItem(new QListWidgetItem(tags.at(i)));
-        if (tagsSort.at(i)){
-            ui->myRecordSortTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tags.at(i)));
+    for (ListTag tag : tags){
+        ui->myRecordEditTagsList->addItem(new QListWidgetItem(tag.getName()));
+        if (tag.getChecked()){
+            ui->myRecordSortTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tag.getName()));
         }
-        else ui->myRecordSortTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tags.at(i)));
+        else ui->myRecordSortTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag.getName()));
     }
 }
+
 
 void MainWindow::on_myRecordEditTagsList_itemClicked(QListWidgetItem *item) // Add or remove a tag from a record
 {
@@ -402,20 +436,18 @@ void MainWindow::on_myRecordEditTagsList_itemClicked(QListWidgetItem *item) // A
 }
 
 
-void MainWindow::on_myRecordSortTagsList_itemClicked(QListWidgetItem *item)
+void MainWindow::on_myRecordSortTagsList_itemClicked(QListWidgetItem *item) // Sort my records by a tag (sort tag list clicked)
 {
-    if (tagsSort.at(ui->myRecordSortTagsList->currentRow())){ // Tag is true, set to false
+    if (tags.at(ui->myRecordSortTagsList->currentRow()).getChecked()){ // Tag is checked, set to unchecked
         QString tag = ui->myRecordSortTagsList->currentItem()->text();
-        tagsSort.erase(tagsSort.begin()+ui->myRecordSortTagsList->currentRow());
-        tagsSort.insert(tagsSort.begin()+ui->myRecordSortTagsList->currentRow(), false);
+        tags.at(ui->myRecordSortTagsList->currentRow()).setChecked(false);
         ui->myRecordSortTagsList->takeItem(ui->myRecordSortTagsList->currentRow());
         ui->myRecordSortTagsList->insertItem(ui->myRecordSortTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag));
         ui->myRecordSortTagsList->sortItems();
     }
-    else { // Tag is false, set to true
+    else { // Tag is unchecked, set to checked
         QString tag = ui->myRecordSortTagsList->currentItem()->text();
-        tagsSort.erase(tagsSort.begin()+ui->myRecordSortTagsList->currentRow());
-        tagsSort.insert(tagsSort.begin()+ui->myRecordSortTagsList->currentRow(), true);
+        tags.at(ui->myRecordSortTagsList->currentRow()).setChecked(true);
         ui->myRecordSortTagsList->takeItem(ui->myRecordSortTagsList->currentRow());
         ui->myRecordSortTagsList->insertItem(ui->myRecordSortTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tag));
         ui->myRecordSortTagsList->sortItems();
@@ -428,34 +460,20 @@ void MainWindow::on_myRecordSortTagsList_itemClicked(QListWidgetItem *item)
 }
 
 
-void MainWindow::on_myRecordManageTagButton_clicked()
+void MainWindow::on_myRecordManageTagButton_clicked() // Open and handle manage tags popup
 {
     tagsWindow* popup = new tagsWindow(&tags);
-    std::vector<QString> saveTags = tags;
-    std::vector<QString> sortShow;
-    for (int i = 0; i < tagsSort.size(); i++){ // Get the tags that should still being showing after tags are added or removed
-        if (tagsSort.at(i)){
-            sortShow.push_back(tags.at(i));
-        }
-    }
+    std::vector<ListTag> saveTags = tags;
+
     // Do after popup closes
     connect(popup, &QDialog::finished, this, [=]() {
-        std::vector<QString> deletedTags;
-        tagsSort.clear();
-        for (int i = 0; i < tags.size(); i++){
-            bool show = false;
-            for (int j = 0; j < sortShow.size(); j++){
-                if (tags.at(i).compare(sortShow.at(j)) == 0) show = true;
-            }
-            if (show) tagsSort.push_back(true);
-            else tagsSort.push_back(false);
-        }
+        std::vector<ListTag> deletedTags;
 
         // Figure out what tags have been deleted
-        for (QString oldTag : saveTags){
+        for (ListTag oldTag : saveTags){
             bool deleted = true;
-            for (QString newTag : tags){
-                if (oldTag.compare(newTag) == 0){
+            for (ListTag newTag : tags){
+                if (oldTag.getName().compare(newTag.getName()) == 0){
                     deleted = false;
                     break;
                 }
@@ -465,8 +483,8 @@ void MainWindow::on_myRecordManageTagButton_clicked()
 
         // Remove deleted tag(s) from records
         for (int i = 0; i < allMyRecords.size(); i++){
-            for (QString deleteTag : deletedTags){
-                allMyRecords.at(i).removeTag(deleteTag);
+            for (ListTag deleteTag : deletedTags){
+                allMyRecords.at(i).removeTag(deleteTag.getName());
             }
         }
 
@@ -487,8 +505,8 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
     std::vector<Record> newRecordsList; // New vector to hold records than have required tags
     for (Record record : allMyRecords){
         bool matches = true;
-        for (int i = 0; i < tagsSort.size(); i++){
-            if (tagsSort.at(i) && !record.hasTag(tags.at(i))){ // Record should have tag but does not
+        for (int i = 0; i < tags.size(); i++){
+            if (tags.at(i).getChecked() && !record.hasTag(tags.at(i).getName())){ // Record should have tag but does not
                 matches = false;
             }
         }
@@ -583,7 +601,8 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
     }
 }
 
-QString MainWindow::downloadCover(QUrl imageUrl) {
+
+QString MainWindow::downloadCover(QUrl imageUrl) { // Download image from the internet to covers subfolder
     QString fileName = imageUrl.toString();
     for (int i = fileName.size()-1; i >= 0; i--) {
         if (fileName[i] == '/') {
@@ -625,7 +644,8 @@ QString MainWindow::downloadCover(QUrl imageUrl) {
     return fileName;
 }
 
-bool MainWindow::deleteCover(const QString& coverName) {
+
+bool MainWindow::deleteCover(const QString& coverName) { // Delete album cover from covers subfolder
     QFile file(dir.absolutePath() + "/resources/covers/" + coverName);
 
     if (file.exists()) {
@@ -639,5 +659,60 @@ bool MainWindow::deleteCover(const QString& coverName) {
     } else {
         qDebug() << "Error: File" << coverName << "does not exist";
         return false;
+    }
+}
+
+
+void MainWindow::on_searchRecordTable_cellClicked(int row, int column) // Click on search records table, show suggested tags
+{
+    ui->searchRecordSuggestedTagsList->clear();
+    suggestedTags.clear();
+    suggestedTags = json.wikiTags(results.at(ui->searchRecordTable->currentRow()));
+    sortTagsAlpha(&suggestedTags);
+    ui->searchRecordSuggestedTagsList->clear();
+    for (ListTag tag : suggestedTags) {
+        ui->searchRecordSuggestedTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag.getName()));
+    }
+}
+
+
+void MainWindow::on_searchRecordSuggestedTagsList_itemClicked(QListWidgetItem *item) // Click on suggested tags list
+{
+
+    if (suggestedTags.at(ui->searchRecordSuggestedTagsList->currentRow()).getChecked()){ // Tag is checked, set to unchecked
+        QString tag = ui->searchRecordSuggestedTagsList->currentItem()->text();
+        suggestedTags.at(ui->searchRecordSuggestedTagsList->currentRow()).setChecked(false);
+        ui->searchRecordSuggestedTagsList->takeItem(ui->searchRecordSuggestedTagsList->currentRow());
+        ui->searchRecordSuggestedTagsList->insertItem(ui->searchRecordSuggestedTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag));
+    }
+    else { // Tag is unchecked, set to checked
+        QString tag = ui->searchRecordSuggestedTagsList->currentItem()->text();
+        suggestedTags.at(ui->searchRecordSuggestedTagsList->currentRow()).setChecked(true);
+        ui->searchRecordSuggestedTagsList->takeItem(ui->searchRecordSuggestedTagsList->currentRow());
+        ui->searchRecordSuggestedTagsList->insertItem(ui->searchRecordSuggestedTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tag));
+    }
+
+    ui->searchRecordSuggestedTagsList->sortItems();
+    ui->searchRecordSuggestedTagsList->setCurrentRow(-1); // Reset row selection
+}
+
+
+void MainWindow::sortTagsAlpha(std::vector<ListTag> *list) {
+    std::vector<QString> names;
+    std::vector<ListTag> copy = *list;
+
+    for (ListTag tag : *list){
+        names.push_back(tag.getName());
+    }
+    std::sort(names.begin(), names.end());
+
+    list->clear();
+    for (int i = 0; i < names.size(); i++) {
+        for (int j = 0; j < copy.size(); j++) {
+            if (names.at(i).compare(copy.at(j).getName()) == 0){
+                list->push_back(copy.at(j));
+                break;
+            }
+        }
     }
 }

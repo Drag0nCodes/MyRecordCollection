@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
+#include "listtag.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -47,6 +48,10 @@ private slots:
 
     void on_myRecordManageTagButton_clicked();
 
+    void on_searchRecordTable_cellClicked(int row, int column);
+
+    void on_searchRecordSuggestedTagsList_itemClicked(QListWidgetItem *item);
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);
@@ -57,6 +62,6 @@ private:
     void updateTagsList();
     void updateRecordsListOrder();
     bool deleteCover(const QString& coverName);
-
+    void sortTagsAlpha(std::vector<ListTag> *list);
 };
 #endif // MAINWINDOW_H
