@@ -51,13 +51,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->myRecordTable->setColumnWidth(1, 250);
     ui->myRecordTable->setColumnWidth(2, 130);
     ui->myRecordTable->setColumnWidth(3, 50);
-    ui->myRecordTable->setColumnWidth(4, 194);
+    ui->myRecordTable->setColumnWidth(4, 192);
     ui->myRecordTable->verticalHeader()->hide();
     ui->myRecordTable->setFont(font);
 
     ui->searchRecordTable->setColumnWidth(0, 140);
     ui->searchRecordTable->setColumnWidth(1, 385);
-    ui->searchRecordTable->setColumnWidth(2, 239);
+    ui->searchRecordTable->setColumnWidth(2, 237);
     ui->searchRecordTable->verticalHeader()->hide();
     ui->searchRecordTable->setFont(font);
 
@@ -531,7 +531,7 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest).getName().compare(newRecordsList.at(i).getName()) > 0){
+                if (newRecordsList.at(littlest).getName().toLower().compare(newRecordsList.at(i).getName().toLower()) > 0){
                     littlest = i;
                 }
             }
@@ -545,7 +545,7 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest).getName().compare(newRecordsList.at(i).getName()) < 0){
+                if (newRecordsList.at(littlest).getName().toLower().compare(newRecordsList.at(i).getName().toLower()) < 0){
                     littlest = i;
                 }
             }
@@ -559,7 +559,7 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest).getArtist().compare(newRecordsList.at(i).getArtist()) > 0){
+                if (newRecordsList.at(littlest).getArtist().toLower().compare(newRecordsList.at(i).getArtist().toLower()) > 0){
                     littlest = i;
                 }
             }
@@ -573,7 +573,7 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest).getArtist().compare(newRecordsList.at(i).getArtist()) < 0){
+                if (newRecordsList.at(littlest).getArtist().toLower().compare(newRecordsList.at(i).getArtist().toLower()) < 0){
                     littlest = i;
                 }
             }
@@ -719,6 +719,6 @@ void MainWindow::sortTagsAlpha(std::vector<ListTag> *list) {
 
 void MainWindow::on_myRecordPickForMe_clicked()
 {
-    ui->myRecordTable->setCurrentCell(rand() % recordsList.size(), 0);
+    if (ui->myRecordTable->rowCount()>0) ui->myRecordTable->setCurrentCell(rand() % recordsList.size(), 0);
 }
 

@@ -35,14 +35,16 @@ void tagsWindow::on_tagsWinDoneButton_clicked()
 
 void tagsWindow::on_tagsWinRemoveButton_clicked()
 {
-    json json;
-    ui->tagsWinMessageLabel->setText("Tag removed: " + tagsList.at(ui->tagsWinList->currentRow()).getName());
-    tagsList.erase(tagsList.begin()+ui->tagsWinList->currentRow());
-    ui->tagsWinList->clear();
-    for (int i = 0; i < tagsList.size(); i++){
-        ui->tagsWinList->addItem(new QListWidgetItem(tagsList.at(i).getName()));
+    if (ui->tagsWinList->currentRow()>=0) {
+        json json;
+        ui->tagsWinMessageLabel->setText("Tag removed: " + tagsList.at(ui->tagsWinList->currentRow()).getName());
+        tagsList.erase(tagsList.begin()+ui->tagsWinList->currentRow());
+        ui->tagsWinList->clear();
+        for (int i = 0; i < tagsList.size(); i++){
+            ui->tagsWinList->addItem(new QListWidgetItem(tagsList.at(i).getName()));
+        }
+        json.writeTags(&tagsList);
     }
-    json.writeTags(&tagsList);
 }
 
 
