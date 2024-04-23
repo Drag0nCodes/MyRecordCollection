@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1000</width>
-    <height>800</height>
+    <height>810</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>0</y>
+      <y>-10</y>
       <width>1000</width>
       <height>800</height>
      </rect>
@@ -30,7 +30,7 @@
         <x>10</x>
         <y>50</y>
         <width>781</width>
-        <height>701</height>
+        <height>700</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -355,7 +355,7 @@ My Collection</string>
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>421</y>
+        <y>420</y>
         <width>191</width>
         <height>171</height>
        </rect>
@@ -473,6 +473,25 @@ My Collection</string>
        <string>Showing 0/0 Records</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="myRecordPickForMe">
+      <property name="geometry">
+       <rect>
+        <x>635</x>
+        <y>755</y>
+        <width>151</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Pick a Record For Me</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="searchRecordsPage">
      <widget class="QTableWidget" name="searchRecordTable">
@@ -517,11 +536,6 @@ My Collection</string>
       <attribute name="verticalHeaderVisible">
        <bool>false</bool>
       </attribute>
-      <row>
-       <property name="text">
-        <string/>
-       </property>
-      </row>
       <column>
        <property name="text">
         <string>Cover</string>
@@ -543,7 +557,7 @@ My Collection</string>
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>171</width>
+        <width>351</width>
         <height>41</height>
        </rect>
       </property>
@@ -555,7 +569,7 @@ My Collection</string>
        </font>
       </property>
       <property name="text">
-       <string>Search</string>
+       <string>Search New Records</string>
       </property>
      </widget>
      <widget class="QPushButton" name="toMyRecordsButton">
@@ -747,7 +761,7 @@ Collection</string>
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>400</y>
+        <y>397</y>
         <width>131</width>
         <height>21</height>
        </rect>
@@ -774,8 +788,54 @@ Collection</string>
      <height>25</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionContact"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionToggle_Theme"/>
+    <addaction name="actionImport_Records"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <addaction name="menuSettings"/>
+   <addaction name="menuHelp"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionToggle_Theme">
+   <property name="text">
+    <string>Toggle Theme</string>
+   </property>
+  </action>
+  <action name="actionyes">
+   <property name="text">
+    <string>yes</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionImport_Records">
+   <property name="text">
+    <string>Import Records</string>
+   </property>
+  </action>
+  <action name="actionContact">
+   <property name="text">
+    <string>Contact</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

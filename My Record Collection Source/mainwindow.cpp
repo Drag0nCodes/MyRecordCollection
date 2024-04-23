@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowTitle("Vinyl App 1.1");
+    setWindowTitle("My Record Collection 1.2.0");
 
     // Set the style sheet for the program
     QFile styleFile(dir.absolutePath() + "/resources/darktheme.qss");
@@ -716,3 +716,9 @@ void MainWindow::sortTagsAlpha(std::vector<ListTag> *list) {
         }
     }
 }
+
+void MainWindow::on_myRecordPickForMe_clicked()
+{
+    ui->myRecordTable->setCurrentCell(rand() % recordsList.size(), 0);
+}
+

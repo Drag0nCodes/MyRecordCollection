@@ -52,6 +52,8 @@ private slots:
 
     void on_searchRecordSuggestedTagsList_itemClicked(QListWidgetItem *item);
 
+    void on_myRecordPickForMe_clicked();
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);
