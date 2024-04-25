@@ -14,7 +14,7 @@ private:
 
 public:
     Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating);
-    Record(QString name, QString artist, QString cover);
+    Record(QString name, QString artist, QString cover, qint64 rating);
     QString getName();
     QString getArtist();
     QString getCover();

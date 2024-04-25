@@ -24,7 +24,7 @@
      </rect>
     </property>
     <widget class="QWidget" name="myRecordsPage">
-     <widget class="QTableWidget" name="myRecordTable">
+     <widget class="QTableWidget" name="myRecord_Table">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -121,7 +121,7 @@
        </property>
       </column>
      </widget>
-     <widget class="QLabel" name="myRecordsPageLabel">
+     <widget class="QLabel" name="myRecord_PageLabel">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -141,7 +141,7 @@
        <string>My Collection</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="toSearchRecordsButton">
+     <widget class="QPushButton" name="myRecord_ToSearchRecordsButton">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -160,7 +160,7 @@
        <string>Find New Records</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="removeFromMyRecordButton">
+     <widget class="QPushButton" name="myRecord_RemoveRecordButton">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -180,7 +180,7 @@
 My Collection</string>
       </property>
      </widget>
-     <widget class="QSlider" name="myRecordRatingSlider">
+     <widget class="QSlider" name="myRecord_RatingSlider">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -217,7 +217,7 @@ My Collection</string>
        <enum>QSlider::TicksBelow</enum>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecordRatingNumLabel1">
+     <widget class="QLabel" name="myRecord_RatingNumLabel1">
       <property name="geometry">
        <rect>
         <x>802</x>
@@ -236,7 +236,7 @@ My Collection</string>
        <string>0   1   2   3   4</string>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecordSortLabel">
+     <widget class="QLabel" name="myRecord_SortLabel">
       <property name="geometry">
        <rect>
         <x>222</x>
@@ -258,7 +258,7 @@ My Collection</string>
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
-     <widget class="QLineEdit" name="myRecordSearchBar">
+     <widget class="QLineEdit" name="myRecord_SearchBar">
       <property name="geometry">
        <rect>
         <x>470</x>
@@ -277,7 +277,7 @@ My Collection</string>
        <string>Search My Collection</string>
       </property>
      </widget>
-     <widget class="QComboBox" name="myRecordSortBox">
+     <widget class="QComboBox" name="myRecord_SortBox">
       <property name="geometry">
        <rect>
         <x>310</x>
@@ -332,7 +332,7 @@ My Collection</string>
        </property>
       </item>
      </widget>
-     <widget class="QLabel" name="myRecordRatingLabel">
+     <widget class="QLabel" name="myRecord_RatingLabel">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -351,7 +351,7 @@ My Collection</string>
        <string>Record Rating:</string>
       </property>
      </widget>
-     <widget class="QListWidget" name="myRecordEditTagsList">
+     <widget class="QListWidget" name="myRecord_EditTagsList">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -367,7 +367,7 @@ My Collection</string>
        <enum>Qt::ScrollBarAsNeeded</enum>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecordEditTagsLabel">
+     <widget class="QLabel" name="myRecord_EditTagsLabel">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -386,7 +386,7 @@ My Collection</string>
        <string>Toggle Tags:</string>
       </property>
      </widget>
-     <widget class="QListWidget" name="myRecordSortTagsList">
+     <widget class="QListWidget" name="myRecord_SortTagsList">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -396,7 +396,7 @@ My Collection</string>
        </rect>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecordSortTagsLabel">
+     <widget class="QLabel" name="myRecord_SortTagsLabel">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -415,7 +415,7 @@ My Collection</string>
        <string>Sort by Tags:</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="myRecordManageTagButton">
+     <widget class="QPushButton" name="myRecord_ManageTagButton">
       <property name="geometry">
        <rect>
         <x>890</x>
@@ -434,7 +434,7 @@ My Collection</string>
        <string>Manage Tags</string>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecordRatingNumLabel2">
+     <widget class="QLabel" name="myRecord_RatingNumLabel2">
       <property name="geometry">
        <rect>
         <x>892</x>
@@ -453,7 +453,7 @@ My Collection</string>
        <string>5   6   7   8   9  10</string>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecordRecordCountLabel">
+     <widget class="QLabel" name="myRecord_RecordCountLabel">
       <property name="geometry">
        <rect>
         <x>13</x>
@@ -473,7 +473,7 @@ My Collection</string>
        <string>Showing 0/0 Records</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="myRecordPickForMe">
+     <widget class="QPushButton" name="myRecord_PickForMe">
       <property name="geometry">
        <rect>
         <x>635</x>
@@ -492,9 +492,28 @@ My Collection</string>
        <string>Pick a Record For Me</string>
       </property>
      </widget>
+     <widget class="QLabel" name="myRecord_InfoLabel">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>758</y>
+        <width>201</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="searchRecordsPage">
-     <widget class="QTableWidget" name="searchRecordTable">
+     <widget class="QTableWidget" name="searchRecord_Table">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -552,7 +571,7 @@ My Collection</string>
        </property>
       </column>
      </widget>
-     <widget class="QLabel" name="searchPageLabel">
+     <widget class="QLabel" name="searchRecord_PageLabel">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -572,7 +591,7 @@ My Collection</string>
        <string>Search New Records</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="toMyRecordsButton">
+     <widget class="QPushButton" name="searchRecord_ToMyRecordsButton">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -592,7 +611,7 @@ My Collection</string>
 Collection</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="searchRecordSearchBar">
+     <widget class="QLineEdit" name="searchRecord_SearchBar">
       <property name="geometry">
        <rect>
         <x>470</x>
@@ -611,7 +630,7 @@ Collection</string>
        <string>Search For New Records</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="addToMyRecordButton">
+     <widget class="QPushButton" name="searchRecord_AddToMyRecordButton">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -631,7 +650,7 @@ Collection</string>
 Collection</string>
       </property>
      </widget>
-     <widget class="QLabel" name="searchRecordsInfoLabel">
+     <widget class="QLabel" name="searchRecord_InfoLabel">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -653,7 +672,7 @@ Collection</string>
        <set>Qt::AlignCenter</set>
       </property>
      </widget>
-     <widget class="QLabel" name="searchRecordRatingLabel">
+     <widget class="QLabel" name="searchRecord_RatingLabel">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -672,7 +691,7 @@ Collection</string>
        <string>Record Rating:</string>
       </property>
      </widget>
-     <widget class="QSlider" name="searchRecordRatingSlider">
+     <widget class="QSlider" name="searchRecord_RatingSlider">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -709,7 +728,7 @@ Collection</string>
        <enum>QSlider::TicksBelow</enum>
       </property>
      </widget>
-     <widget class="QLabel" name="searchRecordRatingNumLabel1">
+     <widget class="QLabel" name="searchRecord_RatingNumLabel1">
       <property name="geometry">
        <rect>
         <x>892</x>
@@ -728,7 +747,7 @@ Collection</string>
        <string>5   6   7   8   9  10</string>
       </property>
      </widget>
-     <widget class="QLabel" name="searchRecordRatingNumLabel2">
+     <widget class="QLabel" name="searchRecord_RatingNumLabel2">
       <property name="geometry">
        <rect>
         <x>802</x>
@@ -747,7 +766,7 @@ Collection</string>
        <string>0   1   2   3   4</string>
       </property>
      </widget>
-     <widget class="QListWidget" name="searchRecordSuggestedTagsList">
+     <widget class="QListWidget" name="searchRecord_SuggestedTagsList">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -757,7 +776,7 @@ Collection</string>
        </rect>
       </property>
      </widget>
-     <widget class="QLabel" name="searchRecordSuggestedTagsLabel">
+     <widget class="QLabel" name="searchRecord_SuggestedTagsLabel">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -792,21 +811,22 @@ Collection</string>
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionAbout"/>
-    <addaction name="actionContact"/>
+    <addaction name="help_actionAbout"/>
+    <addaction name="help_actionContact"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
      <string>Settings</string>
     </property>
-    <addaction name="actionToggle_Theme"/>
-    <addaction name="actionImport_Records"/>
-    <addaction name="actionExit"/>
+    <addaction name="settings_actionToggleTheme"/>
+    <addaction name="settings_actionImportDiscogs"/>
+    <addaction name="separator"/>
+    <addaction name="settings_actionExit"/>
    </widget>
    <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
   </widget>
-  <action name="actionToggle_Theme">
+  <action name="settings_actionToggleTheme">
    <property name="text">
     <string>Toggle Theme</string>
    </property>
@@ -816,22 +836,22 @@ Collection</string>
     <string>yes</string>
    </property>
   </action>
-  <action name="actionAbout">
+  <action name="help_actionAbout">
    <property name="text">
     <string>About</string>
    </property>
   </action>
-  <action name="actionExit">
+  <action name="settings_actionExit">
    <property name="text">
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionImport_Records">
+  <action name="settings_actionImportDiscogs">
    <property name="text">
-    <string>Import Records</string>
+    <string>Import Discogs Collection</string>
    </property>
   </action>
-  <action name="actionContact">
+  <action name="help_actionContact">
    <property name="text">
     <string>Contact</string>
    </property>

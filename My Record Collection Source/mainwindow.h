@@ -20,46 +20,45 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_toMyRecordsButton_clicked();
+    void on_searchRecord_ToMyRecordsButton_clicked();
 
-    void on_toSearchRecordsButton_clicked();
+    void on_myRecord_ToSearchRecordsButton_clicked();
 
-    void on_searchRecordSearchBar_returnPressed();
+    void on_searchRecord_SearchBar_returnPressed();
 
-    void on_addToMyRecordButton_clicked();
+    void on_searchRecord_AddToMyRecordButton_clicked();
 
-    void on_removeFromMyRecordButton_clicked();
+    void on_myRecord_RemoveRecordButton_clicked();
 
-    void on_myRecordTable_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
+    void on_myRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
 
-    void on_searchRecordTable_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
+    void on_searchRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
 
-    void on_myRecordRatingSlider_valueChanged(int value);
+    void on_myRecord_RatingSlider_valueChanged(int value);
 
-    void on_myRecordSearchBar_textChanged();
+    void on_myRecord_SearchBar_textChanged();
 
-    void on_myRecordSortBox_activated(int index);
+    void on_myRecord_SortBox_activated(int index);
 
-    void on_myRecordSearchBar_textChanged(const QString &arg1);
+    void on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item);
 
-    void on_myRecordEditTagsList_itemClicked(QListWidgetItem *item);
+    void on_myRecord_SortTagsList_itemClicked(QListWidgetItem *item);
 
-    void on_myRecordSortTagsList_itemClicked(QListWidgetItem *item);
+    void on_myRecord_ManageTagButton_clicked();
 
-    void on_myRecordManageTagButton_clicked();
+    void on_searchRecord_Table_cellClicked(int row, int column);
 
-    void on_searchRecordTable_cellClicked(int row, int column);
+    void on_searchRecord_SuggestedTagsList_itemClicked(QListWidgetItem *item);
 
-    void on_searchRecordSuggestedTagsList_itemClicked(QListWidgetItem *item);
+    void on_myRecord_PickForMe_clicked();
 
-    void on_myRecordPickForMe_clicked();
+    void on_settings_actionImportDiscogs_triggered();
 
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);
-    QString downloadCover(QUrl imageUrl);
     class ImageDelegate;
-    void updateMyRecords();
+    void updateMyRecordsTable();
     void updateMyRecordsInfo();
     void updateTagsList();
     void updateRecordsListOrder();
