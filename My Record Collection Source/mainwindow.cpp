@@ -13,11 +13,15 @@
 #include <QTimer>
 #include "listtag.h"
 #include "tagswindow.h"
+#include "importdiscogs.h"
 #include <QFileDialog>
 #include <QProgressDialog>
+#include <QThread>
+#include <QDebug>
+#include <QCoreApplication>
+#include <QtConcurrent>
 
-
-json json;
+json Json;
 QDir dir;
 std::vector<Record> results; // Search records results
 std::vector<Record> allMyRecords; // All records in collection
@@ -25,6 +29,7 @@ std::vector<Record> recordsList; // Records shown on my collection table
 std::vector<ListTag> tags; // All tags
 std::vector<ListTag> suggestedTags; // The list of suggested tags on the search records page
 bool selectedMyRecord = false; // If a record is selected on the my record page
+bool dark = true;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -43,9 +48,9 @@ MainWindow::MainWindow(QWidget *parent)
     font.setPixelSize(14);
 
     // Fill the records vectors and tag vector
-    allMyRecords = json.getRecords();
+    allMyRecords = Json.getRecords();
     recordsList = allMyRecords;
-    tags = json.getTags();
+    tags = Json.getTags();
     sortTagsAlpha(&tags);
 
     // Set the style of the tables
@@ -139,7 +144,7 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
     ui->searchRecord_InfoLabel->setText("");
     ui->searchRecord_Table->clear();
     ui->searchRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
-    results = json.searchRecords(ui->searchRecord_SearchBar->text(), 10);
+    results = Json.searchRecords(ui->searchRecord_SearchBar->text(), 10);
     ui->searchRecord_Table->setRowCount(results.size());
 
     for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's text info into table
@@ -191,6 +196,7 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert record's covers into table
         QPixmap image(dir.absolutePath() + "/resources/covers/" + recordsList.at(recordNum).getCover());
+        if (image.isNull()) image = QPixmap(dir.absolutePath() + "/resources/images/missingImg.jpg");
         image = image.scaled(130, 130, Qt::KeepAspectRatio);
 
         QTableWidgetItem *item = new QTableWidgetItem();
@@ -247,7 +253,7 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
     if (!copy){ // Record is new, add to allMyRecords
         ui->searchRecord_InfoLabel->setText("");
         Record addRecord = results.at(ui->searchRecord_Table->currentRow()); // Get the selected record to add
-        addRecord.setCover(json.downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
+        addRecord.setCover(Json.downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
         addRecord.setRating(ui->searchRecord_RatingSlider->sliderPosition()); // Set records rating
 
         for (int i = 0; i < suggestedTags.size(); i++){
@@ -272,18 +278,18 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
                 if (!dup) { // Add tag
                     tags.push_back(ListTag(newTag));
                     sortTagsAlpha(&tags);
-                    json.writeTags(&tags);
+                    Json.writeTags(&tags);
                 }
             }
         }
 
         updateTagsList();
-        json.writeTags(&tags);
+        Json.writeTags(&tags);
 
         allMyRecords.push_back(addRecord);
         on_myRecord_SearchBar_textChanged();
         updateMyRecordsTable();
-        json.writeRecords(&allMyRecords);
+        Json.writeRecords(&allMyRecords);
         ui->searchRecord_InfoLabel->setText("Added to My Collection");
     } else { // New record is duplicate
         ui->searchRecord_InfoLabel->setText("Record already in library");
@@ -311,7 +317,7 @@ void MainWindow::on_myRecord_RemoveRecordButton_clicked() // Remove record from 
             ui->myRecord_Table->removeRow(ui->myRecord_Table->currentRow()); // Update myRecords table (delete one table row)
         }
 
-        json.writeRecords(&allMyRecords); // Update saved records
+        Json.writeRecords(&allMyRecords); // Update saved records
 
         // Set record count label text
         ui->myRecord_RecordCountLabel->setText("Showing " + QString::number(recordsList.size()) + "/" + QString::number(allMyRecords.size()) + " Records");
@@ -357,13 +363,21 @@ void MainWindow::on_myRecord_RatingSlider_valueChanged(int value) // Change reco
         for (int i = 0; i < allMyRecords.size(); i++){
             if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){
                 // If selected record in list matches record in allMyRecords
+                QString saveCover = allMyRecords.at(i).getCover();
                 allMyRecords.at(i).setRating(value); // Set its rating in allMyRecords
                 recordsList.at(ui->myRecord_Table->currentRow()).setRating(value); // Set its rating in shown records
+                updateRecordsListOrder(); // Update tables
+                updateMyRecordsTable();
+                for (int j = 0; j < recordsList.size(); j++){ // Set the current row to the already selected record
+                    if (recordsList.at(j).getCover().compare(saveCover) == 0){
+                        ui->myRecord_Table->setCurrentCell(j, 0);
+                        break;
+                    }
+                }
                 break;
             }
         }
-        updateMyRecordsInfo(); // Update only the text info in list
-        json.writeRecords(&allMyRecords); // Save new rating to json
+        Json.writeRecords(&allMyRecords); // Save new rating to json
     }
 }
 
@@ -424,7 +438,7 @@ void MainWindow::on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item) // 
         }
         updateMyRecordsInfo(); // Update only the text info in list
         ui->myRecord_EditTagsList->setCurrentRow(-1);
-        json.writeRecords(&allMyRecords); // Save new tags to json
+        Json.writeRecords(&allMyRecords); // Save new tags to json
     }
 }
 
@@ -617,7 +631,7 @@ void MainWindow::on_searchRecord_Table_cellClicked(int row, int column) // Click
 {
     ui->searchRecord_SuggestedTagsList->clear();
     suggestedTags.clear();
-    suggestedTags = json.wikiTags(results.at(ui->searchRecord_Table->currentRow()));
+    suggestedTags = Json.wikiTags(results.at(ui->searchRecord_Table->currentRow()));
     sortTagsAlpha(&suggestedTags);
     ui->searchRecord_SuggestedTagsList->clear();
     for (ListTag tag : suggestedTags) {
@@ -675,16 +689,86 @@ void MainWindow::on_myRecord_PickForMe_clicked() // Highlight a random record in
 
 void MainWindow::on_settings_actionImportDiscogs_triggered() // "Import Discogs Collection" menubar button clicked
 {
-    QString file = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
+    if (!filePath.isEmpty()) { // If file is chosen...
+        QFile myFile(filePath); // File of playlists JSON
+        if (myFile.exists()){
+            if (myFile.open(QIODevice::ReadOnly)){ // Erase all text in playlists json
+                QString line = myFile.readLine();
+                if (!line.startsWith("Catalog#,Artist,Title")){ // Not a discogs collection, invalid file
+                    myFile.close();
+                    std::cerr << "Inavlid collection file" << std::endl;
+                    ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
+                }
+                else {
+                    line = myFile.readLine(); // Get first discogs record
+                    int tot = 0; // The total number of records in the discogs file
+                    std::vector<QThread*> threads; // Thread for each record import
+                    std::vector<ImportDiscogs*> imports; // The ImportDiscogs class for each record import, will be moved to thread in vector threads
+                    while (!line.isEmpty()) { // Loop until all discogs record read in
+                        imports.push_back(new ImportDiscogs(line, &allMyRecords)); // Create and add ImportDiscogs class to vector
+                        threads.push_back(new QThread); // Create a QThread for record
+                        imports.at(tot)->moveToThread(threads.at(tot)); // Move the ImportDiscogs to its won thread
 
-    if (!file.isEmpty()) { // If file is chosen...
-        ui->myRecord_InfoLabel->setText("Reading In Discogs Collection");
-        QProgressDialog progress("Importing Discogs Collection...", "", 0, 0, this);
-        progress.setWindowModality(Qt::WindowModal);
-        json.importDiscogs("C:\\Users\\colin\\Downloads\\drag0n_-collection-20240421-2005.csv", &allMyRecords, &progress); // Import collection from file
-        updateRecordsListOrder(); // Update the vector with the record collection table elements
-        updateMyRecordsTable(); // Visably update the record collection table
-        ui->myRecord_InfoLabel->setText("Finished");
+                        // Connect for started and finished signals
+                        QObject::connect(threads.at(tot), &QThread::started, imports.at(tot), &ImportDiscogs::run); // Run import method when thread starts
+                        QObject::connect(imports.at(tot), &ImportDiscogs::finished, threads.at(tot), &QThread::quit); // When ImportDiscogs run finished, quit QThread
+                        QObject::connect(threads.at(tot), &QThread::finished, threads.at(tot), &QThread::deleteLater); // When thread finished, delete thread
+
+                        threads.at(tot)->start(); // Start thread
+                        line = myFile.readLine(); // Get next discogs record
+                        tot++;
+                    }
+                    for (int i = 0; i < tot; i++){ // Get results from each record
+                        while (imports.at(i)->getProcessedRec() == nullptr); // Loop main until import is finished
+                        Record *importedRec = imports.at(i)->getProcessedRec(); // Get the new Record
+                        if (!(importedRec->getName().compare("") == 0 & importedRec->getArtist().compare("") == 0 && importedRec->getCover().compare("") == 0 && importedRec->getRating() == -1)){
+                            allMyRecords.push_back(*imports.at(i)->getProcessedRec()); // Record is new, add to collection, don't add duplicates
+                        }
+                        imports.at(i)->deleteLater(); // Delete object
+                    }
+                    Json.writeRecords(&allMyRecords); // Write changes to json
+                    updateRecordsListOrder(); // Update list orders
+                    updateMyRecordsTable();
+                }
+            }
+        }
     }
+}
+
+void MainWindow::on_actionImport_Discogs_Single_Threaded_triggered()
+{
+    QProgressDialog progress("Importing Discogs Collection...", "", 0, 0, this);
+    progress.setMinimumDuration(0);
+    ImportDiscogs import;
+    progress.setWindowModality(Qt::WindowModal);
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
+    if (!filePath.isEmpty()) { // If file is chosen...
+        import.importAll(filePath, &allMyRecords); // Import collection from file
+        updateRecordsListOrder(); // Update the vector with the record collection table elements
+        updateMyRecordsTable(); // Visably update the record collection table*/
+    }
+}
+
+
+void MainWindow::on_settings_actionExit_triggered()
+{
+    abort();
+}
+
+
+void MainWindow::on_settings_actionToggleTheme_triggered()
+{
+    QFile *styleFile;
+    if (dark){
+        styleFile = new QFile(dir.absolutePath() + "/resources/lighttheme.qss");
+    }
+    else {
+        styleFile = new QFile(dir.absolutePath() + "/resources/darktheme.qss");
+    }
+    styleFile->open(QFile::ReadOnly);
+    QString style(styleFile->readAll());
+    setStyleSheet(style);
+    dark = !dark;
 }
 

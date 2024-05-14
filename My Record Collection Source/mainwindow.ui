@@ -477,7 +477,7 @@ My Collection</string>
       <property name="geometry">
        <rect>
         <x>635</x>
-        <y>755</y>
+        <y>760</y>
         <width>151</width>
         <height>29</height>
        </rect>
@@ -820,6 +820,7 @@ Collection</string>
     </property>
     <addaction name="settings_actionToggleTheme"/>
     <addaction name="settings_actionImportDiscogs"/>
+    <addaction name="actionImport_Discogs_Single_Threaded"/>
     <addaction name="separator"/>
     <addaction name="settings_actionExit"/>
    </widget>
@@ -854,6 +855,11 @@ Collection</string>
   <action name="help_actionContact">
    <property name="text">
     <string>Contact</string>
+   </property>
+  </action>
+  <action name="actionImport_Discogs_Single_Threaded">
+   <property name="text">
+    <string>Import Discogs (Single Threaded)</string>
    </property>
   </action>
  </widget>

@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QListWidgetItem>
 #include "listtag.h"
+#include "record.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -53,6 +54,12 @@ private slots:
     void on_myRecord_PickForMe_clicked();
 
     void on_settings_actionImportDiscogs_triggered();
+
+    void on_actionImport_Discogs_Single_Threaded_triggered();
+
+    void on_settings_actionExit_triggered();
+
+    void on_settings_actionToggleTheme_triggered();
 
 private:
     Ui::MainWindow *ui;
