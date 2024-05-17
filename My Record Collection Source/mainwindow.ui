@@ -42,7 +42,7 @@
       <property name="font">
        <font>
         <family>Arial</family>
-        <pointsize>12</pointsize>
+        <pointsize>11</pointsize>
        </font>
       </property>
       <property name="autoFillBackground">
@@ -818,9 +818,17 @@ Collection</string>
     <property name="title">
      <string>Settings</string>
     </property>
+    <widget class="QMenu" name="menuImport_Discogs_Collection">
+     <property name="title">
+      <string>Import Discogs Collection</string>
+     </property>
+     <addaction name="importDiscogsTheadedOpt"/>
+     <addaction name="importDiscogsAddTagsOpt"/>
+     <addaction name="actionSelect_File_and_Run"/>
+    </widget>
     <addaction name="settings_actionToggleTheme"/>
-    <addaction name="settings_actionImportDiscogs"/>
-    <addaction name="actionImport_Discogs_Single_Threaded"/>
+    <addaction name="menuImport_Discogs_Collection"/>
+    <addaction name="actionDelete_All_User_Data"/>
     <addaction name="separator"/>
     <addaction name="settings_actionExit"/>
    </widget>
@@ -847,19 +855,41 @@ Collection</string>
     <string>Exit</string>
    </property>
   </action>
-  <action name="settings_actionImportDiscogs">
-   <property name="text">
-    <string>Import Discogs Collection</string>
-   </property>
-  </action>
   <action name="help_actionContact">
    <property name="text">
     <string>Contact</string>
    </property>
   </action>
-  <action name="actionImport_Discogs_Single_Threaded">
+  <action name="importDiscogsTheadedOpt">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Import Discogs (Single Threaded)</string>
+    <string>Threaded</string>
+   </property>
+  </action>
+  <action name="importDiscogsAddTagsOpt">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Add tags</string>
+   </property>
+  </action>
+  <action name="actionSelect_File_and_Run">
+   <property name="text">
+    <string>Select File and Run</string>
+   </property>
+  </action>
+  <action name="actionDelete_All_User_Data">
+   <property name="text">
+    <string>Delete All User Data</string>
    </property>
   </action>
  </widget>

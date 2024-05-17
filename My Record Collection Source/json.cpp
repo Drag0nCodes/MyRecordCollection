@@ -10,12 +10,13 @@
 #include <QEventLoop>
 #include <iostream>
 
-std::vector<Record> json::getRecords(){
+std::vector<Record> Json::getRecords(){
     std::vector<Record> allRecords;
     QDir dir;
     try{
         QString jsonStr;
-        QFile myFile(dir.absolutePath() + "/resources/records.json"); // File of records JSON
+        dir.mkpath(dir.absolutePath() + "/resources/user data");
+        QFile myFile(dir.absolutePath() + "/resources/user data/records.json"); // File of records JSON
 
 
         if (myFile.exists()){
@@ -24,13 +25,15 @@ std::vector<Record> json::getRecords(){
                 myFile.close();
 
                 QJsonDocument myDoc = QJsonDocument::fromJson(jsonStr.toUtf8());
-                QJsonArray myArr = myDoc.array();
+                QJsonObject root = myDoc.object();
+                int jsonVersion = root.value("_json_version").toInt();
+                QJsonArray recs = root.value("records").toArray();
 
-                if (myArr.empty()){
+                if (recs.empty()){
                     std::cerr << "JSON error, myArr empty" << std::endl;
                 } else {
-                    for (int i = 0; i < myArr.size(); i++){
-                        QJsonObject val = myArr.at(i).toObject();
+                    for (int i = 0; i < recs.size(); i++){
+                        QJsonObject val = recs.at(i).toObject();
                         QString name = val.value("name").toString();
                         QString artist = val.value("artist").toString();
                         QString cover = val.value("cover").toString();
@@ -44,8 +47,10 @@ std::vector<Record> json::getRecords(){
                     }
                 }
             }
-        }else{
-
+        }else{ // Create file
+            if (myFile.open(QIODevice::WriteOnly | QIODevice::Text)){
+                myFile.close();
+            }
         }
     }catch (const std::out_of_range& e) {
         std::cerr << "Exception caught - json get records method: " << e.what() << std::endl;
@@ -53,7 +58,7 @@ std::vector<Record> json::getRecords(){
     return allRecords; // Return vector with all Song objects
 }
 
-std::vector<Record> json::searchRecords(QString search, int limit) {
+std::vector<Record> Json::searchRecords(QString search, int limit) {
     QNetworkAccessManager manager;
     QEventLoop loop;
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
@@ -88,43 +93,47 @@ std::vector<Record> json::searchRecords(QString search, int limit) {
     return records;
 }
 
-void json::writeRecords(std::vector<Record>* myRecords){
+void Json::writeRecords(std::vector<Record>* myRecords){
     QDir dir;
-    QFile myFile(dir.absolutePath() + "/resources/records.json"); // File of playlists JSON
+    QFile myFile(dir.absolutePath() + "/resources/user data/records.json"); // File of playlists JSON
 
     if (myFile.exists()){
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in playlists json
             myFile.close();
         }
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Text)){ // Write all playlists to JSON
-            myFile.write("[\n");
-            for (int recNum = 0; recNum < myRecords->size(); recNum++){
-                myFile.write("    {\n        \"name\": \"" + myRecords->at(recNum).getName().toUtf8() + "\",\n"
-                "        \"artist\": \"" + myRecords->at(recNum).getArtist().toUtf8() + "\",\n"
-                "        \"cover\": \"" + myRecords->at(recNum).getCover().toUtf8() + "\",\n"
-                "        \"rating\": " + QString::number(myRecords->at(recNum).getRating()).toUtf8() + ",\n        \"tags\": [");
-                for (int tagNum = 0; tagNum < myRecords->at(recNum).getTags().size(); tagNum++){
-                    if (tagNum < myRecords->at(recNum).getTags().size()-1){ // not last
-                        myFile.write("\"" + myRecords->at(recNum).getTags().at(tagNum).toUtf8() + "\", ");
-                    } else { // last tag
-                        myFile.write("\"" + myRecords->at(recNum).getTags().at(tagNum).toUtf8() + "\"");
-                    }
+            QJsonDocument doc;
+            QJsonObject root; // Array of all Record object information
+            QJsonArray recs; // Array of all records
+            root.insert("_json_version", 2);
+            for (Record rec : *myRecords){ // Add information of each record to a JsonObject and add to the JsonArray
+                QJsonObject recObj; // The record object json
+                recObj.insert("name", rec.getName());
+                recObj.insert("artist", rec.getArtist());
+                recObj.insert("cover", rec.getCover());
+                recObj.insert("rating", rec.getRating());
+                QJsonArray tags;
+                for (QString tag : rec.getTags()){
+                    tags.insert(tags.size(), tag);
                 }
-                if (recNum < myRecords->size()-1) myFile.write("]\n    },\n"); // another record
-                else myFile.write("]\n    }\n"); // no records left
+                recObj.insert("tags", tags);
+                recs.insert(recs.size(), recObj);
             }
-            myFile.write("]");
+            root.insert("records", recs);
+            doc.setObject(root);
+            myFile.write(doc.toJson());
             myFile.close();
         }
     }
 }
 
-std::vector<ListTag> json::getTags(){
+std::vector<ListTag> Json::getTags(){
     std::vector<ListTag> allTags;
     try{
         QString jsonStr;
         QDir dir;
-        QFile myFile(dir.absolutePath() + "/resources/tags.json"); // File of tags JSON
+        dir.mkpath(dir.absolutePath() + "/resources/user data");
+        QFile myFile(dir.absolutePath() + "/resources/user data/tags.json"); // File of tags JSON
 
 
         if (myFile.exists()){
@@ -133,20 +142,24 @@ std::vector<ListTag> json::getTags(){
                 myFile.close();
 
                 QJsonDocument myDoc = QJsonDocument::fromJson(jsonStr.toUtf8());
-                QJsonArray myArr = myDoc.array();
+                QJsonObject root = myDoc.object();
+                int jsonVersion = root.value("_json_version").toInt();
 
-                if (myArr.empty()){
-                    std::cerr << "JSON error, myArr empty" << std::endl;
-                } else {
-                    for (int i = 0; i < myArr.size(); i++){
-                        QJsonObject val = myArr.at(i).toObject();
-                        QString name = val.value("name").toString();
-                        allTags.push_back(ListTag(name));
+                if (jsonVersion == 2) {
+                    QJsonArray tags = root.value("tags").toArray();
+                    if (tags.empty()){
+                        std::cerr << "JSON error, myArr empty" << std::endl;
+                    } else {
+                        for (int i = 0; i < tags.size(); i++){
+                            allTags.push_back(ListTag(tags.at(i).toString()));
+                        }
                     }
                 }
             }
-        }else{
-
+        }else{// Create file
+            if (myFile.open(QIODevice::WriteOnly | QIODevice::Text)){
+                myFile.close();
+            }
         }
     }catch (const std::out_of_range& e) {
         std::cerr << "Exception caught - json get tags method: " << e.what() << std::endl;
@@ -154,37 +167,36 @@ std::vector<ListTag> json::getTags(){
     return allTags; // Return vector with all Song objects
 }
 
-void json::writeTags(std::vector<ListTag>* tags){
+void Json::writeTags(std::vector<ListTag>* tags){
     QDir dir;
-    QFile myFile(dir.absolutePath() + "/resources/tags.json"); // File of playlists JSON
+    QFile myFile(dir.absolutePath() + "/resources/user data/tags.json"); // File of tags JSON
 
     if (myFile.exists()){
-        if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in playlists json
+        if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in tags json
             myFile.close();
         }
-        if (myFile.open(QIODevice::ReadWrite | QIODevice::Text)){ // Write all playlists to JSON
-            myFile.write("[\n");
-            for (int tagNum = 0; tagNum < tags->size(); tagNum++){
-                if (tagNum != tags->size()-1) { // Not last tag
-                    myFile.write("    {\"name\": \"" + tags->at(tagNum).getName().toUtf8() + "\"},\n");
-                }
-                else { // last tag
-                    myFile.write("    {\"name\": \"" + tags->at(tagNum).getName().toUtf8() + "\"}\n");
-                }
-            }
-            myFile.write("]");
+        if (myFile.open(QIODevice::ReadWrite | QIODevice::Text)){ // Write all tags to JSON
+            QJsonDocument doc;
+            QJsonObject root; // Array of all tags
+            QJsonArray tagsArr;
+            root.insert("_json_version", 2);
+            for (ListTag tag : *tags) tagsArr.append(tag.getName());
+            // Add names of each tag to JsonArray
+            root.insert("tags", tagsArr);
+            doc.setObject(root);
+            myFile.write(doc.toJson()); // Write names to json file
             myFile.close();
         }
     }
 }
 
-std::vector<ListTag> json::wikiTags(Record record) {
+std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
     QNetworkAccessManager manager;
     QEventLoop loop;
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
     std::vector<ListTag> tags;
 
-    QUrl searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=" + record.getName() + "%20" + record.getArtist() + "%20album");
+    QUrl searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=" + name + "%20" + artist + "%20album");
 
     QNetworkRequest request(searchUrl);
     QNetworkReply *reply = manager.get(request);
@@ -247,8 +259,7 @@ std::vector<ListTag> json::wikiTags(Record record) {
     return tags;
 }
 
-
-QString json::downloadCover(QUrl imageUrl) { // Download image from the internet to covers subfolder
+QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet to covers subfolder
     QString fileName = imageUrl.toString();
     QDir dir;
     for (int i = fileName.size()-1; i >= 0; i--) {
@@ -257,7 +268,7 @@ QString json::downloadCover(QUrl imageUrl) { // Download image from the internet
             break;
         }
     }
-    QString savePath = dir.absolutePath() + "/resources/covers/" + fileName;
+    QString savePath = dir.absolutePath() + "/resources/user data/covers/" + fileName;
 
     QNetworkAccessManager manager;
 
@@ -291,7 +302,76 @@ QString json::downloadCover(QUrl imageUrl) { // Download image from the internet
     return fileName;
 }
 
-void json::writePrefs(Record rec){
-    QJsonDocument root;
+Prefs Json::getPrefs(){
+    QDir dir;
+    try{
+        QString jsonStr;
+        dir.mkpath(dir.absolutePath() + "/resources/user data");
+        QFile myFile(dir.absolutePath() + "/resources/user data/prefs.json"); // File of tags JSON
 
+        if (myFile.exists()){
+            if (myFile.open(QIODevice::ReadOnly | QIODevice::Text)){
+                jsonStr = myFile.readAll(); // Read all file into jsonStr
+                myFile.close();
+                QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toUtf8());
+                QJsonObject root = doc.object();
+                int jsonVersion = root.value("_json_version").toInt();
+
+                if (jsonVersion == 2) {
+                    return Prefs(root.value("sortBy").toInt(), root.value("darkTheme").toBool()); // Return a Prefs object with the read information
+                }
+            }
+        }else{ // Create a prefs file with default vals
+            if (myFile.open(QIODevice::WriteOnly | QIODevice::Text)){
+                myFile.close();
+                Prefs returnPref(0, true);
+                writePrefs(&returnPref);
+                return returnPref;
+            }
+        }
+    }catch (const std::out_of_range& e) {
+        std::cerr << "Exception caught - json get tags method: " << e.what() << std::endl;
+    }
+    return Prefs(0, true);
 }
+
+void Json::writePrefs(Prefs *prefs){
+    QDir dir;
+    QFile myFile(dir.absolutePath() + "/resources/user data/prefs.json"); // File of preferences JSON
+
+    if (myFile.exists()){
+        if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
+            myFile.close();
+        }
+        if (myFile.open(QIODevice::ReadWrite | QIODevice::Text)){ // Write all prefs to JSON
+            QJsonDocument doc;
+            QJsonObject root;
+            root.insert("_json_version", 2);
+            root.insert("darkTheme", prefs->getDark()); // Add preferences to json object
+            root.insert("sortBy", prefs->getSort());
+            doc.setObject(root);
+            myFile.write(doc.toJson()); // Write to json file
+            myFile.close();
+        }
+    }
+}
+
+void Json::deleteUserData()
+{
+    QDir dir;
+    QFile tagsFile(dir.absolutePath() + "/resources/user data/tags.json");
+    QFile recordsFile(dir.absolutePath() + "/resources/user data/records.json");
+
+    if (tagsFile.exists()){
+        if (tagsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
+            tagsFile.close();
+        }
+    }
+    if (recordsFile.exists()){
+        if (recordsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
+            recordsFile.close();
+        }
+    }
+}
+
+

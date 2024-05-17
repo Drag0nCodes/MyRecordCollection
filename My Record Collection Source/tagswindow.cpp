@@ -3,7 +3,7 @@
 #include "json.h"
 #include "QDir"
 
-tagsWindow::tagsWindow(std::vector<ListTag>* tags, QWidget *parent)
+tagsWindow::tagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::tagsWindow)
     , tagsList(*tags)
@@ -14,12 +14,8 @@ tagsWindow::tagsWindow(std::vector<ListTag>* tags, QWidget *parent)
         ui->tagsWinList->addItem(new QListWidgetItem(tags->at(i).getName()));
     }
 
-    // Set window theme
-    QDir dir;
-    QFile styleFile(dir.absolutePath() + "/resources/darktheme.qss");
-    styleFile.open(QFile::ReadOnly);
-    QString style(styleFile.readAll());
-    setStyleSheet(style);
+    // Set the style sheet for the program
+    setStyleSheet(prefs->getStyle());
 }
 
 tagsWindow::~tagsWindow()
@@ -36,7 +32,7 @@ void tagsWindow::on_tagsWinDoneButton_clicked()
 void tagsWindow::on_tagsWinRemoveButton_clicked()
 {
     if (ui->tagsWinList->currentRow()>=0) {
-        json json;
+        Json json;
         ui->tagsWinMessageLabel->setText("Tag removed: " + tagsList.at(ui->tagsWinList->currentRow()).getName());
         tagsList.erase(tagsList.begin()+ui->tagsWinList->currentRow());
         ui->tagsWinList->clear();
@@ -66,7 +62,7 @@ void tagsWindow::on_tagsWinAddButton_clicked()
             ui->tagsWinMessageLabel->setText("Tag already exists");
         }
         else { // Add tag
-            json json;
+            Json json;
             ui->tagsWinMessageLabel->setText("Tag added: " + newTag);
             tagsList.push_back(ListTag(newTag));
 

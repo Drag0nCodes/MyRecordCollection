@@ -28,6 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         tagswindow.h tagswindow.cpp tagswindow.ui
         listtag.h listtag.cpp
         importdiscogs.h importdiscogs.cpp
+        prefs.h prefs.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

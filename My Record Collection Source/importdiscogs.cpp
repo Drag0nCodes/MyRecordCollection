@@ -2,20 +2,24 @@
 #include "json.h"
 #include <iostream>
 
-ImportDiscogs::ImportDiscogs(QString line, std::vector<Record> *allRecordPointer, QObject *parent) : QObject{parent}
+ImportDiscogs::ImportDiscogs(QString line, std::vector<Record> *allRecordPointer, bool addTags, QObject *parent) : QObject{parent}
 {
     recordLine = line;
     allRecords = allRecordPointer;
     processedRec = NULL;
+    this->addTags = addTags;
+    done = false;
 }
 
-ImportDiscogs::ImportDiscogs(QObject *parent) : QObject{parent}
+ImportDiscogs::ImportDiscogs(bool addTags, QObject *parent) : QObject{parent}
 {
+    this->addTags = addTags;
+    done = false;
 }
 
 void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) {
     QFile myFile(file); // File of playlists JSON
-    json Json;
+    Json json;
     if (myFile.exists()){
         if (myFile.open(QIODevice::ReadOnly)){ // Erase all text in playlists json
             QString line = myFile.readLine();
@@ -67,7 +71,7 @@ void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) {
                 line = myFile.readLine(); // Get the next line for the next record
 
                 // Find the record on last.fm to get the album cover
-                QString coverUrl = Json.searchRecords(newName + " " + newArtist, 1).at(0).getCover(); // Search the record name and artist on last fm, the first result will (hopefully) be the correct album cover
+                QString coverUrl = json.searchRecords(newName + " " + newArtist, 1).at(0).getCover(); // Search the record name and artist on last fm, the first result will (hopefully) be the correct album cover
                 bool copy = false;
                 for (Record record : *allRecords){ // Check all my records to see if cover matches requested add
                     QString searchPageRecordCover = coverUrl; // Copy the cover URL
@@ -84,12 +88,18 @@ void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) {
                     }
                 }
                 if (!copy){ // Record is not in collection
-                    std::cerr << "Adding to collection: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-                    allRecords->push_back(Record(newName, newArtist, Json.downloadCover(coverUrl), newRating)); // Add to master record vector (allMyRecords)
+                    Record returningRec(newName, newArtist, json.downloadCover(coverUrl), newRating);
+                    if (addTags){
+                        std::vector<ListTag> tags = json.wikiTags(newName, newArtist);
+                        for (ListTag tag : tags){
+                            returningRec.addTag(tag.getName());
+                        }
+                    }
+                    allRecords->push_back(returningRec); // Add to master record vector (allMyRecords)
                 }
             }
             myFile.close();
-            //Json.writeRecords(allRecords);
+            json.writeRecords(allRecords);
         }
     }
 }
@@ -103,8 +113,7 @@ void ImportDiscogs::importSingle() {
     int endSec = recordLine.indexOf(',', startSec+1); // The index of the end of the csv cell/section
     bool literal = false; // Indicates if the current value being read in is string literal as it contains a ','
     Record *returnRec; // The record that will be returned
-    //QScopedPointer<json> Json(new json);
-    json Json;
+    QScopedPointer<Json> json(new Json);
 
     if (recordLine.at(startSec) == '"'){ // If the catalog number is a string literal, get to the proper end of the cell
         literal = true;
@@ -139,7 +148,7 @@ void ImportDiscogs::importSingle() {
     }
 
     // Find the record on last.fm to get the album cover
-    QString coverUrl = Json.searchRecords(newName + " " + newArtist, 1).at(0).getCover(); // Search the record name and artist on last fm, the first result will (hopefully) be the correct album cover
+    QString coverUrl = json->searchRecords(newName + " " + newArtist, 1).at(0).getCover(); // Search the record name and artist on last fm, the first result will (hopefully) be the correct album cover
     bool copy = false;
     for (Record record : *allRecords){ // Check all my records to see if cover matches requested add
         QString searchPageRecordCover = coverUrl; // Copy the cover URL
@@ -158,8 +167,15 @@ void ImportDiscogs::importSingle() {
     }
     if (!copy){ // Record is not in collection
         //std::cerr << "Ready to return: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-        processedRec = new Record(newName, newArtist, Json.downloadCover(coverUrl), newRating); // Set return val to record pointer
+        processedRec = new Record(newName, newArtist, json->downloadCover(coverUrl), newRating); // Set return val to record pointer
+        if (addTags){
+            std::vector<ListTag> tags = json->wikiTags(newName, newArtist);
+            for (ListTag tag : tags){
+                processedRec->addTag(tag.getName());
+            }
+        }
     }
+    done = true;
     emit finished();
 }
 
@@ -175,4 +191,9 @@ void ImportDiscogs::run() {
 Record* ImportDiscogs::getProcessedRec(){
     //std::cerr << "Returning: " + processedRec->getArtist().toStdString() + " - " + processedRec->getName().toStdString() << std::endl;
     return processedRec;
+}
+
+bool ImportDiscogs::isDone()
+{
+    return done;
 }

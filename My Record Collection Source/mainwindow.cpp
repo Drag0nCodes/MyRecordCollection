@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include "json.h"
 #include <QTableWidgetItem>
 #include <QDir>
 #include <QLabel>
@@ -14,22 +13,25 @@
 #include "listtag.h"
 #include "tagswindow.h"
 #include "importdiscogs.h"
+#include "prefs.h"
+#include "json.h"
 #include <QFileDialog>
 #include <QProgressDialog>
 #include <QThread>
 #include <QDebug>
 #include <QCoreApplication>
 #include <QtConcurrent>
+#include <QMessageBox>
 
-json Json;
+Json json;
 QDir dir;
+Prefs prefs;
 std::vector<Record> results; // Search records results
 std::vector<Record> allMyRecords; // All records in collection
 std::vector<Record> recordsList; // Records shown on my collection table
 std::vector<ListTag> tags; // All tags
 std::vector<ListTag> suggestedTags; // The list of suggested tags on the search records page
 bool selectedMyRecord = false; // If a record is selected on the my record page
-bool dark = true;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -38,19 +40,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle("My Record Collection 1.2.0");
 
-    // Set the style sheet for the program
-    QFile styleFile(dir.absolutePath() + "/resources/darktheme.qss");
-    styleFile.open(QFile::ReadOnly);
-    QString style(styleFile.readAll());
-    setStyleSheet(style);
-
     QFont font("Arial");
     font.setPixelSize(14);
 
     // Fill the records vectors and tag vector
-    allMyRecords = Json.getRecords();
+    allMyRecords = json.getRecords();
     recordsList = allMyRecords;
-    tags = Json.getTags();
+    tags = json.getTags();
+    prefs = json.getPrefs();
     sortTagsAlpha(&tags);
 
     // Set the style of the tables
@@ -68,8 +65,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->searchRecord_Table->verticalHeader()->hide();
     ui->searchRecord_Table->setFont(font);
 
-    ui->myRecord_SortBox->setCurrentIndex(7); // Sort by rating decending
+    // Set preferences
+    ui->myRecord_SortBox->setCurrentIndex(prefs.getSort()); // Sort by rating decending
     updateRecordsListOrder();
+    // Set the style sheet for the program
+    setStyleSheet(prefs.getStyle());
 
     // Fill tables
     //QTimer::singleShot(1, [=](){ emit updateMyRecords(); }); // Fill my records table a second after program startup
@@ -144,7 +144,7 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
     ui->searchRecord_InfoLabel->setText("");
     ui->searchRecord_Table->clear();
     ui->searchRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
-    results = Json.searchRecords(ui->searchRecord_SearchBar->text(), 10);
+    results = json.searchRecords(ui->searchRecord_SearchBar->text(), 10);
     ui->searchRecord_Table->setRowCount(results.size());
 
     for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's text info into table
@@ -195,7 +195,7 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
     }
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert record's covers into table
-        QPixmap image(dir.absolutePath() + "/resources/covers/" + recordsList.at(recordNum).getCover());
+        QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + recordsList.at(recordNum).getCover());
         if (image.isNull()) image = QPixmap(dir.absolutePath() + "/resources/images/missingImg.jpg");
         image = image.scaled(130, 130, Qt::KeepAspectRatio);
 
@@ -253,7 +253,7 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
     if (!copy){ // Record is new, add to allMyRecords
         ui->searchRecord_InfoLabel->setText("");
         Record addRecord = results.at(ui->searchRecord_Table->currentRow()); // Get the selected record to add
-        addRecord.setCover(Json.downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
+        addRecord.setCover(json.downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
         addRecord.setRating(ui->searchRecord_RatingSlider->sliderPosition()); // Set records rating
 
         for (int i = 0; i < suggestedTags.size(); i++){
@@ -278,18 +278,18 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
                 if (!dup) { // Add tag
                     tags.push_back(ListTag(newTag));
                     sortTagsAlpha(&tags);
-                    Json.writeTags(&tags);
+                    json.writeTags(&tags);
                 }
             }
         }
 
         updateTagsList();
-        Json.writeTags(&tags);
+        json.writeTags(&tags);
 
         allMyRecords.push_back(addRecord);
         on_myRecord_SearchBar_textChanged();
         updateMyRecordsTable();
-        Json.writeRecords(&allMyRecords);
+        json.writeRecords(&allMyRecords);
         ui->searchRecord_InfoLabel->setText("Added to My Collection");
     } else { // New record is duplicate
         ui->searchRecord_InfoLabel->setText("Record already in library");
@@ -317,7 +317,7 @@ void MainWindow::on_myRecord_RemoveRecordButton_clicked() // Remove record from 
             ui->myRecord_Table->removeRow(ui->myRecord_Table->currentRow()); // Update myRecords table (delete one table row)
         }
 
-        Json.writeRecords(&allMyRecords); // Update saved records
+        json.writeRecords(&allMyRecords); // Update saved records
 
         // Set record count label text
         ui->myRecord_RecordCountLabel->setText("Showing " + QString::number(recordsList.size()) + "/" + QString::number(allMyRecords.size()) + " Records");
@@ -327,12 +327,27 @@ void MainWindow::on_myRecord_RemoveRecordButton_clicked() // Remove record from 
 
 void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn) // My collection record selected
 {
-    if (currentRow >= 0 || currentRow < recordsList.size()) { // Valid selection made of myRecords
+    QFont font("Arial");
+    font.setPixelSize(14);
+    if (previousRow >= 0) { // If previous selection, set previous font back to regular
+        ui->myRecord_Table->item(previousRow, 1)->setFont(font);
+        ui->myRecord_Table->item(previousRow, 2)->setFont(font);
+        ui->myRecord_Table->item(previousRow, 3)->setFont(font);
+        ui->myRecord_Table->item(previousRow, 4)->setFont(font);
+    }
+
+    if (currentRow >= 0 && currentRow < recordsList.size()) { // Valid selection made of myRecords
         ui->myRecord_RemoveRecordButton->setDisabled(false);
         ui->myRecord_RatingSlider->setDisabled(false);
         ui->myRecord_RatingSlider->setSliderPosition(recordsList.at(ui->myRecord_Table->currentRow()).getRating());
         ui->myRecord_EditTagsList->setDisabled(false);
         selectedMyRecord = true;
+
+        font.setBold(true); // Bold selection font
+        ui->myRecord_Table->item(currentRow, 1)->setFont(font);
+        ui->myRecord_Table->item(currentRow, 2)->setFont(font);
+        ui->myRecord_Table->item(currentRow, 3)->setFont(font);
+        ui->myRecord_Table->item(currentRow, 4)->setFont(font);
     }
     else { // Invalid selection made of myRecords
         ui->myRecord_RemoveRecordButton->setDisabled(true);
@@ -377,7 +392,7 @@ void MainWindow::on_myRecord_RatingSlider_valueChanged(int value) // Change reco
                 break;
             }
         }
-        Json.writeRecords(&allMyRecords); // Save new rating to json
+        json.writeRecords(&allMyRecords); // Save new rating to json
     }
 }
 
@@ -396,12 +411,14 @@ void MainWindow::on_myRecord_SearchBar_textChanged() // Search my records
             recordsList = newRecords;
         }
     }
-    on_myRecord_SortBox_activated(ui->myRecord_SortBox->currentIndex());
+    on_myRecord_SortBox_activated(prefs.getSort());
 }
 
 
 void MainWindow::on_myRecord_SortBox_activated(int index) // Sort my records based on combo box
 {
+    prefs.setSort(index);
+    json.writePrefs(&prefs);
     updateRecordsListOrder();
     updateMyRecordsTable();
 }
@@ -437,8 +454,8 @@ void MainWindow::on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item) // 
             }
         }
         updateMyRecordsInfo(); // Update only the text info in list
-        ui->myRecord_EditTagsList->setCurrentRow(-1);
-        Json.writeRecords(&allMyRecords); // Save new tags to json
+        on_myRecord_Table_currentCellChanged(ui->myRecord_Table->currentRow(), 0, -1, 0);
+        json.writeRecords(&allMyRecords); // Save new tags to json
     }
 }
 
@@ -469,7 +486,7 @@ void MainWindow::on_myRecord_SortTagsList_itemClicked(QListWidgetItem *item) // 
 
 void MainWindow::on_myRecord_ManageTagButton_clicked() // Open and handle manage tags popup
 {
-    tagsWindow* popup = new tagsWindow(&tags);
+    tagsWindow* popup = new tagsWindow(&tags, &prefs);
     std::vector<ListTag> saveTags = tags;
 
     // Do after popup closes
@@ -610,7 +627,7 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
 
 
 bool MainWindow::deleteCover(const QString& coverName) { // Delete album cover from covers subfolder
-    QFile file(dir.absolutePath() + "/resources/covers/" + coverName);
+    QFile file(dir.absolutePath() + "/resources/user data/covers/" + coverName);
 
     if (file.exists()) {
         if (file.remove()) {
@@ -631,7 +648,7 @@ void MainWindow::on_searchRecord_Table_cellClicked(int row, int column) // Click
 {
     ui->searchRecord_SuggestedTagsList->clear();
     suggestedTags.clear();
-    suggestedTags = Json.wikiTags(results.at(ui->searchRecord_Table->currentRow()));
+    suggestedTags = json.wikiTags(results.at(ui->searchRecord_Table->currentRow()).getName(), results.at(ui->searchRecord_Table->currentRow()).getArtist());
     sortTagsAlpha(&suggestedTags);
     ui->searchRecord_SuggestedTagsList->clear();
     for (ListTag tag : suggestedTags) {
@@ -661,7 +678,7 @@ void MainWindow::on_searchRecord_SuggestedTagsList_itemClicked(QListWidgetItem *
 }
 
 
-void MainWindow::sortTagsAlpha(std::vector<ListTag> *list) { // Sort a vector of ListTag objects alphabetically
+void MainWindow::sortTagsAlpha(std::vector<ListTag> *list, bool delDups) { // Sort a vector of ListTag objects alphabetically
     std::vector<QString> names;
     std::vector<ListTag> copy = *list;
 
@@ -669,6 +686,8 @@ void MainWindow::sortTagsAlpha(std::vector<ListTag> *list) { // Sort a vector of
         names.push_back(tag.getName());
     }
     std::sort(names.begin(), names.end());
+
+    if (delDups) names.erase(unique(names.begin(), names.end()), names.end());
 
     list->clear();
     for (int i = 0; i < names.size(); i++) {
@@ -681,77 +700,17 @@ void MainWindow::sortTagsAlpha(std::vector<ListTag> *list) { // Sort a vector of
     }
 }
 
+
 void MainWindow::on_myRecord_PickForMe_clicked() // Highlight a random record in the table
 {
-    if (ui->myRecord_Table->rowCount()>0) ui->myRecord_Table->setCurrentCell(rand() % recordsList.size(), 0);
-}
-
-
-void MainWindow::on_settings_actionImportDiscogs_triggered() // "Import Discogs Collection" menubar button clicked
-{
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
-    if (!filePath.isEmpty()) { // If file is chosen...
-        QFile myFile(filePath); // File of playlists JSON
-        if (myFile.exists()){
-            if (myFile.open(QIODevice::ReadOnly)){ // Erase all text in playlists json
-                QString line = myFile.readLine();
-                if (!line.startsWith("Catalog#,Artist,Title")){ // Not a discogs collection, invalid file
-                    myFile.close();
-                    std::cerr << "Inavlid collection file" << std::endl;
-                    ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
-                }
-                else {
-                    line = myFile.readLine(); // Get first discogs record
-                    int tot = 0; // The total number of records in the discogs file
-                    std::vector<QThread*> threads; // Thread for each record import
-                    std::vector<ImportDiscogs*> imports; // The ImportDiscogs class for each record import, will be moved to thread in vector threads
-                    while (!line.isEmpty()) { // Loop until all discogs record read in
-                        imports.push_back(new ImportDiscogs(line, &allMyRecords)); // Create and add ImportDiscogs class to vector
-                        threads.push_back(new QThread); // Create a QThread for record
-                        imports.at(tot)->moveToThread(threads.at(tot)); // Move the ImportDiscogs to its won thread
-
-                        // Connect for started and finished signals
-                        QObject::connect(threads.at(tot), &QThread::started, imports.at(tot), &ImportDiscogs::run); // Run import method when thread starts
-                        QObject::connect(imports.at(tot), &ImportDiscogs::finished, threads.at(tot), &QThread::quit); // When ImportDiscogs run finished, quit QThread
-                        QObject::connect(threads.at(tot), &QThread::finished, threads.at(tot), &QThread::deleteLater); // When thread finished, delete thread
-
-                        threads.at(tot)->start(); // Start thread
-                        line = myFile.readLine(); // Get next discogs record
-                        tot++;
-                    }
-                    for (int i = 0; i < tot; i++){ // Get results from each record
-                        while (imports.at(i)->getProcessedRec() == nullptr); // Loop main until import is finished
-                        Record *importedRec = imports.at(i)->getProcessedRec(); // Get the new Record
-                        if (!(importedRec->getName().compare("") == 0 & importedRec->getArtist().compare("") == 0 && importedRec->getCover().compare("") == 0 && importedRec->getRating() == -1)){
-                            allMyRecords.push_back(*imports.at(i)->getProcessedRec()); // Record is new, add to collection, don't add duplicates
-                        }
-                        imports.at(i)->deleteLater(); // Delete object
-                    }
-                    Json.writeRecords(&allMyRecords); // Write changes to json
-                    updateRecordsListOrder(); // Update list orders
-                    updateMyRecordsTable();
-                }
-            }
-        }
-    }
-}
-
-void MainWindow::on_actionImport_Discogs_Single_Threaded_triggered()
-{
-    QProgressDialog progress("Importing Discogs Collection...", "", 0, 0, this);
-    progress.setMinimumDuration(0);
-    ImportDiscogs import;
-    progress.setWindowModality(Qt::WindowModal);
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
-    if (!filePath.isEmpty()) { // If file is chosen...
-        import.importAll(filePath, &allMyRecords); // Import collection from file
-        updateRecordsListOrder(); // Update the vector with the record collection table elements
-        updateMyRecordsTable(); // Visably update the record collection table*/
+    if (ui->myRecord_Table->rowCount()>0) {
+        int randRow = rand() % recordsList.size();
+        ui->myRecord_Table->setCurrentCell(randRow, 0);
     }
 }
 
 
-void MainWindow::on_settings_actionExit_triggered()
+void MainWindow::on_settings_actionExit_triggered() // Exit program menu button pressed
 {
     abort();
 }
@@ -759,16 +718,107 @@ void MainWindow::on_settings_actionExit_triggered()
 
 void MainWindow::on_settings_actionToggleTheme_triggered()
 {
-    QFile *styleFile;
-    if (dark){
-        styleFile = new QFile(dir.absolutePath() + "/resources/lighttheme.qss");
+    prefs.toggleTheme(); // Update the theme in the preferences object
+    setStyleSheet(prefs.getStyle()); // Set the style
+    json.writePrefs(&prefs); // Update the prefs json
+}
+
+
+void MainWindow::on_actionSelect_File_and_Run_triggered()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
+
+    if (!ui->importDiscogsTheadedOpt->isChecked()){ // Import discogs single threaded
+        QProgressDialog progress("Importing Discogs Collection...", "", 0, 0, this);
+        progress.setMinimumDuration(0);
+        progress.setWindowModality(Qt::WindowModal);
+        ImportDiscogs *import;
+        if (ui->importDiscogsAddTagsOpt->isChecked()) import = new ImportDiscogs(true);
+        else import = new ImportDiscogs(false);
+        if (!filePath.isEmpty()) { // If file is chosen...
+            import->importAll(filePath, &allMyRecords); // Import collection from file
+        }
     }
-    else {
-        styleFile = new QFile(dir.absolutePath() + "/resources/darktheme.qss");
+
+    else { // Import discogs threaded
+        if (!filePath.isEmpty()) { // If file is chosen...
+            QFile myFile(filePath); // File of playlists JSON
+            if (myFile.exists()){
+                if (myFile.open(QIODevice::ReadOnly)){ // Erase all text in playlists json
+                    QString line = myFile.readLine();
+                    if (!line.startsWith("Catalog#,Artist,Title")){ // Not a discogs collection, invalid file
+                        myFile.close();
+                        std::cerr << "Inavlid collection file" << std::endl;
+                        ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
+                    }
+                    else {
+                        line = myFile.readLine(); // Get first discogs record
+                        int tot = 0; // The total number of records in the discogs file
+                        std::vector<QThread*> threads; // Thread for each record import
+                        std::vector<ImportDiscogs*> imports; // The ImportDiscogs class for each record import, will be moved to thread in vector threads
+                        while (!line.isEmpty()) { // Loop until all discogs record read in
+                            if (ui->importDiscogsAddTagsOpt->isChecked()) imports.push_back(new ImportDiscogs(line, &allMyRecords, true)); // Create and add ImportDiscogs class to vector, add suggested tags
+                            else imports.push_back(new ImportDiscogs(line, &allMyRecords, false)); // Dont add suggested tags to record
+                            threads.push_back(new QThread); // Create a QThread for record
+                            imports.at(tot)->moveToThread(threads.at(tot)); // Move the ImportDiscogs to its won thread
+
+                            // Connect for started and finished signals
+                            QObject::connect(threads.at(tot), &QThread::started, imports.at(tot), &ImportDiscogs::run); // Run import method when thread starts
+                            QObject::connect(imports.at(tot), &ImportDiscogs::finished, threads.at(tot), &QThread::quit); // When ImportDiscogs run finished, quit QThread
+                            QObject::connect(threads.at(tot), &QThread::finished, threads.at(tot), &QThread::deleteLater); // When thread finished, delete thread
+
+                            threads.at(tot)->start(); // Start thread
+                            line = myFile.readLine(); // Get next discogs record
+                            tot++;
+                        }
+                        for (int i = 0; i < tot; i++){ // Get results from each record
+                            while (!imports.at(i)->isDone()); // Loop main until import is finished
+                            Record *importedRec = imports.at(i)->getProcessedRec(); // Get the new Record
+                            if (!(importedRec->getName().compare("") == 0 & importedRec->getArtist().compare("") == 0 && importedRec->getCover().compare("") == 0 && importedRec->getRating() == -1)){
+                                allMyRecords.push_back(*imports.at(i)->getProcessedRec()); // Record is new, add to collection, don't add duplicates
+                                for (QString tag : imports.at(i)->getProcessedRec()->getTags()){
+                                    tags.push_back(ListTag(tag));
+                                }
+                            }
+                            imports.at(i)->deleteLater(); // Delete object
+                        }
+                        sortTagsAlpha(&tags, true);
+                        json.writeTags(&tags);
+                        updateTagsList();
+                        json.writeRecords(&allMyRecords); // Write changes to json
+                    }
+                }
+            }
+        }
     }
-    styleFile->open(QFile::ReadOnly);
-    QString style(styleFile->readAll());
-    setStyleSheet(style);
-    dark = !dark;
+
+    updateRecordsListOrder(); // Update the vector with the record collection table elements
+    updateMyRecordsTable(); // Visably update the record collection table*/
+}
+
+
+void MainWindow::on_actionDelete_All_User_Data_triggered()
+{
+    QMessageBox msgBox;
+    msgBox.setStyleSheet(prefs.getMessageStyle());
+    msgBox.setText("Are you sure you want to erase all user data?");
+    msgBox.setInformativeText("This action cannot be undone.");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    msgBox.setIcon(QMessageBox::Warning);
+    int ret = msgBox.exec();
+
+    if (ret == QMessageBox::Yes){
+        for (Record rec : allMyRecords) {
+            deleteCover(rec.getCover());
+        }
+        allMyRecords.clear();
+        tags.clear();
+        updateRecordsListOrder(); // Update tables
+        updateMyRecordsTable();
+        ui->myRecord_EditTagsList->clear();
+        ui->myRecord_SortTagsList->clear();
+        json.deleteUserData();
+    }
 }
 

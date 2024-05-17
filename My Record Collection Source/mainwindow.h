@@ -53,13 +53,13 @@ private slots:
 
     void on_myRecord_PickForMe_clicked();
 
-    void on_settings_actionImportDiscogs_triggered();
-
-    void on_actionImport_Discogs_Single_Threaded_triggered();
-
     void on_settings_actionExit_triggered();
 
     void on_settings_actionToggleTheme_triggered();
+
+    void on_actionSelect_File_and_Run_triggered();
+
+    void on_actionDelete_All_User_Data_triggered();
 
 private:
     Ui::MainWindow *ui;
@@ -70,6 +70,6 @@ private:
     void updateTagsList();
     void updateRecordsListOrder();
     bool deleteCover(const QString& coverName);
-    void sortTagsAlpha(std::vector<ListTag> *list);
+    void sortTagsAlpha(std::vector<ListTag> *list, bool delDups = false);
 };
 #endif // MAINWINDOW_H

@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include "listtag.h"
+#include "prefs.h"
 
 namespace Ui {
 class tagsWindow;
@@ -13,7 +14,7 @@ class tagsWindow : public QDialog
     Q_OBJECT
 
 public:
-    explicit tagsWindow(std::vector<ListTag>* tags, QWidget *parent = nullptr);
+    explicit tagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent = nullptr);
     ~tagsWindow();
 
 private slots:
