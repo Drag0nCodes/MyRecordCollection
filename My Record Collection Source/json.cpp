@@ -12,7 +12,6 @@
 
 std::vector<Record> Json::getRecords(){
     std::vector<Record> allRecords;
-    QDir dir;
     try{
         QString jsonStr;
         dir.mkpath(dir.absolutePath() + "/resources/user data");
@@ -94,7 +93,6 @@ std::vector<Record> Json::searchRecords(QString search, int limit) {
 }
 
 void Json::writeRecords(std::vector<Record>* myRecords){
-    QDir dir;
     QFile myFile(dir.absolutePath() + "/resources/user data/records.json"); // File of playlists JSON
 
     if (myFile.exists()){
@@ -131,10 +129,8 @@ std::vector<ListTag> Json::getTags(){
     std::vector<ListTag> allTags;
     try{
         QString jsonStr;
-        QDir dir;
         dir.mkpath(dir.absolutePath() + "/resources/user data");
         QFile myFile(dir.absolutePath() + "/resources/user data/tags.json"); // File of tags JSON
-
 
         if (myFile.exists()){
             if (myFile.open(QIODevice::ReadOnly | QIODevice::Text)){
@@ -168,7 +164,6 @@ std::vector<ListTag> Json::getTags(){
 }
 
 void Json::writeTags(std::vector<ListTag>* tags){
-    QDir dir;
     QFile myFile(dir.absolutePath() + "/resources/user data/tags.json"); // File of tags JSON
 
     if (myFile.exists()){
@@ -196,7 +191,7 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
     std::vector<ListTag> tags;
 
-    QUrl searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=" + name + "%20" + artist + "%20album");
+    QUrl searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=" + artist + "%20" + name + "%20album");
 
     QNetworkRequest request(searchUrl);
     QNetworkReply *reply = manager.get(request);
@@ -220,7 +215,16 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
                 QString content = jsonWikiPage.value("query").toObject().value("pages").toObject().value(QString::number(pageid)).toObject().value("revisions").toArray().at(0).toObject().value("*").toString();
 
                 int position = content.indexOf("| genre", 0, Qt::CaseInsensitive); // The start of the genre section
+                if (position < 0) return tags;
+                int label = content.indexOf("| label", 0, Qt::CaseInsensitive); // The start of the label section
+                int arrowStart = content.indexOf("<!--", 0, Qt::CaseInsensitive); // Start of the <!-- ... --> that can sometimes appear after the "| genre" string (e.g. Folklore deluxe)
+                int arrowEnd = content.indexOf("-->", 0, Qt::CaseInsensitive); // End of the <!-- ... --> that can sometimes appear after the "| genre" string
+                if (arrowStart > 0 && arrowStart < position+20) while (position < arrowEnd) position = content.indexOf("[[", position) +2; // Move to position of first genre after --> if start arrow is close to "| genre"
+
                 position = content.indexOf("[[", position) +2; // Move to position of first single genre
+
+                if (label < position) return tags; // No genres on wiki page, return nothing
+
                 int genreSectionEnd = content.indexOf("\n|", position); // The end of the entire genre section
                 int genre = 0;
                 int source = 0;
@@ -242,14 +246,15 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
                         else { // Genre is of the from "Pop" (without middle line '|')
                             genre = content.mid(position, genreEndPos-position).toLower();
                         }
+
                         source = content.indexOf("=[[", position);
                         position = content.indexOf("[[", position) +2;
 
-                        if (genre.contains("{") || genre.contains("}") ||  genre.contains("|") || genre.contains("[") || genre.contains("]")) {
+                        if (genre.contains("{") || genre.contains("}") ||  genre.contains("|") || genre.contains("[") || genre.contains("]")) { // If genre has {, }, |, [, or ], do not add to vector
                             continue;
                         }
 
-                        tags.push_back(ListTag(genre));
+                        tags.push_back(ListTag(genre.replace("&nbsp;", " "))); // Add the genre tag to the vector that will be returned. If it has "&nbsp;" remove that,
                     }
                 }
             }
@@ -261,7 +266,6 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
 
 QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet to covers subfolder
     QString fileName = imageUrl.toString();
-    QDir dir;
     for (int i = fileName.size()-1; i >= 0; i--) {
         if (fileName[i] == '/') {
             fileName.remove(0,i+1);
@@ -290,7 +294,7 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
         if (file.open(QIODevice::WriteOnly)) {
             file.write(imageData);
             file.close();
-            qDebug() << "Image saved to" << savePath;
+            //qDebug() << "Image saved to" << savePath;
         } else {
             qDebug() << "Error: Could not open file for writing";
         }
@@ -302,8 +306,24 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
     return fileName;
 }
 
+bool Json::deleteCover(const QString& coverName) { // Delete album cover from covers subfolder
+    QFile file(dir.absolutePath() + "/resources/user data/covers/" + coverName);
+
+    if (file.exists()) {
+        if (file.remove()) {
+            qDebug() << "File" << coverName << "deleted successfully";
+            return true;
+        } else {
+            qDebug() << "Error: Could not delete file" << coverName;
+            return false;
+        }
+    } else {
+        qDebug() << "Error: File" << coverName << "does not exist";
+        return false;
+    }
+}
+
 Prefs Json::getPrefs(){
-    QDir dir;
     try{
         QString jsonStr;
         dir.mkpath(dir.absolutePath() + "/resources/user data");
@@ -336,7 +356,6 @@ Prefs Json::getPrefs(){
 }
 
 void Json::writePrefs(Prefs *prefs){
-    QDir dir;
     QFile myFile(dir.absolutePath() + "/resources/user data/prefs.json"); // File of preferences JSON
 
     if (myFile.exists()){
@@ -358,7 +377,6 @@ void Json::writePrefs(Prefs *prefs){
 
 void Json::deleteUserData()
 {
-    QDir dir;
     QFile tagsFile(dir.absolutePath() + "/resources/user data/tags.json");
     QFile recordsFile(dir.absolutePath() + "/resources/user data/records.json");
 

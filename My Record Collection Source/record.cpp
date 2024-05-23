@@ -51,9 +51,9 @@ void Record::setCover(QString cover){
 }
 
 int Record::addTag(QString tag){
-    for (QString test : tags){
-        if (QString::compare(test, tag, Qt::CaseInsensitive) == 0) {
-            return 1; // 1 = error, tag already added
+    for (QString testTag : tags){
+        if (QString::compare(testTag, tag, Qt::CaseInsensitive) == 0) {
+            return 1; // 1 = error, record already has tag, dont add again
         }
     }
     tags.push_back(tag.toLower());
@@ -109,8 +109,8 @@ bool Record::contains(QString search) {
 }
 
 bool Record::hasTag(QString tag){
-    for (QString myTag : tags){
-        if (myTag.compare(tag) == 0) return true;
+    for (QString testTag : tags){
+        if (testTag.compare(tag) == 0) return true;
     }
     return false;
 }

@@ -3,9 +3,9 @@
 #include "json.h"
 #include "QDir"
 
-tagsWindow::tagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent)
+TagsWindow::TagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::tagsWindow)
+    , ui(new Ui::TagsWindow)
     , tagsList(*tags)
 {
     ui->setupUi(this);
@@ -18,18 +18,18 @@ tagsWindow::tagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent
     setStyleSheet(prefs->getStyle());
 }
 
-tagsWindow::~tagsWindow()
+TagsWindow::~TagsWindow()
 {
     delete ui;
 }
 
-void tagsWindow::on_tagsWinDoneButton_clicked()
+void TagsWindow::on_tagsWinDoneButton_clicked()
 {
     this->close();
 }
 
 
-void tagsWindow::on_tagsWinRemoveButton_clicked()
+void TagsWindow::on_tagsWinRemoveButton_clicked()
 {
     if (ui->tagsWinList->currentRow()>=0) {
         Json json;
@@ -44,7 +44,7 @@ void tagsWindow::on_tagsWinRemoveButton_clicked()
 }
 
 
-void tagsWindow::on_tagsWinAddButton_clicked()
+void TagsWindow::on_tagsWinAddButton_clicked()
 {
     QString newTag = ui->tagsWinAddLineEdit->text().toLower().toLatin1();
     if (newTag.isEmpty()){ // Don't add a blank tag
@@ -95,7 +95,7 @@ void tagsWindow::on_tagsWinAddButton_clicked()
 }
 
 
-void tagsWindow::on_tagsWinAddLineEdit_returnPressed()
+void TagsWindow::on_tagsWinAddLineEdit_returnPressed()
 {
     on_tagsWinAddButton_clicked();
 }

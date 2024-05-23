@@ -43,7 +43,7 @@ private slots:
 
     void on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item);
 
-    void on_myRecord_SortTagsList_itemClicked(QListWidgetItem *item);
+    void on_myRecord_FilterTagsList_itemClicked(QListWidgetItem *item);
 
     void on_myRecord_ManageTagButton_clicked();
 
@@ -60,6 +60,12 @@ private slots:
     void on_actionSelect_File_and_Run_triggered();
 
     void on_actionDelete_All_User_Data_triggered();
+
+    void on_myRecord_ResetTagsFilterButton_clicked();
+
+    void on_help_actionAbout_triggered();
+
+    void on_help_actionContact_triggered();
 
 private:
     Ui::MainWindow *ui;

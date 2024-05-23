@@ -50,12 +50,12 @@ void Prefs::updateThemeString()
     QFile *styleFile;
     QFile *styleMessageFile;
     if (darkTheme) {
-        styleFile = new QFile(dir.absolutePath() + "/resources/dark_theme.qss");
-        styleMessageFile = new QFile(dir.absolutePath() + "/resources/dark_theme_message.qss");
+        styleFile = new QFile(dir.absolutePath() + "/resources/themes/dark_theme.qss");
+        styleMessageFile = new QFile(dir.absolutePath() + "/resources/themes/dark_theme_message.qss");
     }
     else {
-        styleFile = new QFile(dir.absolutePath() + "/resources/light_theme.qss");
-        styleMessageFile = new QFile(dir.absolutePath() + "/resources/light_theme_message.qss");
+        styleFile = new QFile(dir.absolutePath() + "/resources/themes/light_theme.qss");
+        styleMessageFile = new QFile(dir.absolutePath() + "/resources/themes/light_theme_message.qss");
     }
     styleFile->open(QFile::ReadOnly);
     styleMessageFile->open(QFile::ReadOnly);

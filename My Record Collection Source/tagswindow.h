@@ -6,16 +6,16 @@
 #include "prefs.h"
 
 namespace Ui {
-class tagsWindow;
+class TagsWindow;
 }
 
-class tagsWindow : public QDialog
+class TagsWindow : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit tagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent = nullptr);
-    ~tagsWindow();
+    explicit TagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent = nullptr);
+    ~TagsWindow();
 
 private slots:
     void on_tagsWinDoneButton_clicked();
@@ -27,7 +27,7 @@ private slots:
     void on_tagsWinAddLineEdit_returnPressed();
 
 private:
-    Ui::tagsWindow *ui;
+    Ui::TagsWindow *ui;
     std::vector<ListTag> &tagsList;
 };
 

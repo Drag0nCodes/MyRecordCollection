@@ -1,0 +1,26 @@
+QPushButton {
+	background-color: rgb(230, 230, 230);
+	color: black;
+	border-radius: 14px;
+	border-style: outset;
+	padding-left: 25px;
+	padding-right: 25px;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+
+QPushButton:hover, QComboBox:hover, QLineEdit:hover {
+	background-color: rgb(210, 210, 210);
+}
+
+QPushButton:pressed {
+	background-color: rgb(230, 230, 230);
+}
+
+QMainWindow, QDialog {
+	background-color: white;
+}
+
+QLabel {
+	color: black;
+}

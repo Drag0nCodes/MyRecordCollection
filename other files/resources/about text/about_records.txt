@@ -1,0 +1,5 @@
+Records can be added to your collection by searching for them on the Find New Records page or by importing them from a Discogs Collection. The Find New Records page uses the Last.fm API to get record information and cover photo and then uses the MediaWiki API to get suggested tags. 
+
+Records in your collection can then be given tags and a rating to help you sort and filter through your collection and decide what you want to listen to next.
+
+You can also use the Pick a Record For Me button to randomly select a record to listen to based on the records currently displayed in the My Collection list.

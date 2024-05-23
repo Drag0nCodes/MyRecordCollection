@@ -10,6 +10,7 @@ public:
     void setName(QString tagName);
     bool getChecked();
     void setChecked(bool checked);
+    bool toggleCheck();
 
 private:
     QString name;

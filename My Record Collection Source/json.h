@@ -5,6 +5,7 @@
 #include "listtag.h"
 #include <QUrl>
 #include <QObject>
+#include <QDir>
 
 class Json
 {
@@ -17,9 +18,14 @@ public:
     void writeTags(std::vector<ListTag>* tags);
     std::vector<ListTag> wikiTags(QString name, QString artist);
     QString downloadCover(QUrl imageUrl);
+    bool deleteCover(const QString& coverName);
     Prefs getPrefs();
     void writePrefs(Prefs *prefs);
     void deleteUserData();
+
+private:
+    QDir dir;
 };
+
 
 #endif // JSON_H

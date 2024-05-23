@@ -42,7 +42,7 @@
       <property name="font">
        <font>
         <family>Arial</family>
-        <pointsize>11</pointsize>
+        <pointsize>14</pointsize>
        </font>
       </property>
       <property name="autoFillBackground">
@@ -386,7 +386,7 @@ My Collection</string>
        <string>Toggle Tags:</string>
       </property>
      </widget>
-     <widget class="QListWidget" name="myRecord_SortTagsList">
+     <widget class="QListWidget" name="myRecord_FilterTagsList">
       <property name="geometry">
        <rect>
         <x>800</x>
@@ -396,12 +396,12 @@ My Collection</string>
        </rect>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecord_SortTagsLabel">
+     <widget class="QLabel" name="myRecord_FilterTagsLabel">
       <property name="geometry">
        <rect>
         <x>800</x>
         <y>90</y>
-        <width>101</width>
+        <width>131</width>
         <height>21</height>
        </rect>
       </property>
@@ -412,7 +412,7 @@ My Collection</string>
        </font>
       </property>
       <property name="text">
-       <string>Sort by Tags:</string>
+       <string>Filter by Tags:</string>
       </property>
      </widget>
      <widget class="QPushButton" name="myRecord_ManageTagButton">
@@ -511,6 +511,25 @@ My Collection</string>
        <string/>
       </property>
      </widget>
+     <widget class="QPushButton" name="myRecord_ResetTagsFilterButton">
+      <property name="geometry">
+       <rect>
+        <x>930</x>
+        <y>283</y>
+        <width>61</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Reset</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="searchRecordsPage">
      <widget class="QTableWidget" name="searchRecord_Table">
@@ -588,7 +607,7 @@ My Collection</string>
        </font>
       </property>
       <property name="text">
-       <string>Search New Records</string>
+       <string>Find New Records</string>
       </property>
      </widget>
      <widget class="QPushButton" name="searchRecord_ToMyRecordsButton">
@@ -868,7 +887,7 @@ Collection</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Threaded</string>
+    <string>Multithreaded</string>
    </property>
   </action>
   <action name="importDiscogsAddTagsOpt">
@@ -884,7 +903,7 @@ Collection</string>
   </action>
   <action name="actionSelect_File_and_Run">
    <property name="text">
-    <string>Select File and Run</string>
+    <string>Select File and Import</string>
    </property>
   </action>
   <action name="actionDelete_All_User_Data">

@@ -158,7 +158,7 @@ void ImportDiscogs::importSingle() {
                 break;
             }
         }
-        if (record.getCover().compare(searchPageRecordCover) == 0 || (record.getName().compare(newName) == 0 && record.getArtist().compare(newArtist) == 0)){
+        if (record.getCover().compare(searchPageRecordCover) == 0 || (record.getName().toLower().compare(newName.toLower()) == 0 && record.getArtist().toLower().compare(newArtist.toLower()) == 0)){
             copy = true; // If the (new cover matches cover filenames) or (the album name and artist match) with a record already in the collection, do not add it again
             std::cerr << "Skipping from adding: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
             processedRec = new Record("", "", "", -1);

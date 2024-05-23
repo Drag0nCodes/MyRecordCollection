@@ -23,3 +23,9 @@ bool ListTag::getChecked() {
 void ListTag::setChecked(bool checked) {
     this->checked = checked;
 }
+
+bool ListTag::toggleCheck()
+{
+    checked = !checked;
+    return checked;
+}

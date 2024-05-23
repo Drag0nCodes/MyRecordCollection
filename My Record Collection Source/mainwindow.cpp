@@ -13,8 +13,8 @@
 #include "listtag.h"
 #include "tagswindow.h"
 #include "importdiscogs.h"
-#include "prefs.h"
 #include "json.h"
+#include "aboutwindow.h"
 #include <QFileDialog>
 #include <QProgressDialog>
 #include <QThread>
@@ -55,13 +55,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->myRecord_Table->setColumnWidth(1, 250);
     ui->myRecord_Table->setColumnWidth(2, 130);
     ui->myRecord_Table->setColumnWidth(3, 50);
-    ui->myRecord_Table->setColumnWidth(4, 192);
+    ui->myRecord_Table->setColumnWidth(4, 194);
     ui->myRecord_Table->verticalHeader()->hide();
     ui->myRecord_Table->setFont(font);
 
     ui->searchRecord_Table->setColumnWidth(0, 140);
     ui->searchRecord_Table->setColumnWidth(1, 385);
-    ui->searchRecord_Table->setColumnWidth(2, 237);
+    ui->searchRecord_Table->setColumnWidth(2, 239);
     ui->searchRecord_Table->verticalHeader()->hide();
     ui->searchRecord_Table->setFont(font);
 
@@ -239,6 +239,7 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
     bool copy = false;
     for (Record record : allMyRecords){ // Check all my records to see if cover matches requested add
         QString searchPageRecordCover = results.at(ui->searchRecord_Table->currentRow()).getCover();
+        if (searchPageRecordCover.compare("") == 0) break;
         for (int i = searchPageRecordCover.size()-1; i >= 0; i--) {
             if (searchPageRecordCover[i] == '/') {
                 searchPageRecordCover.remove(0,i+1);
@@ -300,23 +301,17 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
 void MainWindow::on_myRecord_RemoveRecordButton_clicked() // Remove record from my collection
 {
     if (selectedMyRecord){
-        deleteCover(recordsList.at(ui->myRecord_Table->currentRow()).getCover());
+        json.deleteCover(recordsList.at(ui->myRecord_Table->currentRow()).getCover());
 
         for (int i = 0; i < allMyRecords.size(); i++){
-            if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){ // Remove from allMyRecords and recordsList
+            if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){ // Find and remove from allMyRecords and recordsList
                 allMyRecords.erase(allMyRecords.begin() + i);
                 recordsList.erase(recordsList.begin() + ui->myRecord_Table->currentRow());
                 break;
             }
         }
 
-        if (ui->myRecord_Table->currentRow() == ui->myRecord_Table->rowCount()-2){ // Update myRecords table (second last row deleted, full update of table)
-            updateMyRecordsTable();
-        }
-        else {
-            ui->myRecord_Table->removeRow(ui->myRecord_Table->currentRow()); // Update myRecords table (delete one table row)
-        }
-
+        updateMyRecordsTable();
         json.writeRecords(&allMyRecords); // Update saved records
 
         // Set record count label text
@@ -348,6 +343,19 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
         ui->myRecord_Table->item(currentRow, 2)->setFont(font);
         ui->myRecord_Table->item(currentRow, 3)->setFont(font);
         ui->myRecord_Table->item(currentRow, 4)->setFont(font);
+
+        // Set edit tags list checks
+        ui->myRecord_EditTagsList->clear();
+        QIcon checked(dir.absolutePath() + "/resources/images/check.png");
+        QIcon unchecked(dir.absolutePath() + "/resources/images/uncheck.png");
+        for (ListTag tag : tags){
+            if (recordsList.at(ui->myRecord_Table->currentRow()).hasTag(tag.getName())){
+                ui->myRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
+            }
+            else {
+                ui->myRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
+            }
+        }
     }
     else { // Invalid selection made of myRecords
         ui->myRecord_RemoveRecordButton->setDisabled(true);
@@ -426,14 +434,19 @@ void MainWindow::on_myRecord_SortBox_activated(int index) // Sort my records bas
 
 void MainWindow::updateTagsList(){ // Update the edit and sort tag lists
     ui->myRecord_EditTagsList->clear();
-    ui->myRecord_SortTagsList->clear();
+    ui->myRecord_FilterTagsList->clear();
+    QIcon checked(dir.absolutePath() + "/resources/images/check.png");
+    QIcon unchecked(dir.absolutePath() + "/resources/images/uncheck.png");
     for (ListTag tag : tags){
-        ui->myRecord_EditTagsList->addItem(new QListWidgetItem(tag.getName()));
+        ui->myRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
         if (tag.getChecked()){
-            ui->myRecord_SortTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tag.getName()));
+            ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
         }
-        else ui->myRecord_SortTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag.getName()));
+        else {
+            ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
+        }
     }
+    ui->myRecord_Table->setCurrentCell(-1, 0);
 }
 
 
@@ -444,11 +457,21 @@ void MainWindow::on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item) // 
             if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){
                 // If selected record in list matches record in allMyRecords
                 std::vector<QString> recordTags = allMyRecords.at(i).getTags();
-                if (allMyRecords.at(i).addTag(item->text()) == 1){
-                    allMyRecords.at(i).removeTag(item->text());
+                int rowSave = ui->myRecord_EditTagsList->currentRow();
+                if (allMyRecords.at(i).addTag(item->text()) == 1){ // Try to add tag to record
+                    allMyRecords.at(i).removeTag(item->text()); // if record already has tag, REMOVE TAG
+                    ui->myRecord_EditTagsList->takeItem(ui->myRecord_EditTagsList->currentRow());
+                    ui->myRecord_EditTagsList->insertItem(ui->myRecord_EditTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), item->text()));
+                    ui->myRecord_EditTagsList->sortItems();
                 }
-                if (recordsList.at(ui->myRecord_Table->currentRow()).addTag(item->text()) == 1){
-                    recordsList.at(ui->myRecord_Table->currentRow()).removeTag(item->text());
+                else { // Adding tag, set the check box to checked
+                    ui->myRecord_EditTagsList->takeItem(ui->myRecord_EditTagsList->currentRow());
+                    ui->myRecord_EditTagsList->insertItem(ui->myRecord_EditTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), item->text()));
+                    ui->myRecord_EditTagsList->sortItems();
+                }
+                ui->myRecord_EditTagsList->setCurrentRow(rowSave);
+                if (recordsList.at(ui->myRecord_Table->currentRow()).addTag(item->text()) == 1){ // Try to add tag to record, match with allMyRecords
+                    recordsList.at(ui->myRecord_Table->currentRow()).removeTag(item->text());  // if record already has tag, remove it
                 }
                 break;
             }
@@ -460,24 +483,21 @@ void MainWindow::on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item) // 
 }
 
 
-void MainWindow::on_myRecord_SortTagsList_itemClicked(QListWidgetItem *item) // Sort my records by a tag (sort tag list clicked)
+void MainWindow::on_myRecord_FilterTagsList_itemClicked(QListWidgetItem *item) // Sort my records by a tag (sort tag list clicked)
 {
-    if (tags.at(ui->myRecord_SortTagsList->currentRow()).getChecked()){ // Tag is checked, set to unchecked
-        QString tag = ui->myRecord_SortTagsList->currentItem()->text();
-        tags.at(ui->myRecord_SortTagsList->currentRow()).setChecked(false);
-        ui->myRecord_SortTagsList->takeItem(ui->myRecord_SortTagsList->currentRow());
-        ui->myRecord_SortTagsList->insertItem(ui->myRecord_SortTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag));
-        ui->myRecord_SortTagsList->sortItems();
+    QString tag = ui->myRecord_FilterTagsList->currentItem()->text();
+    if (tags.at(ui->myRecord_FilterTagsList->currentRow()).toggleCheck()){ // Tag was unchecked, set to checked
+        ui->myRecord_FilterTagsList->takeItem(ui->myRecord_FilterTagsList->currentRow()); // Remove tag list item
+        ui->myRecord_FilterTagsList->insertItem(ui->myRecord_FilterTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tag)); // Add tag back as checked
+        ui->myRecord_FilterTagsList->sortItems();
     }
     else { // Tag is unchecked, set to checked
-        QString tag = ui->myRecord_SortTagsList->currentItem()->text();
-        tags.at(ui->myRecord_SortTagsList->currentRow()).setChecked(true);
-        ui->myRecord_SortTagsList->takeItem(ui->myRecord_SortTagsList->currentRow());
-        ui->myRecord_SortTagsList->insertItem(ui->myRecord_SortTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tag));
-        ui->myRecord_SortTagsList->sortItems();
+        ui->myRecord_FilterTagsList->takeItem(ui->myRecord_FilterTagsList->currentRow());
+        ui->myRecord_FilterTagsList->insertItem(ui->myRecord_FilterTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag));
+        ui->myRecord_FilterTagsList->sortItems();
     }
 
-    ui->myRecord_SortTagsList->setCurrentRow(-1); // Reset row selection
+    ui->myRecord_FilterTagsList->setCurrentRow(-1); // Reset row selection
 
     updateRecordsListOrder();
     updateMyRecordsTable();
@@ -486,7 +506,7 @@ void MainWindow::on_myRecord_SortTagsList_itemClicked(QListWidgetItem *item) // 
 
 void MainWindow::on_myRecord_ManageTagButton_clicked() // Open and handle manage tags popup
 {
-    tagsWindow* popup = new tagsWindow(&tags, &prefs);
+    TagsWindow* popup = new TagsWindow(&tags, &prefs);
     std::vector<ListTag> saveTags = tags;
 
     // Do after popup closes
@@ -622,24 +642,6 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
         }
         recordsList = sortedRecords;
         break;
-    }
-}
-
-
-bool MainWindow::deleteCover(const QString& coverName) { // Delete album cover from covers subfolder
-    QFile file(dir.absolutePath() + "/resources/user data/covers/" + coverName);
-
-    if (file.exists()) {
-        if (file.remove()) {
-            qDebug() << "File" << coverName << "deleted successfully";
-            return true;
-        } else {
-            qDebug() << "Error: Could not delete file" << coverName;
-            return false;
-        }
-    } else {
-        qDebug() << "Error: File" << coverName << "does not exist";
-        return false;
     }
 }
 
@@ -810,15 +812,46 @@ void MainWindow::on_actionDelete_All_User_Data_triggered()
 
     if (ret == QMessageBox::Yes){
         for (Record rec : allMyRecords) {
-            deleteCover(rec.getCover());
+            json.deleteCover(rec.getCover());
         }
         allMyRecords.clear();
         tags.clear();
         updateRecordsListOrder(); // Update tables
         updateMyRecordsTable();
         ui->myRecord_EditTagsList->clear();
-        ui->myRecord_SortTagsList->clear();
+        ui->myRecord_FilterTagsList->clear();
         json.deleteUserData();
     }
+}
+
+
+void MainWindow::on_myRecord_ResetTagsFilterButton_clicked()
+{
+    for (int i = 0; i < tags.size(); i++){
+        tags.at(i).setChecked(false);
+    }
+    updateTagsList();
+    updateRecordsListOrder();
+    updateMyRecordsTable();
+}
+
+
+void MainWindow::on_help_actionAbout_triggered()
+{
+    AboutWindow* popup = new AboutWindow(&prefs);
+    popup->setModal(true);
+    popup->exec();
+}
+
+
+void MainWindow::on_help_actionContact_triggered()
+{
+    QMessageBox msgBox;
+    msgBox.setStyleSheet(prefs.getMessageStyle());
+    msgBox.setText("Thank you for using My Record Collection! If you have any feedback or ideas for the app, please email me at MyRecordCollectionContact@gmail.com.");
+    msgBox.setStandardButtons(QMessageBox::Close);
+    msgBox.setDefaultButton(QMessageBox::Close);
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.exec();
 }
 
