@@ -841,7 +841,6 @@ Collection</string>
      <property name="title">
       <string>Import Discogs Collection</string>
      </property>
-     <addaction name="importDiscogsTheadedOpt"/>
      <addaction name="importDiscogsAddTagsOpt"/>
      <addaction name="actionSelect_File_and_Run"/>
     </widget>

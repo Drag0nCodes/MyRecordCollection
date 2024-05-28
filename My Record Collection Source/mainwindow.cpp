@@ -733,65 +733,52 @@ void MainWindow::on_actionSelect_File_and_Run_triggered()
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection - My Record Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
 
-    if (!ui->importDiscogsTheadedOpt->isChecked()){ // Import discogs single threaded
-        QProgressDialog progress("Importing Discogs Collection...", "", 0, 0, this);
-        progress.setMinimumDuration(0);
-        progress.setWindowModality(Qt::WindowModal);
-        ImportDiscogs *import;
-        if (ui->importDiscogsAddTagsOpt->isChecked()) import = new ImportDiscogs(true);
-        else import = new ImportDiscogs(false);
-        if (!filePath.isEmpty()) { // If file is chosen...
-            import->importAll(filePath, &allMyRecords); // Import collection from file
-        }
-    }
+    // Import discogs threaded
+    if (!filePath.isEmpty()) { // If file is chosen...
+        QFile myFile(filePath); // File of playlists JSON
+        if (myFile.exists()){
+            if (myFile.open(QIODevice::ReadOnly)){ // Erase all text in playlists json
+                QString line = myFile.readLine();
+                if (!line.startsWith("Catalog#,Artist,Title")){ // Not a discogs collection, invalid file
+                    myFile.close();
+                    std::cerr << "Inavlid collection file" << std::endl;
+                    ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
+                }
+                else {
+                    line = myFile.readLine(); // Get first discogs record
+                    int tot = 0; // The total number of records in the discogs file
+                    std::vector<QThread*> threads; // Thread for each record import
+                    std::vector<ImportDiscogs*> imports; // The ImportDiscogs class for each record import, will be moved to thread in vector threads
+                    while (!line.isEmpty()) { // Loop until all discogs record read in
+                        if (ui->importDiscogsAddTagsOpt->isChecked()) imports.push_back(new ImportDiscogs(line, &allMyRecords, true)); // Create and add ImportDiscogs class to vector, add suggested tags
+                        else imports.push_back(new ImportDiscogs(line, &allMyRecords, false)); // Dont add suggested tags to record
+                        threads.push_back(new QThread); // Create a QThread for record
+                        imports.at(tot)->moveToThread(threads.at(tot)); // Move the ImportDiscogs to its won thread
 
-    else { // Import discogs threaded
-        if (!filePath.isEmpty()) { // If file is chosen...
-            QFile myFile(filePath); // File of playlists JSON
-            if (myFile.exists()){
-                if (myFile.open(QIODevice::ReadOnly)){ // Erase all text in playlists json
-                    QString line = myFile.readLine();
-                    if (!line.startsWith("Catalog#,Artist,Title")){ // Not a discogs collection, invalid file
-                        myFile.close();
-                        std::cerr << "Inavlid collection file" << std::endl;
-                        ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
+                        // Connect for started and finished signals
+                        QObject::connect(threads.at(tot), &QThread::started, imports.at(tot), &ImportDiscogs::run); // Run import method when thread starts
+                        QObject::connect(imports.at(tot), &ImportDiscogs::finished, threads.at(tot), &QThread::quit); // When ImportDiscogs run finished, quit QThread
+                        QObject::connect(threads.at(tot), &QThread::finished, threads.at(tot), &QThread::deleteLater); // When thread finished, delete thread
+
+                        threads.at(tot)->start(); // Start thread
+                        line = myFile.readLine(); // Get next discogs record
+                        tot++;
                     }
-                    else {
-                        line = myFile.readLine(); // Get first discogs record
-                        int tot = 0; // The total number of records in the discogs file
-                        std::vector<QThread*> threads; // Thread for each record import
-                        std::vector<ImportDiscogs*> imports; // The ImportDiscogs class for each record import, will be moved to thread in vector threads
-                        while (!line.isEmpty()) { // Loop until all discogs record read in
-                            if (ui->importDiscogsAddTagsOpt->isChecked()) imports.push_back(new ImportDiscogs(line, &allMyRecords, true)); // Create and add ImportDiscogs class to vector, add suggested tags
-                            else imports.push_back(new ImportDiscogs(line, &allMyRecords, false)); // Dont add suggested tags to record
-                            threads.push_back(new QThread); // Create a QThread for record
-                            imports.at(tot)->moveToThread(threads.at(tot)); // Move the ImportDiscogs to its won thread
-
-                            // Connect for started and finished signals
-                            QObject::connect(threads.at(tot), &QThread::started, imports.at(tot), &ImportDiscogs::run); // Run import method when thread starts
-                            QObject::connect(imports.at(tot), &ImportDiscogs::finished, threads.at(tot), &QThread::quit); // When ImportDiscogs run finished, quit QThread
-                            QObject::connect(threads.at(tot), &QThread::finished, threads.at(tot), &QThread::deleteLater); // When thread finished, delete thread
-
-                            threads.at(tot)->start(); // Start thread
-                            line = myFile.readLine(); // Get next discogs record
-                            tot++;
-                        }
-                        for (int i = 0; i < tot; i++){ // Get results from each record
-                            while (!imports.at(i)->isDone()); // Loop main until import is finished
-                            Record *importedRec = imports.at(i)->getProcessedRec(); // Get the new Record
-                            if (!(importedRec->getName().compare("") == 0 & importedRec->getArtist().compare("") == 0 && importedRec->getCover().compare("") == 0 && importedRec->getRating() == -1)){
-                                allMyRecords.push_back(*imports.at(i)->getProcessedRec()); // Record is new, add to collection, don't add duplicates
-                                for (QString tag : imports.at(i)->getProcessedRec()->getTags()){
-                                    tags.push_back(ListTag(tag));
-                                }
+                    for (int i = 0; i < tot; i++){ // Get results from each record
+                        while (!imports.at(i)->isDone()); // Loop main until import is finished
+                        Record *importedRec = imports.at(i)->getProcessedRec(); // Get the new Record
+                        if (!(importedRec->getName().compare("") == 0 & importedRec->getArtist().compare("") == 0 && importedRec->getCover().compare("") == 0 && importedRec->getRating() == -1)){
+                            allMyRecords.push_back(*imports.at(i)->getProcessedRec()); // Record is new, add to collection, don't add duplicates
+                            for (QString tag : imports.at(i)->getProcessedRec()->getTags()){
+                                tags.push_back(ListTag(tag));
                             }
-                            imports.at(i)->deleteLater(); // Delete object
                         }
-                        sortTagsAlpha(&tags, true);
-                        json.writeTags(&tags);
-                        updateTagsList();
-                        json.writeRecords(&allMyRecords); // Write changes to json
+                        imports.at(i)->deleteLater(); // Delete object
                     }
+                    sortTagsAlpha(&tags, true);
+                    json.writeTags(&tags);
+                    updateTagsList();
+                    json.writeRecords(&allMyRecords); // Write changes to json
                 }
             }
         }
