@@ -535,7 +535,10 @@ void MainWindow::on_myRecord_ManageTagButton_clicked() // Open and handle manage
         updateTagsList();
         recordsList = allMyRecords;
         updateRecordsListOrder();
-        if (!deletedTags.empty()) updateMyRecordsTable();
+        if (!deletedTags.empty()) { // A tag was deleted
+            updateMyRecordsTable();
+            json.writeRecords(&allMyRecords);
+        }
     });
 
     popup->setModal(true);
