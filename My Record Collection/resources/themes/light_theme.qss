@@ -1,0 +1,116 @@
+QTableWidget {
+	background-color: rgb(230, 230, 230);
+	color: black;
+	selection-color: black;
+	selection-background-color: white;
+	alternate-background-color: rgb(210, 210, 210);
+	border: 0px;
+}
+
+QScrollBar {
+	background: rgb(210, 210, 210);
+	color: black;
+}
+
+QTableWidget QHeaderView::section {
+	background-color: rgb(210, 210, 210);
+	color: black;
+	border: 0px;
+}
+
+QListWidget {
+	background-color: white;
+	color: black;
+	border-color: black;
+	border-width: 1px;
+	border-style: inset;
+}
+
+QListWidget:disabled, QPushButton:disabled {
+	color: rgb(180, 180, 180);
+}
+
+QListWidget:item {
+	padding-bottom: 2px;
+}
+
+QPushButton {
+	background-color: rgb(230, 230, 230);
+	color: black;
+	border-style: outset;
+	border-radius: 14px;
+}
+
+QPushButton:hover, QComboBox:hover, QLineEdit:hover {
+	background-color: rgb(210, 210, 210);
+}
+
+QPushButton:pressed {
+	background-color: rgb(230, 230, 230);
+}
+
+QMainWindow, QDialog {
+	background-color: white;
+}
+
+QLabel {
+	color: black;
+}
+
+QLineEdit, QComboBox {
+	background-color: rgb(230, 230, 230);
+	color: black;
+	border-style: outset;
+	border-radius: 14px;
+	padding-left: 10px;
+}
+
+QComboBox::drop-down {
+	border: 0px;
+}
+
+QComboBox QListView {
+	background-color: rgb(210, 210, 210);
+	color: black;
+	border: 0px;
+	padding: 5px;
+}
+
+QComboBox QListView:item {
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+
+QTabWidget::pane { /* The tab widget frame line */
+    border-top: 2px solid rgb(230, 230, 230);
+}
+
+QTabWidget::tab-bar {
+    left: 10px; 
+}
+
+QTabBar::tab { /* The tab button unselected */
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+    border: 2px solid rgb(230, 230, 230);
+    border-bottom-color: #C2C7CB; /* same as the pane color */
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    min-width: 8ex;
+    padding: 5px;
+}
+
+QTabBar::tab:selected, QTabBar::tab:hover {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #fafafa, stop: 0.4 #f4f4f4,
+                                stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);
+}
+
+QTabBar::tab:selected {
+    border-color: rgb(230, 230, 230);
+}
+
+QTabBar::tab:!selected {
+    margin-top: 2px; /* make non-selected tabs look smaller */
+}

@@ -11,12 +11,14 @@ AboutWindow::AboutWindow(Prefs *prefs, QWidget *parent)
     // Set the style sheet for the program
     setStyleSheet(prefs->getStyle());
 
-    setWindowTitle("About");
+    setWindowTitle("About - My Record Collection");
+
+    QDir dir;
+    this->setWindowIcon(QIcon(dir.absolutePath() + "/resources/images/appico.ico"));
 
     // Fill text boxes
     try{
         QString jsonStr;
-        QDir dir;
 
         // Tags about tab
         QFile aboutTagsFile(dir.absolutePath() + "/resources/about text/about_tags.txt"); // File of about_tags.txt

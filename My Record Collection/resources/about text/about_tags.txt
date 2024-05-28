@@ -1,0 +1,9 @@
+Tags are used to organize your collection. You can create a tag for anything, however, having the genres of a record as its tags is a good idea.
+
+You can create and remove tags by adding them in the Manage Tags window which can be found on the My Collection page. Removing a tag from the Manage Tags window will remove it from all records that have it as a tag. Additionally, you can create tags by selecting them from the suggested tags list on the Find New Records page and adding the record to your colleciton or by importing a discogs collection with the "Add Tags" option selected.
+
+You can manage an individual record's tags by selecting the record and toggling its tags in the Toggle Tags list.
+
+The records shown in the My Collection list can be sorted to only show records with a specific tag or tags by toggling tags in the Filter by Tags list. You can reset this filter by clicking the reset button below this list.
+
+Suggested tags can be selected from on the Search Records page or added automatically when importing a Discogs collection. These tags are taken from the genres listed in the album's wikipedia infobox. It is possible that sometimes the tag(s) processed won't be correct if the format of the wikipedia page is different or if the wikipedia page returned from the API is not the correct page. 

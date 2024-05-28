@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowTitle("My Record Collection 1.2.0");
+    setWindowTitle("My Record Collection");
 
     QFont font("Arial");
     font.setPixelSize(14);
@@ -731,7 +731,7 @@ void MainWindow::on_settings_actionToggleTheme_triggered()
 
 void MainWindow::on_actionSelect_File_and_Run_triggered()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection - My Record Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
 
     if (!ui->importDiscogsTheadedOpt->isChecked()){ // Import discogs single threaded
         QProgressDialog progress("Importing Discogs Collection...", "", 0, 0, this);
@@ -811,6 +811,8 @@ void MainWindow::on_actionDelete_All_User_Data_triggered()
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setWindowIcon(QIcon(dir.absolutePath() + "/resources/images/appico.ico"));
+    msgBox.setWindowTitle("Erase User Data - My Record Collection");
     int ret = msgBox.exec();
 
     if (ret == QMessageBox::Yes){
@@ -842,6 +844,7 @@ void MainWindow::on_myRecord_ResetTagsFilterButton_clicked()
 void MainWindow::on_help_actionAbout_triggered()
 {
     AboutWindow* popup = new AboutWindow(&prefs);
+    popup->setWindowIcon(QIcon(dir.absolutePath() + "/resources/images/appico.ico"));
     popup->setModal(true);
     popup->exec();
 }
@@ -855,6 +858,8 @@ void MainWindow::on_help_actionContact_triggered()
     msgBox.setStandardButtons(QMessageBox::Close);
     msgBox.setDefaultButton(QMessageBox::Close);
     msgBox.setIcon(QMessageBox::Information);
+    msgBox.setWindowIcon(QIcon(dir.absolutePath() + "/resources/images/appico.ico"));
+    msgBox.setWindowTitle("Contact - My Record Collection");
     msgBox.exec();
 }
 

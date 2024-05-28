@@ -9,10 +9,13 @@ TagsWindow::TagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent
     , tagsList(*tags)
 {
     ui->setupUi(this);
-    setWindowTitle("Manage Tags");
+    setWindowTitle("Manage Tags - My Record Collection");
     for (int i = 0; i < tags->size(); i++){
         ui->tagsWinList->addItem(new QListWidgetItem(tags->at(i).getName()));
     }
+
+    QDir dir;
+    this->setWindowIcon(QIcon(dir.absolutePath() + "/resources/images/appico.ico"));
 
     // Set the style sheet for the program
     setStyleSheet(prefs->getStyle());

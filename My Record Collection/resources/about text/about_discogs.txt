@@ -1,0 +1,7 @@
+To export your Discogs collection and import it to My Record Collection, go to your Discogs dashbord, select the "Export" tab, choose to export your "collection" and select "Request Data Export". Once your data export is ready, download it. 
+
+https://www.discogs.com/users/export
+
+Then, in My Record Collection, choose "Settings" in the menu bar, set your import options for "Import Discogs Collection", and choose to Select File and Import. Select the .csv file downloaded from Discogs and wait for your Discogs records to be imported to My Record Collection. This can take some time, especially if it is run single threaded, as the process must search for and download the album cover from Last.fm and get tags from wikipedia (if that option is selected).
+
+Once your Discogs collection is processed, the records will be added to your collection and visable on the My Collection page.
