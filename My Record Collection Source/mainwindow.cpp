@@ -850,3 +850,10 @@ void MainWindow::on_help_actionContact_triggered()
     msgBox.exec();
 }
 
+
+void MainWindow::on_importDiscogsAddTagsOpt_triggered()
+{
+    ui->menuSettings->show();
+    ui->menuImport_Discogs_Collection->show();
+}
+

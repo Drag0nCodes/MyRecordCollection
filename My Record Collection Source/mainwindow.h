@@ -67,6 +67,8 @@ private slots:
 
     void on_help_actionContact_triggered();
 
+    void on_importDiscogsAddTagsOpt_triggered();
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);

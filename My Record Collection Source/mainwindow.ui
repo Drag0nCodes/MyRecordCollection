@@ -897,7 +897,7 @@ Collection</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Add tags</string>
+    <string>Add Tags (Toggle)</string>
    </property>
   </action>
   <action name="actionSelect_File_and_Run">
