@@ -23,21 +23,12 @@
 #include <QtConcurrent>
 #include <QMessageBox>
 
-Json json;
-QDir dir;
-Prefs prefs;
-std::vector<Record> results; // Search records results
-std::vector<Record> allMyRecords; // All records in collection
-std::vector<Record> recordsList; // Records shown on my collection table
-std::vector<ListTag> tags; // All tags
-std::vector<ListTag> suggestedTags; // The list of suggested tags on the search records page
-bool selectedMyRecord = false; // If a record is selected on the my record page
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setFixedSize(QSize(1000, 810));
     setWindowTitle("My Record Collection");
 
     QFont font("Arial");
@@ -73,7 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Fill tables
     //QTimer::singleShot(1, [=](){ emit updateMyRecords(); }); // Fill my records table a second after program startup
-    updateTagsList();
+    updateTagCount();
+    updateTagList();
     updateMyRecordsTable();
 
     // Start off with no record selected and unable to use some buttons
@@ -284,7 +276,8 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
             }
         }
 
-        updateTagsList();
+        updateTagCount();
+        updateTagList();
         json.writeTags(&tags);
 
         allMyRecords.push_back(addRecord);
@@ -432,7 +425,7 @@ void MainWindow::on_myRecord_SortBox_activated(int index) // Sort my records bas
 }
 
 
-void MainWindow::updateTagsList(){ // Update the edit and sort tag lists
+void MainWindow::updateTagList(){ // Update the edit and sort tag lists
     ui->myRecord_EditTagsList->clear();
     ui->myRecord_FilterTagsList->clear();
     QIcon checked(dir.absolutePath() + "/resources/images/check.png");
@@ -440,10 +433,10 @@ void MainWindow::updateTagsList(){ // Update the edit and sort tag lists
     for (ListTag tag : tags){
         ui->myRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
         if (tag.getChecked()){
-            ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
+            ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(checked, tag.getName() + " (" + QString::number(tag.getCount()) + ")"));
         }
         else {
-            ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
+            ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(unchecked, tag.getName() + " (" + QString::number(tag.getCount()) + ")"));
         }
     }
     ui->myRecord_Table->setCurrentCell(-1, 0);
@@ -453,6 +446,7 @@ void MainWindow::updateTagsList(){ // Update the edit and sort tag lists
 void MainWindow::on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item) // Add or remove a tag from a record
 {
     if (selectedMyRecord){
+        int tableRow = ui->myRecord_Table->currentRow();
         for (int i = 0; i < allMyRecords.size(); i++){
             if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){
                 // If selected record in list matches record in allMyRecords
@@ -460,24 +454,37 @@ void MainWindow::on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item) // 
                 int rowSave = ui->myRecord_EditTagsList->currentRow();
                 if (allMyRecords.at(i).addTag(item->text()) == 1){ // Try to add tag to record
                     allMyRecords.at(i).removeTag(item->text()); // if record already has tag, REMOVE TAG
-                    ui->myRecord_EditTagsList->takeItem(ui->myRecord_EditTagsList->currentRow());
-                    ui->myRecord_EditTagsList->insertItem(ui->myRecord_EditTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), item->text()));
+                    ui->myRecord_EditTagsList->takeItem(rowSave);
+                    ui->myRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), item->text()));
                     ui->myRecord_EditTagsList->sortItems();
+                    tags.at(rowSave).decCount();
+                    recordsList.at(ui->myRecord_Table->currentRow()).removeTag(item->text()); // Remove tag from record object
                 }
                 else { // Adding tag, set the check box to checked
-                    ui->myRecord_EditTagsList->takeItem(ui->myRecord_EditTagsList->currentRow());
-                    ui->myRecord_EditTagsList->insertItem(ui->myRecord_EditTagsList->currentRow(), new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), item->text()));
+                    ui->myRecord_EditTagsList->takeItem(rowSave);
+                    ui->myRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), item->text()));
                     ui->myRecord_EditTagsList->sortItems();
+                    tags.at(rowSave).incCount();
+                    recordsList.at(ui->myRecord_Table->currentRow()).addTag(item->text()); // Add tag to record object
                 }
-                ui->myRecord_EditTagsList->setCurrentRow(rowSave);
-                if (recordsList.at(ui->myRecord_Table->currentRow()).addTag(item->text()) == 1){ // Try to add tag to record, match with allMyRecords
-                    recordsList.at(ui->myRecord_Table->currentRow()).removeTag(item->text());  // if record already has tag, remove it
+                ui->myRecord_EditTagsList->setCurrentRow(rowSave); // Set the edit tags list row back to what it was
+
+                // Update the filter tags list number
+                ui->myRecord_FilterTagsList->takeItem(rowSave); // Remove the filter item to be readded
+                if (tags.at(rowSave).getChecked()) { // Add tag that is being filtered
+                    ui->myRecord_FilterTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tags.at(rowSave).getName() + " (" + QString::number(tags.at(rowSave).getCount()) + ")"));
                 }
+                else { // Add a tag that is not being filtered
+                    ui->myRecord_FilterTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tags.at(rowSave).getName() + " (" + QString::number(tags.at(rowSave).getCount()) + ")"));
+                }
+                ui->myRecord_FilterTagsList->setCurrentRow(-1); // Set filter record to not have anything selected
+
                 break;
             }
         }
-        updateMyRecordsInfo(); // Update only the text info in list
-        on_myRecord_Table_currentCellChanged(ui->myRecord_Table->currentRow(), 0, -1, 0);
+        updateRecordsListOrder(); // Update record table
+        updateMyRecordsTable();
+        ui->myRecord_Table->setCurrentCell(tableRow, 0); // Set the record table back to the current record
         json.writeRecords(&allMyRecords); // Save new tags to json
     }
 }
@@ -500,6 +507,8 @@ void MainWindow::on_myRecord_FilterTagsList_itemClicked(QListWidgetItem *item) /
     ui->myRecord_FilterTagsList->setCurrentRow(-1); // Reset row selection
 
     updateRecordsListOrder();
+    updateTagCount();
+    updateTagList();
     updateMyRecordsTable();
 }
 
@@ -532,9 +541,9 @@ void MainWindow::on_myRecord_ManageTagButton_clicked() // Open and handle manage
             }
         }
 
-        updateTagsList();
         recordsList = allMyRecords;
         updateRecordsListOrder();
+        updateTagList();
         if (!deletedTags.empty()) { // A tag was deleted
             updateMyRecordsTable();
             json.writeRecords(&allMyRecords);
@@ -721,7 +730,7 @@ void MainWindow::on_settings_actionExit_triggered() // Exit program menu button 
 }
 
 
-void MainWindow::on_settings_actionToggleTheme_triggered()
+void MainWindow::on_settings_actionToggleTheme_triggered() // Toggle theme menu button clicked
 {
     prefs.toggleTheme(); // Update the theme in the preferences object
     setStyleSheet(prefs.getStyle()); // Set the style
@@ -729,7 +738,7 @@ void MainWindow::on_settings_actionToggleTheme_triggered()
 }
 
 
-void MainWindow::on_actionSelect_File_and_Run_triggered()
+void MainWindow::on_actionSelect_File_and_Run_triggered() // Import discogs file menu button clicked
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection - My Record Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
 
@@ -753,7 +762,7 @@ void MainWindow::on_actionSelect_File_and_Run_triggered()
                         if (ui->importDiscogsAddTagsOpt->isChecked()) imports.push_back(new ImportDiscogs(line, &allMyRecords, true)); // Create and add ImportDiscogs class to vector, add suggested tags
                         else imports.push_back(new ImportDiscogs(line, &allMyRecords, false)); // Dont add suggested tags to record
                         threads.push_back(new QThread); // Create a QThread for record
-                        imports.at(tot)->moveToThread(threads.at(tot)); // Move the ImportDiscogs to its won thread
+                        imports.at(tot)->moveToThread(threads.at(tot)); // Move the ImportDiscogs to its own thread
 
                         // Connect for started and finished signals
                         QObject::connect(threads.at(tot), &QThread::started, imports.at(tot), &ImportDiscogs::run); // Run import method when thread starts
@@ -777,7 +786,6 @@ void MainWindow::on_actionSelect_File_and_Run_triggered()
                     }
                     sortTagsAlpha(&tags, true);
                     json.writeTags(&tags);
-                    updateTagsList();
                     json.writeRecords(&allMyRecords); // Write changes to json
                 }
             }
@@ -785,11 +793,13 @@ void MainWindow::on_actionSelect_File_and_Run_triggered()
     }
 
     updateRecordsListOrder(); // Update the vector with the record collection table elements
+    updateTagCount();
+    updateTagList();
     updateMyRecordsTable(); // Visably update the record collection table*/
 }
 
 
-void MainWindow::on_actionDelete_All_User_Data_triggered()
+void MainWindow::on_actionDelete_All_User_Data_triggered() // Delete all user data menu button clicked
 {
     QMessageBox msgBox;
     msgBox.setStyleSheet(prefs.getMessageStyle());
@@ -817,18 +827,19 @@ void MainWindow::on_actionDelete_All_User_Data_triggered()
 }
 
 
-void MainWindow::on_myRecord_ResetTagsFilterButton_clicked()
+void MainWindow::on_myRecord_ResetTagsFilterButton_clicked() // "Reset" tags button clicked
 {
     for (int i = 0; i < tags.size(); i++){
         tags.at(i).setChecked(false);
     }
-    updateTagsList();
     updateRecordsListOrder();
+    updateTagCount();
+    updateTagList();
     updateMyRecordsTable();
 }
 
 
-void MainWindow::on_help_actionAbout_triggered()
+void MainWindow::on_help_actionAbout_triggered() // About menu button clicked
 {
     AboutWindow* popup = new AboutWindow(&prefs);
     popup->setWindowIcon(QIcon(dir.absolutePath() + "/resources/images/appico.ico"));
@@ -837,7 +848,7 @@ void MainWindow::on_help_actionAbout_triggered()
 }
 
 
-void MainWindow::on_help_actionContact_triggered()
+void MainWindow::on_help_actionContact_triggered() // Contact menu button clicked
 {
     QMessageBox msgBox;
     msgBox.setStyleSheet(prefs.getMessageStyle());
@@ -851,9 +862,18 @@ void MainWindow::on_help_actionContact_triggered()
 }
 
 
-void MainWindow::on_importDiscogsAddTagsOpt_triggered()
+void MainWindow::on_importDiscogsAddTagsOpt_triggered() // Add tags to discogs import menu button clicked
 {
-    ui->menuSettings->show();
+    ui->menuSettings->show(); // Keep the menu showing
     ui->menuImport_Discogs_Collection->show();
+}
+
+void MainWindow::updateTagCount(){ // Update the counts for all TagList objects
+    for (int i = 0; i < tags.size(); i++){ // For each tag
+        tags.at(i).setCount(0); // Reset count
+        for (Record record : recordsList){ // For each record, compare record tags and add to count if matching ListTag
+            if (record.hasTag(tags.at(i).getName())) tags.at(i).incCount();
+        }
+    }
 }
 

@@ -3,6 +3,7 @@
 ListTag::ListTag(QString tagName, bool checked) {
     name = tagName;
     this->checked = checked;
+    count = 0;
 }
 
 QString ListTag::getName() {
@@ -28,4 +29,24 @@ bool ListTag::toggleCheck()
 {
     checked = !checked;
     return checked;
+}
+
+void ListTag::setCount(int count)
+{
+    this->count = count;
+}
+
+int ListTag::incCount()
+{
+    return count++;
+}
+
+int ListTag::decCount()
+{
+    return count--;
+}
+
+int ListTag::getCount()
+{
+    return count;
 }

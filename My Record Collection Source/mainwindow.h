@@ -5,6 +5,8 @@
 #include <QListWidgetItem>
 #include "listtag.h"
 #include "record.h"
+#include "json.h"
+#include <QDir>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -75,9 +77,20 @@ private:
     class ImageDelegate;
     void updateMyRecordsTable();
     void updateMyRecordsInfo();
-    void updateTagsList();
+    void updateTagList();
     void updateRecordsListOrder();
     bool deleteCover(const QString& coverName);
     void sortTagsAlpha(std::vector<ListTag> *list, bool delDups = false);
+    void updateTagCount();
+
+    Json json;
+    QDir dir;
+    Prefs prefs;
+    std::vector<Record> results; // Search records results
+    std::vector<Record> allMyRecords; // All records in collection
+    std::vector<Record> recordsList; // Records shown on my collection table
+    std::vector<ListTag> tags; // All tags
+    std::vector<ListTag> suggestedTags; // The list of suggested tags on the search records page
+    bool selectedMyRecord = false; // If a record is selected on the my record page
 };
 #endif // MAINWINDOW_H

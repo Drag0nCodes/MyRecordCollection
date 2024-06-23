@@ -11,10 +11,15 @@ public:
     bool getChecked();
     void setChecked(bool checked);
     bool toggleCheck();
+    void setCount(int count);
+    int incCount();
+    int decCount();
+    int getCount();
 
 private:
     QString name;
     bool checked;
+    int count;
 };
 
 
