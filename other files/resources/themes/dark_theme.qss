@@ -128,16 +128,16 @@ QMenuBar::item {
 }
 
 QMenuBar::item:selected { 
-	background-color: rgb(95, 95, 95);
+	background-color: rgb(70, 70, 70);
 }
 
 QMenu {
-	background-color: rgb(95, 95, 95);
+	background-color: rgb(70, 70, 70);
 	color: white;
-	border: 2px solid rgb(70, 70, 70);
+	border: 2px solid rgb(95, 95, 95);
 }
 
 QMenu::item:selected { 
-	background-color: rgb(70, 70, 70);
+	background-color: rgb(95, 95, 95);
 	color: white;
 }

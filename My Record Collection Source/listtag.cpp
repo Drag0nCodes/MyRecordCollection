@@ -38,12 +38,12 @@ void ListTag::setCount(int count)
 
 int ListTag::incCount()
 {
-    return count++;
+    return ++count;
 }
 
 int ListTag::decCount()
 {
-    return count--;
+    return --count;
 }
 
 int ListTag::getCount()

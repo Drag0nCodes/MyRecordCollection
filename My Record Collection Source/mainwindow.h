@@ -22,6 +22,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+
 private slots:
     void on_searchRecord_ToMyRecordsButton_clicked();
 
@@ -31,23 +32,21 @@ private slots:
 
     void on_searchRecord_AddToMyRecordButton_clicked();
 
-    void on_myRecord_RemoveRecordButton_clicked();
-
     void on_myRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
 
     void on_searchRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
 
-    void on_myRecord_RatingSlider_valueChanged(int value);
+    void on_editRecord_RatingSlider_valueChanged(int value);
 
     void on_myRecord_SearchBar_textChanged();
 
     void on_myRecord_SortBox_activated(int index);
 
-    void on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item);
+    void on_editRecord_EditTagsList_itemClicked(QListWidgetItem *item);
 
     void on_myRecord_FilterTagsList_itemClicked(QListWidgetItem *item);
 
-    void on_myRecord_ManageTagButton_clicked();
+    void on_editRecord_ManageTagButton_clicked();
 
     void on_searchRecord_Table_cellClicked(int row, int column);
 
@@ -71,6 +70,14 @@ private slots:
 
     void on_importDiscogsAddTagsOpt_triggered();
 
+    void showContextMenu(const QPoint &pos);
+
+    void on_editRecord_DoneButton_clicked();
+
+    void onWidgetClicked() {
+        printf("nasd");
+    }
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);
@@ -82,7 +89,6 @@ private:
     bool deleteCover(const QString& coverName);
     void sortTagsAlpha(std::vector<ListTag> *list, bool delDups = false);
     void updateTagCount();
-
     Json json;
     QDir dir;
     Prefs prefs;
@@ -92,5 +98,11 @@ private:
     std::vector<ListTag> tags; // All tags
     std::vector<ListTag> suggestedTags; // The list of suggested tags on the search records page
     bool selectedMyRecord = false; // If a record is selected on the my record page
+    QMenu *myRecordContextMenu;
+    QAction *contextActionRemove;
+    QAction *contextActionEdit;
+    void removeTableRecord();
+    void toggleEditRecordFrame();
+    void checkClickEditRecordFrame();
 };
 #endif // MAINWINDOW_H

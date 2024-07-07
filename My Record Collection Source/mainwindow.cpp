@@ -69,11 +69,23 @@ MainWindow::MainWindow(QWidget *parent)
     updateMyRecordsTable();
 
     // Start off with no record selected and unable to use some buttons
-    ui->myRecord_RemoveRecordButton->setDisabled(true);
-    ui->myRecord_EditTagsList->setDisabled(true);
-    ui->myRecord_RatingSlider->setDisabled(true);
+    ui->editRecord_EditTagsList->setDisabled(true);
+    ui->editRecord_RatingSlider->setDisabled(true);
     ui->searchRecord_AddToMyRecordButton->setDisabled(true);
     ui->myRecord_Table->setCurrentCell(-1, -1);
+
+    // Setup context menu for my records table
+    myRecordContextMenu = new QMenu(this);
+    QAction *contextActionRemove = new QAction("Remove", this);
+    myRecordContextMenu->addAction(contextActionRemove);
+    connect(contextActionRemove, &QAction::triggered, this, &MainWindow::removeTableRecord);
+    QAction *contextActionEdit= new QAction("Edit", this);
+    myRecordContextMenu->addAction(contextActionEdit);
+    connect(contextActionEdit, &QAction::triggered, this, &MainWindow::toggleEditRecordFrame);
+    connect(ui->myRecord_Table, &QTableWidget::customContextMenuRequested, this, &MainWindow::showContextMenu);
+
+    // Set editRecordsFrame options
+    ui->editFrameBlockerFrame->setVisible(false);
 }
 
 MainWindow::~MainWindow()
@@ -291,7 +303,7 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
 }
 
 
-void MainWindow::on_myRecord_RemoveRecordButton_clicked() // Remove record from my collection
+void MainWindow::removeTableRecord() // Remove record from my collection
 {
     if (selectedMyRecord){
         json.deleteCover(recordsList.at(ui->myRecord_Table->currentRow()).getCover());
@@ -304,6 +316,8 @@ void MainWindow::on_myRecord_RemoveRecordButton_clicked() // Remove record from 
             }
         }
 
+        updateTagCount();
+        updateTagList();
         updateMyRecordsTable();
         json.writeRecords(&allMyRecords); // Update saved records
 
@@ -325,10 +339,9 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
     }
 
     if (currentRow >= 0 && currentRow < recordsList.size()) { // Valid selection made of myRecords
-        ui->myRecord_RemoveRecordButton->setDisabled(false);
-        ui->myRecord_RatingSlider->setDisabled(false);
-        ui->myRecord_RatingSlider->setSliderPosition(recordsList.at(ui->myRecord_Table->currentRow()).getRating());
-        ui->myRecord_EditTagsList->setDisabled(false);
+        ui->editRecord_RatingSlider->setDisabled(false);
+        ui->editRecord_RatingSlider->setSliderPosition(recordsList.at(ui->myRecord_Table->currentRow()).getRating());
+        ui->editRecord_EditTagsList->setDisabled(false);
         selectedMyRecord = true;
 
         font.setBold(true); // Bold selection font
@@ -338,28 +351,35 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
         ui->myRecord_Table->item(currentRow, 4)->setFont(font);
 
         // Set edit tags list checks
-        ui->myRecord_EditTagsList->clear();
+        ui->editRecord_EditTagsList->clear();
         QIcon checked(dir.absolutePath() + "/resources/images/check.png");
         QIcon unchecked(dir.absolutePath() + "/resources/images/uncheck.png");
         for (ListTag tag : tags){
             if (recordsList.at(ui->myRecord_Table->currentRow()).hasTag(tag.getName())){
-                ui->myRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
+                ui->editRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
             }
             else {
-                ui->myRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
+                ui->editRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
             }
         }
+
+        // Update editRecordsFrame
+        ui->editRecord_ArtistEdit->setText(recordsList.at(ui->myRecord_Table->currentRow()).getArtist());
+        ui->editRecord_TitleEdit->setText(recordsList.at(ui->myRecord_Table->currentRow()).getName());
+
+        QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + recordsList.at(ui->myRecord_Table->currentRow()).getCover());
+        if (image.isNull()) image = QPixmap(dir.absolutePath() + "/resources/images/missingImg.jpg");
+        image = image.scaled(120, 120, Qt::KeepAspectRatio);
+        ui->editRecord_CoverLabel->setPixmap(image);
     }
     else { // Invalid selection made of myRecords
-        ui->myRecord_RemoveRecordButton->setDisabled(true);
-        ui->myRecord_RatingSlider->setDisabled(true);
-        ui->myRecord_EditTagsList->setDisabled(true);
+        ui->editRecord_RatingSlider->setDisabled(true);
+        ui->editRecord_EditTagsList->setDisabled(true);
         selectedMyRecord = false;
     }
     if (recordsList.empty()) { // myRecords list empty
-        ui->myRecord_RemoveRecordButton->setDisabled(true);
-        ui->myRecord_RatingSlider->setDisabled(true);
-        ui->myRecord_EditTagsList->setDisabled(true);
+        ui->editRecord_RatingSlider->setDisabled(true);
+        ui->editRecord_EditTagsList->setDisabled(true);
         selectedMyRecord = false;
     }
 }
@@ -373,7 +393,7 @@ void MainWindow::on_searchRecord_Table_currentCellChanged(int currentRow, int cu
 }
 
 
-void MainWindow::on_myRecord_RatingSlider_valueChanged(int value) // Change record rating
+void MainWindow::on_editRecord_RatingSlider_valueChanged(int value) // Change record rating
 {
     if (selectedMyRecord){
         for (int i = 0; i < allMyRecords.size(); i++){
@@ -426,12 +446,12 @@ void MainWindow::on_myRecord_SortBox_activated(int index) // Sort my records bas
 
 
 void MainWindow::updateTagList(){ // Update the edit and sort tag lists
-    ui->myRecord_EditTagsList->clear();
+    ui->editRecord_EditTagsList->clear();
     ui->myRecord_FilterTagsList->clear();
     QIcon checked(dir.absolutePath() + "/resources/images/check.png");
     QIcon unchecked(dir.absolutePath() + "/resources/images/uncheck.png");
     for (ListTag tag : tags){
-        ui->myRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
+        ui->editRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
         if (tag.getChecked()){
             ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(checked, tag.getName() + " (" + QString::number(tag.getCount()) + ")"));
         }
@@ -443,7 +463,7 @@ void MainWindow::updateTagList(){ // Update the edit and sort tag lists
 }
 
 
-void MainWindow::on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item) // Add or remove a tag from a record
+void MainWindow::on_editRecord_EditTagsList_itemClicked(QListWidgetItem *item) // Add or remove a tag from a record
 {
     if (selectedMyRecord){
         int tableRow = ui->myRecord_Table->currentRow();
@@ -451,23 +471,23 @@ void MainWindow::on_myRecord_EditTagsList_itemClicked(QListWidgetItem *item) // 
             if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){
                 // If selected record in list matches record in allMyRecords
                 std::vector<QString> recordTags = allMyRecords.at(i).getTags();
-                int rowSave = ui->myRecord_EditTagsList->currentRow();
+                int rowSave = ui->editRecord_EditTagsList->currentRow();
                 if (allMyRecords.at(i).addTag(item->text()) == 1){ // Try to add tag to record
                     allMyRecords.at(i).removeTag(item->text()); // if record already has tag, REMOVE TAG
-                    ui->myRecord_EditTagsList->takeItem(rowSave);
-                    ui->myRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), item->text()));
-                    ui->myRecord_EditTagsList->sortItems();
+                    ui->editRecord_EditTagsList->takeItem(rowSave);
+                    ui->editRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), item->text()));
+                    ui->editRecord_EditTagsList->sortItems();
                     tags.at(rowSave).decCount();
                     recordsList.at(ui->myRecord_Table->currentRow()).removeTag(item->text()); // Remove tag from record object
                 }
                 else { // Adding tag, set the check box to checked
-                    ui->myRecord_EditTagsList->takeItem(rowSave);
-                    ui->myRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), item->text()));
-                    ui->myRecord_EditTagsList->sortItems();
+                    ui->editRecord_EditTagsList->takeItem(rowSave);
+                    ui->editRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), item->text()));
+                    ui->editRecord_EditTagsList->sortItems();
                     tags.at(rowSave).incCount();
                     recordsList.at(ui->myRecord_Table->currentRow()).addTag(item->text()); // Add tag to record object
                 }
-                ui->myRecord_EditTagsList->setCurrentRow(rowSave); // Set the edit tags list row back to what it was
+                ui->editRecord_EditTagsList->setCurrentRow(rowSave); // Set the edit tags list row back to what it was
 
                 // Update the filter tags list number
                 ui->myRecord_FilterTagsList->takeItem(rowSave); // Remove the filter item to be readded
@@ -513,7 +533,7 @@ void MainWindow::on_myRecord_FilterTagsList_itemClicked(QListWidgetItem *item) /
 }
 
 
-void MainWindow::on_myRecord_ManageTagButton_clicked() // Open and handle manage tags popup
+void MainWindow::on_editRecord_ManageTagButton_clicked() // Open and handle manage tags popup
 {
     TagsWindow* popup = new TagsWindow(&tags, &prefs);
     std::vector<ListTag> saveTags = tags;
@@ -726,7 +746,7 @@ void MainWindow::on_myRecord_PickForMe_clicked() // Highlight a random record in
 
 void MainWindow::on_settings_actionExit_triggered() // Exit program menu button pressed
 {
-    abort();
+    qApp->quit();
 }
 
 
@@ -820,7 +840,7 @@ void MainWindow::on_actionDelete_All_User_Data_triggered() // Delete all user da
         tags.clear();
         updateRecordsListOrder(); // Update tables
         updateMyRecordsTable();
-        ui->myRecord_EditTagsList->clear();
+        ui->editRecord_EditTagsList->clear();
         ui->myRecord_FilterTagsList->clear();
         json.deleteUserData();
     }
@@ -868,11 +888,47 @@ void MainWindow::on_importDiscogsAddTagsOpt_triggered() // Add tags to discogs i
     ui->menuImport_Discogs_Collection->show();
 }
 
+
 void MainWindow::updateTagCount(){ // Update the counts for all TagList objects
     for (int i = 0; i < tags.size(); i++){ // For each tag
         tags.at(i).setCount(0); // Reset count
         for (Record record : recordsList){ // For each record, compare record tags and add to count if matching ListTag
             if (record.hasTag(tags.at(i).getName())) tags.at(i).incCount();
+        }
+    }
+}
+
+
+void MainWindow::showContextMenu(const QPoint &pos)
+{
+    QPoint globalPos = ui->myRecord_Table->viewport()->mapToGlobal(pos);
+
+    if (ui->myRecord_Table->itemAt(pos)) {
+        myRecordContextMenu->exec(globalPos);
+    }
+}
+
+void MainWindow::toggleEditRecordFrame()
+{
+    if (ui->editRecordFrame->isVisible()) {
+        ui->editFrameBlockerFrame->setVisible(false);
+    }
+    else {
+        ui->editFrameBlockerFrame->setVisible(true);
+    }
+}
+
+
+void MainWindow::on_editRecord_DoneButton_clicked()
+{
+    ui->editFrameBlockerFrame->setVisible(false);
+}
+
+void MainWindow::checkClickEditRecordFrame(){
+    QPoint globalPos = ui->editRecordFrame->mapFromGlobal(QCursor::pos());
+    if (ui->editRecordFrame->isVisible()) {
+        if (globalPos.x() > ui->editRecordFrame->width() || globalPos.x() < 0 || globalPos.y() > ui->editRecordFrame->height() || globalPos.y() < 0) {
+            ui->editRecordFrame->setVisible(false);
         }
     }
 }
