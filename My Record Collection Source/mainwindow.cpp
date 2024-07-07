@@ -298,7 +298,7 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
         json.writeRecords(&allMyRecords);
         ui->searchRecord_InfoLabel->setText("Added to My Collection");
     } else { // New record is duplicate
-        ui->searchRecord_InfoLabel->setText("Record already in library");
+        ui->searchRecord_InfoLabel->setText("Record already in collection");
     }
 }
 
