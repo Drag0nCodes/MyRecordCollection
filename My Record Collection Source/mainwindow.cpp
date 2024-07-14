@@ -30,6 +30,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setFixedSize(QSize(1000, 810));
     setWindowTitle("My Record Collection");
+    setFocus(this, Qt::ClickFocus); // Set all widgets to have click focus
+    ui->myRecord_Table->setFocusPolicy(Qt::NoFocus); // Set tables to have NoFocus policy so there is no dotted line around the selected cell
+    ui->searchRecord_Table->setFocusPolicy(Qt::NoFocus);
 
     QFont font("Arial");
     font.setPixelSize(14);
@@ -758,7 +761,7 @@ void MainWindow::on_settings_actionToggleTheme_triggered() // Toggle theme menu 
 }
 
 
-void MainWindow::on_actionSelect_File_and_Run_triggered() // Import discogs file menu button clicked
+void MainWindow::on_actionSelect_File_and_Import_triggered() // Import discogs file menu button clicked
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection - My Record Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
 
@@ -847,7 +850,7 @@ void MainWindow::on_actionDelete_All_User_Data_triggered() // Delete all user da
 }
 
 
-void MainWindow::on_myRecord_ResetTagsFilterButton_clicked() // "Reset" tags button clicked
+void MainWindow::on_myRecord_ResetTagsFilterButton_clicked() // "Reset" tags filter button clicked
 {
     for (int i = 0; i < tags.size(); i++){
         tags.at(i).setChecked(false);
@@ -899,7 +902,7 @@ void MainWindow::updateTagCount(){ // Update the counts for all TagList objects
 }
 
 
-void MainWindow::showContextMenu(const QPoint &pos)
+void MainWindow::showContextMenu(const QPoint &pos) // Show context menu when right clicking a record in My Collection
 {
     QPoint globalPos = ui->myRecord_Table->viewport()->mapToGlobal(pos);
 
@@ -908,28 +911,31 @@ void MainWindow::showContextMenu(const QPoint &pos)
     }
 }
 
-void MainWindow::toggleEditRecordFrame()
+void MainWindow::setFocus(QWidget* parent, enum Qt::FocusPolicy focus) { // Recursively set all widgets to have a specific focus policy
+    if (!parent) return;
+
+    const QObjectList& children = parent->children();
+    for (QObject* child : children) {
+        QWidget* childWidget = qobject_cast<QWidget*>(child);
+        if (childWidget) {
+            childWidget->setFocusPolicy(focus);
+            setFocus(childWidget, focus); // Recursively set
+        }
+    }
+}
+
+void MainWindow::toggleEditRecordFrame() // Toggle view of edit record frame
 {
     if (ui->editRecordFrame->isVisible()) {
         ui->editFrameBlockerFrame->setVisible(false);
     }
     else {
         ui->editFrameBlockerFrame->setVisible(true);
+        ui->editRecord_TitleEdit->setFocus(); // So that arrow keys cannot change selection on My Record table
     }
 }
 
-
-void MainWindow::on_editRecord_DoneButton_clicked()
+void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
 {
     ui->editFrameBlockerFrame->setVisible(false);
 }
-
-void MainWindow::checkClickEditRecordFrame(){
-    QPoint globalPos = ui->editRecordFrame->mapFromGlobal(QCursor::pos());
-    if (ui->editRecordFrame->isVisible()) {
-        if (globalPos.x() > ui->editRecordFrame->width() || globalPos.x() < 0 || globalPos.y() > ui->editRecordFrame->height() || globalPos.y() < 0) {
-            ui->editRecordFrame->setVisible(false);
-        }
-    }
-}
-

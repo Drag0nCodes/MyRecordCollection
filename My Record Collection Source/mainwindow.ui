@@ -66,6 +66,9 @@
       <property name="editTriggers">
        <set>QAbstractItemView::NoEditTriggers</set>
       </property>
+      <property name="tabKeyNavigation">
+       <bool>false</bool>
+      </property>
       <property name="alternatingRowColors">
        <bool>true</bool>
       </property>
@@ -79,6 +82,9 @@
        <enum>Qt::ElideLeft</enum>
       </property>
       <property name="verticalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
+      <property name="horizontalScrollMode">
        <enum>QAbstractItemView::ScrollPerPixel</enum>
       </property>
       <property name="showGrid">
@@ -328,6 +334,9 @@
       </property>
       <property name="text">
        <string>Pick a Record For Me</string>
+      </property>
+      <property name="checkable">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="myRecord_InfoLabel">
@@ -946,7 +955,8 @@ Collection</string>
       <string>Import Discogs Collection</string>
      </property>
      <addaction name="importDiscogsAddTagsOpt"/>
-     <addaction name="actionSelect_File_and_Run"/>
+     <addaction name="separator"/>
+     <addaction name="actionSelect_File_and_Import"/>
     </widget>
     <addaction name="settings_actionToggleTheme"/>
     <addaction name="menuImport_Discogs_Collection"/>
@@ -1001,17 +1011,17 @@ Collection</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Add Tags (Toggle)</string>
-   </property>
-  </action>
-  <action name="actionSelect_File_and_Run">
-   <property name="text">
-    <string>Select File and Import</string>
+    <string>Add Suggested Tags</string>
    </property>
   </action>
   <action name="actionDelete_All_User_Data">
    <property name="text">
     <string>Delete All User Data</string>
+   </property>
+  </action>
+  <action name="actionSelect_File_and_Import">
+   <property name="text">
+    <string>Select File and Import</string>
    </property>
   </action>
  </widget>

@@ -58,7 +58,7 @@ private slots:
 
     void on_settings_actionToggleTheme_triggered();
 
-    void on_actionSelect_File_and_Run_triggered();
+    void on_actionSelect_File_and_Import_triggered();
 
     void on_actionDelete_All_User_Data_triggered();
 
@@ -104,5 +104,6 @@ private:
     void removeTableRecord();
     void toggleEditRecordFrame();
     void checkClickEditRecordFrame();
+    void setFocus(QWidget* parent, enum Qt::FocusPolicy focus);
 };
 #endif // MAINWINDOW_H
