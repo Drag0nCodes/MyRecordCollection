@@ -38,8 +38,10 @@ MainWindow::MainWindow(QWidget *parent)
     font.setPixelSize(14);
 
     // Fill the records vectors and tag vector
-    allMyRecords = json.getRecords();
-    recordsList = allMyRecords;
+    allMyRecords = json.getRecords(0);
+    for (Record& rec : allMyRecords){
+        recordsList.push_back(&rec);
+    }
     tags = json.getTags();
     prefs = json.getPrefs();
     sortTagsAlpha(&tags);
@@ -79,12 +81,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Setup context menu for my records table
     myRecordContextMenu = new QMenu(this);
-    QAction *contextActionRemove = new QAction("Remove", this);
-    myRecordContextMenu->addAction(contextActionRemove);
-    connect(contextActionRemove, &QAction::triggered, this, &MainWindow::removeTableRecord);
     QAction *contextActionEdit= new QAction("Edit", this);
     myRecordContextMenu->addAction(contextActionEdit);
     connect(contextActionEdit, &QAction::triggered, this, &MainWindow::toggleEditRecordFrame);
+    QAction *contextActionRemove = new QAction("Remove", this);
+    myRecordContextMenu->addAction(contextActionRemove);
+    connect(contextActionRemove, &QAction::triggered, this, &MainWindow::removeTableRecord);
     connect(ui->myRecord_Table, &QTableWidget::customContextMenuRequested, this, &MainWindow::showContextMenu);
 
     // Set editRecordsFrame options
@@ -182,12 +184,12 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
     ui->myRecord_Table->setRowCount(recordsList.size());
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert record's text info into table
-        QTableWidgetItem *nameItem = new QTableWidgetItem(recordsList.at(recordNum).getName());
-        QTableWidgetItem *artistItem = new QTableWidgetItem(recordsList.at(recordNum).getArtist());
-        QTableWidgetItem *ratingItem = new QTableWidgetItem(QString::number(recordsList.at(recordNum).getRating()));
+        QTableWidgetItem *nameItem = new QTableWidgetItem(recordsList.at(recordNum)->getName());
+        QTableWidgetItem *artistItem = new QTableWidgetItem(recordsList.at(recordNum)->getArtist());
+        QTableWidgetItem *ratingItem = new QTableWidgetItem(QString::number(recordsList.at(recordNum)->getRating()));
 
         QString tagString = "";
-        for (QString tag : recordsList.at(recordNum).getTags()) {
+        for (QString tag : recordsList.at(recordNum)->getTags()) {
             if (tagString.isEmpty()) tagString += tag;
             else tagString += ", " + tag;
         }
@@ -202,7 +204,7 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
     }
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert record's covers into table
-        QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + recordsList.at(recordNum).getCover());
+        QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + recordsList.at(recordNum)->getCover());
         if (image.isNull()) image = QPixmap(dir.absolutePath() + "/resources/images/missingImg.jpg");
         image = image.scaled(130, 130, Qt::KeepAspectRatio);
 
@@ -221,12 +223,12 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
 void MainWindow::updateMyRecordsInfo(){ // Update my records list (not images)
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){
-        QTableWidgetItem *nameItem = new QTableWidgetItem(recordsList.at(recordNum).getName());
-        QTableWidgetItem *artistItem = new QTableWidgetItem(recordsList.at(recordNum).getArtist());
-        QTableWidgetItem *ratingItem = new QTableWidgetItem(QString::number(recordsList.at(recordNum).getRating()));
+        QTableWidgetItem *nameItem = new QTableWidgetItem(recordsList.at(recordNum)->getName());
+        QTableWidgetItem *artistItem = new QTableWidgetItem(recordsList.at(recordNum)->getArtist());
+        QTableWidgetItem *ratingItem = new QTableWidgetItem(QString::number(recordsList.at(recordNum)->getRating()));
 
         QString tagString = "";
-        for (QString tag : recordsList.at(recordNum).getTags()) {
+        for (QString tag : recordsList.at(recordNum)->getTags()) {
             if (tagString.isEmpty()) tagString += tag;
             else tagString += ", " + tag;
         }
@@ -263,6 +265,7 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
         Record addRecord = results.at(ui->searchRecord_Table->currentRow()); // Get the selected record to add
         addRecord.setCover(json.downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
         addRecord.setRating(ui->searchRecord_RatingSlider->sliderPosition()); // Set records rating
+        addRecord.setId(allMyRecords.size());
 
         for (int i = 0; i < suggestedTags.size(); i++){
             if (suggestedTags.at(i).getChecked()) {
@@ -309,16 +312,17 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
 void MainWindow::removeTableRecord() // Remove record from my collection
 {
     if (selectedMyRecord){
-        json.deleteCover(recordsList.at(ui->myRecord_Table->currentRow()).getCover());
+        json.deleteCover(recordsList.at(ui->myRecord_Table->currentRow())->getCover());
+        qint64 deleteId = recordsList.at(ui->myRecord_Table->currentRow())->getId();
 
-        for (int i = 0; i < allMyRecords.size(); i++){
-            if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){ // Find and remove from allMyRecords and recordsList
-                allMyRecords.erase(allMyRecords.begin() + i);
-                recordsList.erase(recordsList.begin() + ui->myRecord_Table->currentRow());
-                break;
-            }
+        for (int i = deleteId+1; i < allMyRecords.size(); i++){
+            allMyRecords.at(i).setId(i-1);
         }
 
+        allMyRecords.erase(allMyRecords.begin() + deleteId);
+        recordsList.erase(recordsList.begin() + ui->myRecord_Table->currentRow());
+
+        updateRecordsListOrder(); // Update the vector with the record collection table elements
         updateTagCount();
         updateTagList();
         updateMyRecordsTable();
@@ -343,7 +347,7 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
 
     if (currentRow >= 0 && currentRow < recordsList.size()) { // Valid selection made of myRecords
         ui->editRecord_RatingSlider->setDisabled(false);
-        ui->editRecord_RatingSlider->setSliderPosition(recordsList.at(ui->myRecord_Table->currentRow()).getRating());
+        ui->editRecord_RatingSlider->setSliderPosition(recordsList.at(ui->myRecord_Table->currentRow())->getRating());
         ui->editRecord_EditTagsList->setDisabled(false);
         selectedMyRecord = true;
 
@@ -358,7 +362,7 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
         QIcon checked(dir.absolutePath() + "/resources/images/check.png");
         QIcon unchecked(dir.absolutePath() + "/resources/images/uncheck.png");
         for (ListTag tag : tags){
-            if (recordsList.at(ui->myRecord_Table->currentRow()).hasTag(tag.getName())){
+            if (recordsList.at(ui->myRecord_Table->currentRow())->hasTag(tag.getName())){
                 ui->editRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
             }
             else {
@@ -367,10 +371,10 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
         }
 
         // Update editRecordsFrame
-        ui->editRecord_ArtistEdit->setText(recordsList.at(ui->myRecord_Table->currentRow()).getArtist());
-        ui->editRecord_TitleEdit->setText(recordsList.at(ui->myRecord_Table->currentRow()).getName());
+        ui->editRecord_ArtistEdit->setText(recordsList.at(ui->myRecord_Table->currentRow())->getArtist());
+        ui->editRecord_TitleEdit->setText(recordsList.at(ui->myRecord_Table->currentRow())->getName());
 
-        QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + recordsList.at(ui->myRecord_Table->currentRow()).getCover());
+        QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + recordsList.at(ui->myRecord_Table->currentRow())->getCover());
         if (image.isNull()) image = QPixmap(dir.absolutePath() + "/resources/images/missingImg.jpg");
         image = image.scaled(120, 120, Qt::KeepAspectRatio);
         ui->editRecord_CoverLabel->setPixmap(image);
@@ -396,43 +400,19 @@ void MainWindow::on_searchRecord_Table_currentCellChanged(int currentRow, int cu
 }
 
 
-void MainWindow::on_editRecord_RatingSlider_valueChanged(int value) // Change record rating
-{
-    if (selectedMyRecord){
-        for (int i = 0; i < allMyRecords.size(); i++){
-            if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){
-                // If selected record in list matches record in allMyRecords
-                QString saveCover = allMyRecords.at(i).getCover();
-                allMyRecords.at(i).setRating(value); // Set its rating in allMyRecords
-                recordsList.at(ui->myRecord_Table->currentRow()).setRating(value); // Set its rating in shown records
-                updateRecordsListOrder(); // Update tables
-                updateMyRecordsTable();
-                for (int j = 0; j < recordsList.size(); j++){ // Set the current row to the already selected record
-                    if (recordsList.at(j).getCover().compare(saveCover) == 0){
-                        ui->myRecord_Table->setCurrentCell(j, 0);
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-        json.writeRecords(&allMyRecords); // Save new rating to json
-    }
-}
-
-
 void MainWindow::on_myRecord_SearchBar_textChanged() // Search my records
 {
+    recordsList.clear();
     if (ui->myRecord_SearchBar->text().isEmpty()){
-        recordsList = allMyRecords;
+        for (Record& rec : allMyRecords){
+            recordsList.push_back(&rec);
+        }
     }
     else {
-        std::vector<Record> newRecords;
-        for (Record record : allMyRecords){
-            if (record.contains(ui->myRecord_SearchBar->text())) {
-                newRecords.push_back(record);
+        for (int i = 0; i < allMyRecords.size(); i++){
+            if (allMyRecords.at(i).contains(ui->myRecord_SearchBar->text())) {
+                recordsList.push_back(&allMyRecords[i]);
             }
-            recordsList = newRecords;
         }
     }
     on_myRecord_SortBox_activated(prefs.getSort());
@@ -471,7 +451,7 @@ void MainWindow::on_editRecord_EditTagsList_itemClicked(QListWidgetItem *item) /
     if (selectedMyRecord){
         int tableRow = ui->myRecord_Table->currentRow();
         for (int i = 0; i < allMyRecords.size(); i++){
-            if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow()).getCover()) == 0){
+            if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow())->getCover()) == 0){
                 // If selected record in list matches record in allMyRecords
                 std::vector<QString> recordTags = allMyRecords.at(i).getTags();
                 int rowSave = ui->editRecord_EditTagsList->currentRow();
@@ -481,14 +461,14 @@ void MainWindow::on_editRecord_EditTagsList_itemClicked(QListWidgetItem *item) /
                     ui->editRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), item->text()));
                     ui->editRecord_EditTagsList->sortItems();
                     tags.at(rowSave).decCount();
-                    recordsList.at(ui->myRecord_Table->currentRow()).removeTag(item->text()); // Remove tag from record object
+                    recordsList.at(ui->myRecord_Table->currentRow())->removeTag(item->text()); // Remove tag from record object
                 }
                 else { // Adding tag, set the check box to checked
                     ui->editRecord_EditTagsList->takeItem(rowSave);
                     ui->editRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), item->text()));
                     ui->editRecord_EditTagsList->sortItems();
                     tags.at(rowSave).incCount();
-                    recordsList.at(ui->myRecord_Table->currentRow()).addTag(item->text()); // Add tag to record object
+                    recordsList.at(ui->myRecord_Table->currentRow())->addTag(item->text()); // Add tag to record object
                 }
                 ui->editRecord_EditTagsList->setCurrentRow(rowSave); // Set the edit tags list row back to what it was
 
@@ -564,7 +544,10 @@ void MainWindow::on_editRecord_ManageTagButton_clicked() // Open and handle mana
             }
         }
 
-        recordsList = allMyRecords;
+        recordsList.clear();
+        for (Record& rec : allMyRecords){
+            recordsList.push_back(&rec);
+        }
         updateRecordsListOrder();
         updateTagList();
         if (!deletedTags.empty()) { // A tag was deleted
@@ -581,8 +564,8 @@ void MainWindow::on_editRecord_ManageTagButton_clicked() // Open and handle mana
 void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correct records and order based on the options given (tags and sort) (Does not visably update the table)
 
     // Only show records with selected tags
-    std::vector<Record> newRecordsList; // New vector to hold records than have required tags
-    for (Record record : allMyRecords){
+    std::vector<Record*> newRecordsList; // New vector to hold records than have required tags
+    for (Record& record : allMyRecords){
         bool matches = true;
         for (int i = 0; i < tags.size(); i++){
             if (tags.at(i).getChecked() && !record.hasTag(tags.at(i).getName())){ // Record should have tag but does not
@@ -590,92 +573,116 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             }
         }
         if ((ui->myRecord_SearchBar->text().isEmpty() && matches) || (record.contains(ui->myRecord_SearchBar->text()) && matches)) { // Record has required tags and matches search bar
-            newRecordsList.push_back(record);
+            newRecordsList.push_back(&record);
         }
     }
 
-    std::vector<Record> sortedRecords;
+    std::vector<Record*> sortedRecords;
 
     // Show records in order according to dropdown
     switch (ui->myRecord_SortBox->currentIndex()) {
     case 0: // Oldest to newest
-        recordsList = newRecordsList;
+        recordsList.clear();
+        for (Record *rec : newRecordsList){
+            recordsList.push_back(rec);
+        }
         break;
     case 1: // Newest to oldest
         std::reverse(newRecordsList.begin(),newRecordsList.end());
-        recordsList = newRecordsList;
+        recordsList.clear();
+        for (Record *rec : newRecordsList){
+            recordsList.push_back(rec);
+        }
         break;
     case 2: // Title ascending
         while (!newRecordsList.empty()){
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest).getName().toLower().compare(newRecordsList.at(i).getName().toLower()) > 0){
+                if (newRecordsList.at(littlest)->getName().toLower().compare(newRecordsList.at(i)->getName().toLower()) > 0){
                     littlest = i;
                 }
             }
             sortedRecords.push_back(newRecordsList.at(littlest));
             newRecordsList.erase(newRecordsList.begin()+littlest);
         }
-        recordsList = sortedRecords;
+        recordsList.clear();
+        for (Record *rec : sortedRecords){
+            recordsList.push_back(rec);
+        }
         break;
     case 3: // Title descending
         while (!newRecordsList.empty()){
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest).getName().toLower().compare(newRecordsList.at(i).getName().toLower()) < 0){
+                if (newRecordsList.at(littlest)->getName().toLower().compare(newRecordsList.at(i)->getName().toLower()) < 0){
                     littlest = i;
                 }
             }
             sortedRecords.push_back(newRecordsList.at(littlest));
             newRecordsList.erase(newRecordsList.begin()+littlest);
         }
-        recordsList = sortedRecords;
+        recordsList.clear();
+        for (Record *rec : sortedRecords){
+            recordsList.push_back(rec);
+        }
         break;
     case 4: // Artist ascending
         while (!newRecordsList.empty()){
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest).getArtist().toLower().compare(newRecordsList.at(i).getArtist().toLower()) > 0){
+                if (newRecordsList.at(littlest)->getArtist().toLower().compare(newRecordsList.at(i)->getArtist().toLower()) > 0){
                     littlest = i;
                 }
             }
             sortedRecords.push_back(newRecordsList.at(littlest));
             newRecordsList.erase(newRecordsList.begin()+littlest);
         }
-        recordsList = sortedRecords;
+        recordsList.clear();
+        for (Record *rec : sortedRecords){
+            recordsList.push_back(rec);
+        }
         break;
     case 5: // Artist descending
         while (!newRecordsList.empty()){
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest).getArtist().toLower().compare(newRecordsList.at(i).getArtist().toLower()) < 0){
+                if (newRecordsList.at(littlest)->getArtist().toLower().compare(newRecordsList.at(i)->getArtist().toLower()) < 0){
                     littlest = i;
                 }
             }
             sortedRecords.push_back(newRecordsList.at(littlest));
             newRecordsList.erase(newRecordsList.begin()+littlest);
         }
-        recordsList = sortedRecords;
+        recordsList.clear();
+        for (Record *rec : sortedRecords){
+            recordsList.push_back(rec);
+        }
         break;
     case 6: // Rating ascending
         for (int i = 0; i <= 10; i++){
-            for (Record record : newRecordsList){
-                if (record.getRating() == i) sortedRecords.push_back(record);
+            for (Record *record : newRecordsList){
+                if (record->getRating() == i) sortedRecords.push_back(record);
             }
         }
-        recordsList = sortedRecords;
+        recordsList.clear();
+        for (Record *rec : sortedRecords){
+            recordsList.push_back(rec);
+        }
         break;
     case 7: // Rating ascending
         for (int i = 10; i >= 0; i--){
-            for (Record record : newRecordsList){
-                if (record.getRating() == i) sortedRecords.push_back(record);
+            for (Record *record : newRecordsList){
+                if (record->getRating() == i) sortedRecords.push_back(record);
             }
         }
-        recordsList = sortedRecords;
+        recordsList.clear();
+        for (Record *rec : sortedRecords){
+            recordsList.push_back(rec);
+        }
         break;
     }
 }
@@ -895,8 +902,8 @@ void MainWindow::on_importDiscogsAddTagsOpt_triggered() // Add tags to discogs i
 void MainWindow::updateTagCount(){ // Update the counts for all TagList objects
     for (int i = 0; i < tags.size(); i++){ // For each tag
         tags.at(i).setCount(0); // Reset count
-        for (Record record : recordsList){ // For each record, compare record tags and add to count if matching ListTag
-            if (record.hasTag(tags.at(i).getName())) tags.at(i).incCount();
+        for (Record *record : recordsList){ // For each record, compare record tags and add to count if matching ListTag
+            if (record->hasTag(tags.at(i).getName())) tags.at(i).incCount();
         }
     }
 }
@@ -928,9 +935,16 @@ void MainWindow::toggleEditRecordFrame() // Toggle view of edit record frame
 {
     if (ui->editRecordFrame->isVisible()) {
         ui->editFrameBlockerFrame->setVisible(false);
+        ui->myRecord_Table->setFocus();
+        setFocus(ui->editRecordFrame, Qt::ClickFocus);
     }
     else {
         ui->editFrameBlockerFrame->setVisible(true);
+        ui->editRecord_TitleEdit->setFocusPolicy(Qt::StrongFocus);
+        ui->editRecord_ArtistEdit->setFocusPolicy(Qt::StrongFocus);
+        ui->editRecord_EditTagsList->setFocusPolicy(Qt::StrongFocus);
+        ui->editRecord_ManageTagButton->setFocusPolicy(Qt::StrongFocus);
+        ui->editRecord_RatingSlider->setFocusPolicy(Qt::StrongFocus);
         ui->editRecord_TitleEdit->setFocus(); // So that arrow keys cannot change selection on My Record table
     }
 }
@@ -938,4 +952,49 @@ void MainWindow::toggleEditRecordFrame() // Toggle view of edit record frame
 void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
 {
     ui->editFrameBlockerFrame->setVisible(false);
+    ui->myRecord_Table->setFocus(); // Prevent done button still being focused
+    setFocus(ui->editRecordFrame, Qt::ClickFocus);
+    qint64 id = recordsList.at(ui->myRecord_Table->currentRow())->getId(); // id of record being edited
+
+    // Update records info with new info
+    allMyRecords[id].setName(ui->editRecord_TitleEdit->text());
+    allMyRecords[id].setArtist(ui->editRecord_ArtistEdit->text());
+    allMyRecords[id].setRating(ui->editRecord_RatingSlider->value());
+
+    updateRecordsListOrder();
+    updateMyRecordsTable();
+    json.writeRecords(&allMyRecords);
+    for (int i = 0; i < recordsList.size(); i++){ // Set table to same record is selected
+        if (recordsList[i]->getId() == id){
+            ui->myRecord_Table->setCurrentCell(i, 0);
+            break;
+        }
+    }
 }
+
+void MainWindow::on_myRecord_customRecordButton_clicked()
+{
+    allMyRecords.push_back(Record("Custom Record", "", "", 0, allMyRecords.size()));
+    updateRecordsListOrder();
+    updateMyRecordsTable();
+    json.writeRecords(&allMyRecords);
+    for (int i = 0; i < recordsList.size(); i++){ // Set table to same record is selected
+        if (recordsList[i]->getId() == recordsList.size()-1){
+            ui->myRecord_Table->setCurrentCell(i, 0);
+            break;
+        }
+    }
+}
+
+
+void MainWindow::on_editRecord_ArtistEdit_returnPressed()
+{
+    on_editRecord_DoneButton_clicked();
+}
+
+
+void MainWindow::on_editRecord_TitleEdit_returnPressed()
+{
+    on_editRecord_DoneButton_clicked();
+}
+

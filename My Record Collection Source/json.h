@@ -11,7 +11,7 @@ class Json
 {
 public:
     Json(QObject *parent = nullptr) {}
-    std::vector<Record> getRecords();
+    std::vector<Record> getRecords(int recordCount);
     std::vector<Record> searchRecords(QString search, int limit);
     void writeRecords(std::vector<Record>* myRecords);
     std::vector<ListTag> getTags();

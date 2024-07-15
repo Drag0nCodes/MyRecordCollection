@@ -10,7 +10,9 @@
 #include <QEventLoop>
 #include <iostream>
 
-std::vector<Record> Json::getRecords(){
+const int CURRVERSION = 3; // The current version of all JSON versions
+
+std::vector<Record> Json::getRecords(int recordCount){
     std::vector<Record> allRecords;
     try{
         QString jsonStr;
@@ -26,24 +28,47 @@ std::vector<Record> Json::getRecords(){
                 QJsonDocument myDoc = QJsonDocument::fromJson(jsonStr.toUtf8());
                 QJsonObject root = myDoc.object();
                 int jsonVersion = root.value("_json_version").toInt();
+                if (jsonVersion > CURRVERSION) { // .json file version newer than app supports
+                    allRecords.push_back(Record("\"resources/user data\" files not supported on this app version. User data is version " + QString::number(jsonVersion) + ". This app supports up to version " + QString::number(CURRVERSION) + ".", "Please update to a more recent version.", "", NULL, 0));
+                    return allRecords;
+                }
+
                 QJsonArray recs = root.value("records").toArray();
+
+                QJsonObject val;
+                QString name;
+                QString artist;
+                QString cover;
+                qint64 rating;
+                std::vector<QString> tags;
+                qint64 id;
 
                 if (recs.empty()){
                     std::cerr << "JSON error, myArr empty" << std::endl;
                 } else {
                     for (int i = 0; i < recs.size(); i++){
-                        QJsonObject val = recs.at(i).toObject();
-                        QString name = val.value("name").toString();
-                        QString artist = val.value("artist").toString();
-                        QString cover = val.value("cover").toString();
-                        qint64 rating = val.value("rating").toInteger();
+                        val = recs.at(i).toObject();
+                        if (jsonVersion <= 2) { // If json is version 2 or later, create an id for each record
+                            id = recordCount + i;
+                        }
+                        else {
+                            id = val.value("id").toInt();
+                        }
+                        name = val.value("name").toString();
+                        artist = val.value("artist").toString();
+                        cover = val.value("cover").toString();
+                        rating = val.value("rating").toInt();
+
                         QJsonArray tagArr = val.value("tags").toArray();
-                        std::vector<QString> tags;
+                        tags.clear();
                         for (int j = 0; j < tagArr.size(); j++){
                             tags.push_back(tagArr.at(j).toString());
                         }
-                        allRecords.push_back(Record(name, artist, cover, tags, rating)); // Turn all JSON info into a Song object and add to vector
+                        allRecords.push_back(Record(name, artist, cover, tags, rating, id)); // Turn all JSON info into a Song object and add to vector
                     }
+                }
+                if (jsonVersion < CURRVERSION){ // If json is old version, rewrite it with new data
+                    writeRecords(&allRecords);
                 }
             }
         }else{ // Create file
@@ -84,7 +109,7 @@ std::vector<Record> Json::searchRecords(QString search, int limit) {
             QString artist = val.value("artist").toString();
             QJsonArray coversArr = val.value("image").toArray();
             QString coverUrl = coversArr.at(2).toObject().value("#text").toString();
-            records.push_back(Record(name, artist, coverUrl, 0));
+            records.push_back(Record(name, artist, coverUrl, 0, 0));
         }
     }
 
@@ -103,13 +128,14 @@ void Json::writeRecords(std::vector<Record>* myRecords){
             QJsonDocument doc;
             QJsonObject root; // Array of all Record object information
             QJsonArray recs; // Array of all records
-            root.insert("_json_version", 2);
+            root.insert("_json_version", CURRVERSION);
             for (Record rec : *myRecords){ // Add information of each record to a JsonObject and add to the JsonArray
                 QJsonObject recObj; // The record object json
                 recObj.insert("name", rec.getName());
                 recObj.insert("artist", rec.getArtist());
                 recObj.insert("cover", rec.getCover());
                 recObj.insert("rating", rec.getRating());
+                recObj.insert("id", rec.getId());
                 QJsonArray tags;
                 for (QString tag : rec.getTags()){
                     tags.insert(tags.size(), tag);
@@ -140,16 +166,20 @@ std::vector<ListTag> Json::getTags(){
                 QJsonDocument myDoc = QJsonDocument::fromJson(jsonStr.toUtf8());
                 QJsonObject root = myDoc.object();
                 int jsonVersion = root.value("_json_version").toInt();
+                if (jsonVersion > CURRVERSION) { // .json file version newer than app supports
+                    return allTags;
+                }
 
-                if (jsonVersion == 2) {
-                    QJsonArray tags = root.value("tags").toArray();
-                    if (tags.empty()){
-                        std::cerr << "JSON error, myArr empty" << std::endl;
-                    } else {
-                        for (int i = 0; i < tags.size(); i++){
-                            allTags.push_back(ListTag(tags.at(i).toString()));
-                        }
+                QJsonArray tags = root.value("tags").toArray();
+                if (tags.empty()){
+                    std::cerr << "JSON error, myArr empty" << std::endl;
+                } else {
+                    for (int i = 0; i < tags.size(); i++){
+                        allTags.push_back(ListTag(tags.at(i).toString()));
                     }
+                }
+                if (jsonVersion < CURRVERSION){ // If json is old version, rewrite it with new data
+                    writeTags(&allTags);
                 }
             }
         }else{// Create file
@@ -174,7 +204,7 @@ void Json::writeTags(std::vector<ListTag>* tags){
             QJsonDocument doc;
             QJsonObject root; // Array of all tags
             QJsonArray tagsArr;
-            root.insert("_json_version", 2);
+            root.insert("_json_version", CURRVERSION);
             for (ListTag tag : *tags) tagsArr.append(tag.getName());
             // Add names of each tag to JsonArray
             root.insert("tags", tagsArr);
@@ -255,7 +285,7 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
                         }
 
                         tags.push_back(ListTag(genre.replace("&nbsp;", " "))); // Add the genre tag to the vector that will be returned. If it has "&nbsp;" remove that,
-                    }
+                        }
                 }
             }
         }
@@ -336,10 +366,19 @@ Prefs Json::getPrefs(){
                 QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toUtf8());
                 QJsonObject root = doc.object();
                 int jsonVersion = root.value("_json_version").toInt();
-
-                if (jsonVersion == 2) {
-                    return Prefs(root.value("sortBy").toInt(), root.value("darkTheme").toBool()); // Return a Prefs object with the read information
+                if (jsonVersion > CURRVERSION) { // .json file version newer than app supports
+                    return Prefs(0, true);
                 }
+
+                int sortBy = root.value("sortBy").toInt();
+                bool theme = root.value("darkTheme").toBool();
+
+                Prefs prefs = Prefs(sortBy, theme);
+
+                if (jsonVersion < CURRVERSION){ // If json is old version, rewrite it with new data
+                    writePrefs(&prefs);
+                }
+                return prefs;
             }
         }else{ // Create a prefs file with default vals
             if (myFile.open(QIODevice::WriteOnly | QIODevice::Text)){
@@ -365,7 +404,7 @@ void Json::writePrefs(Prefs *prefs){
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Text)){ // Write all prefs to JSON
             QJsonDocument doc;
             QJsonObject root;
-            root.insert("_json_version", 2);
+            root.insert("_json_version", CURRVERSION);
             root.insert("darkTheme", prefs->getDark()); // Add preferences to json object
             root.insert("sortBy", prefs->getSort());
             doc.setObject(root);

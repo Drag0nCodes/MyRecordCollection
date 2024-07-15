@@ -88,7 +88,7 @@ void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) {
                     }
                 }
                 if (!copy){ // Record is not in collection
-                    Record returningRec(newName, newArtist, json.downloadCover(coverUrl), newRating);
+                    Record returningRec(newName, newArtist, json.downloadCover(coverUrl), newRating, 0); //FIX TO HAVE UNIQUE VALUE
                     if (addTags){
                         std::vector<ListTag> tags = json.wikiTags(newName, newArtist);
                         for (ListTag tag : tags){
@@ -161,13 +161,13 @@ void ImportDiscogs::importSingle() {
         if (record.getCover().compare(searchPageRecordCover) == 0 || (record.getName().toLower().compare(newName.toLower()) == 0 && record.getArtist().toLower().compare(newArtist.toLower()) == 0)){
             copy = true; // If the (new cover matches cover filenames) or (the album name and artist match) with a record already in the collection, do not add it again
             std::cerr << "Skipping from adding: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-            processedRec = new Record("", "", "", -1);
+            processedRec = new Record("", "", "", -1, 0);
             break;
         }
     }
     if (!copy){ // Record is not in collection
         //std::cerr << "Ready to return: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-        processedRec = new Record(newName, newArtist, json->downloadCover(coverUrl), newRating); // Set return val to record pointer
+        processedRec = new Record(newName, newArtist, json->downloadCover(coverUrl), newRating, 0); // Set return val to record pointer
         if (addTags){
             std::vector<ListTag> tags = json->wikiTags(newName, newArtist);
             for (ListTag tag : tags){

@@ -2,19 +2,21 @@
 #include <sstream>
 #include <iostream>
 
-Record::Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating) {
+Record::Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id) {
     this->name = name;
     this->artist = artist;
     this->cover = cover;
     this->tags = tags; // Lower case
     this->rating = rating;
+    this->id = id;
 }
 
-Record::Record(QString name, QString artist, QString cover, qint64 rating) {
+Record::Record(QString name, QString artist, QString cover, qint64 rating, qint64 id) {
     this->name = name;
     this->artist = artist;
     this->cover = cover;
     this->rating = rating;
+    this->id = id;
 }
 
 QString Record::getName(){
@@ -106,6 +108,16 @@ bool Record::contains(QString search) {
         std::cerr << "Exception caught - contains method: ";
     }
     return false;
+}
+
+void Record::setId(qint64 id)
+{
+    this->id = id;
+}
+
+qint64 Record::getId()
+{
+    return id;
 }
 
 bool Record::hasTag(QString tag){

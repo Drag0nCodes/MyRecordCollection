@@ -36,8 +36,6 @@ private slots:
 
     void on_searchRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
 
-    void on_editRecord_RatingSlider_valueChanged(int value);
-
     void on_myRecord_SearchBar_textChanged();
 
     void on_myRecord_SortBox_activated(int index);
@@ -74,9 +72,11 @@ private slots:
 
     void on_editRecord_DoneButton_clicked();
 
-    void onWidgetClicked() {
-        printf("nasd");
-    }
+    void on_myRecord_customRecordButton_clicked();
+
+    void on_editRecord_ArtistEdit_returnPressed();
+
+    void on_editRecord_TitleEdit_returnPressed();
 
 private:
     Ui::MainWindow *ui;
@@ -94,7 +94,7 @@ private:
     Prefs prefs;
     std::vector<Record> results; // Search records results
     std::vector<Record> allMyRecords; // All records in collection
-    std::vector<Record> recordsList; // Records shown on my collection table
+    std::vector<Record*> recordsList; // Records shown on my collection table
     std::vector<ListTag> tags; // All tags
     std::vector<ListTag> suggestedTags; // The list of suggested tags on the search records page
     bool selectedMyRecord = false; // If a record is selected on the my record page
