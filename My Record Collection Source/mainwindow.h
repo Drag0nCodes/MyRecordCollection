@@ -78,6 +78,8 @@ private slots:
 
     void on_editRecord_TitleEdit_returnPressed();
 
+    void on_editRecord_CoverEdit_clicked();
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);

@@ -541,9 +541,9 @@ Collection</string>
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>430</y>
+        <y>435</y>
         <width>191</width>
-        <height>20</height>
+        <height>41</height>
        </rect>
       </property>
       <property name="font">
@@ -556,7 +556,7 @@ Collection</string>
        <string/>
       </property>
       <property name="alignment">
-       <set>Qt::AlignCenter</set>
+       <set>Qt::AlignHCenter|Qt::AlignTop</set>
       </property>
      </widget>
      <widget class="QLabel" name="searchRecord_RatingLabel">
@@ -947,6 +947,19 @@ Collection</string>
       </property>
       <property name="text">
        <string>Artist:</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="editRecord_CoverEdit">
+      <property name="geometry">
+       <rect>
+        <x>270</x>
+        <y>155</y>
+        <width>83</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Change</string>
       </property>
      </widget>
     </widget>

@@ -303,6 +303,7 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
         }
     }
     QString savePath = dir.absolutePath() + "/resources/user data/covers/" + fileName;
+    QFileInfo fileInfo(savePath);
 
     QNetworkAccessManager manager;
 
@@ -317,10 +318,16 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
         QByteArray imageData = reply->readAll();
 
         // Ensure savePath directory exists
-        QFileInfo fileInfo(savePath);
         QDir().mkpath(fileInfo.path());
 
-        QFile file(savePath);
+        int fileNum = 0;
+        QString fileName = fileInfo.baseName();
+        while (fileInfo.isFile()) { // While file already exists, add (1), (2), ... until unqiue file name is found
+            savePath = fileInfo.path() + "/" + fileName + " (" + QString::number(++fileNum) + ")." + fileInfo.suffix();
+            fileInfo = QFileInfo(savePath);
+        }
+
+        QFile file(fileInfo.absoluteFilePath());
         if (file.open(QIODevice::WriteOnly)) {
             file.write(imageData);
             file.close();
@@ -333,7 +340,7 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
     }
 
     reply->deleteLater();
-    return fileName;
+    return fileInfo.fileName(); // Return name of file saved
 }
 
 bool Json::deleteCover(const QString& coverName) { // Delete album cover from covers subfolder

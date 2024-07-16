@@ -129,7 +129,7 @@ QPixmap MainWindow::getPixmapFromUrl(const QUrl& imageUrl) { // Get Qt pixmap fr
     }
 
     delete reply;
-    return pixmap.scaled(130, 130, Qt::KeepAspectRatio);
+    return pixmap.scaled(130, 130, Qt::IgnoreAspectRatio);
 }
 
 
@@ -206,7 +206,7 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert record's covers into table
         QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + recordsList.at(recordNum)->getCover());
         if (image.isNull()) image = QPixmap(dir.absolutePath() + "/resources/images/missingImg.jpg");
-        image = image.scaled(130, 130, Qt::KeepAspectRatio);
+        image = image.scaled(130, 130, Qt::IgnoreAspectRatio);
 
         QTableWidgetItem *item = new QTableWidgetItem();
         item->setData(Qt::DecorationRole, image);
@@ -246,66 +246,55 @@ void MainWindow::updateMyRecordsInfo(){ // Update my records list (not images)
 void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched record to my collection
 {
     bool copy = false;
-    for (Record record : allMyRecords){ // Check all my records to see if cover matches requested add
-        QString searchPageRecordCover = results.at(ui->searchRecord_Table->currentRow()).getCover();
-        if (searchPageRecordCover.compare("") == 0) break;
-        for (int i = searchPageRecordCover.size()-1; i >= 0; i--) {
-            if (searchPageRecordCover[i] == '/') {
-                searchPageRecordCover.remove(0,i+1);
-                break;
-            }
-        }
-        if (record.getCover().compare(searchPageRecordCover) == 0){ // Match with new record and one already added
+    for (Record record : allMyRecords){ // Check all my records to see if name matches requested add, possible duplicate
+        if (record.getName().compare(results.at(ui->searchRecord_Table->currentRow()).getName()) == 0) {
             copy = true;
             break;
         }
     }
-    if (!copy){ // Record is new, add to allMyRecords
-        ui->searchRecord_InfoLabel->setText("");
-        Record addRecord = results.at(ui->searchRecord_Table->currentRow()); // Get the selected record to add
-        addRecord.setCover(json.downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
-        addRecord.setRating(ui->searchRecord_RatingSlider->sliderPosition()); // Set records rating
-        addRecord.setId(allMyRecords.size());
+    ui->searchRecord_InfoLabel->setText("");
+    Record addRecord = results.at(ui->searchRecord_Table->currentRow()); // Get the selected record to add
+    addRecord.setCover(json.downloadCover(addRecord.getCover())); // Change the new records cover address from URL to file name
+    addRecord.setRating(ui->searchRecord_RatingSlider->sliderPosition()); // Set records rating
+    addRecord.setId(allMyRecords.size());
 
-        for (int i = 0; i < suggestedTags.size(); i++){
-            if (suggestedTags.at(i).getChecked()) {
-                addRecord.addTag(ui->searchRecord_SuggestedTagsList->item(i)->text());
-            }
+    for (int i = 0; i < suggestedTags.size(); i++){
+        if (suggestedTags.at(i).getChecked()) {
+            addRecord.addTag(ui->searchRecord_SuggestedTagsList->item(i)->text());
         }
-
-        // Create new tags if they don't exist
-        for (QString newTag : addRecord.getTags()){
-            if (newTag.isEmpty()){ // Don't add a blank tag
-                // nothing
-            }
-            else {
-                bool dup = false;
-                for (ListTag oldTag : tags){ // check if tag already exists
-                    if (oldTag.getName().compare(newTag) == 0){
-                        dup = true;
-                        break;
-                    }
-                }
-                if (!dup) { // Add tag
-                    tags.push_back(ListTag(newTag));
-                    sortTagsAlpha(&tags);
-                    json.writeTags(&tags);
-                }
-            }
-        }
-
-        updateTagCount();
-        updateTagList();
-        json.writeTags(&tags);
-
-        allMyRecords.push_back(addRecord);
-        on_myRecord_SearchBar_textChanged();
-        updateMyRecordsTable();
-        json.writeRecords(&allMyRecords);
-        ui->searchRecord_InfoLabel->setText("Added to My Collection");
-    } else { // New record is duplicate
-        ui->searchRecord_InfoLabel->setText("Record already in collection");
     }
+
+    // Create new tags if they don't exist
+    for (QString newTag : addRecord.getTags()){
+        if (newTag.isEmpty()){ // Don't add a blank tag
+            // nothing
+        }
+        else {
+            bool dup = false;
+            for (ListTag oldTag : tags){ // check if tag already exists
+                if (oldTag.getName().compare(newTag) == 0){
+                    dup = true;
+                    break;
+                }
+            }
+            if (!dup) { // Add tag
+                tags.push_back(ListTag(newTag));
+                sortTagsAlpha(&tags);
+                json.writeTags(&tags);
+            }
+        }
+    }
+
+    updateTagCount();
+    updateTagList();
+    json.writeTags(&tags);
+
+    allMyRecords.push_back(addRecord);
+    on_myRecord_SearchBar_textChanged();
+    updateMyRecordsTable();
+    json.writeRecords(&allMyRecords);
+    if (copy) ui->searchRecord_InfoLabel->setText("Added to My Collection\nRecord may be duplicate");
+    else ui->searchRecord_InfoLabel->setText("Added to My Collection");
 }
 
 
@@ -376,7 +365,7 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
 
         QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + recordsList.at(ui->myRecord_Table->currentRow())->getCover());
         if (image.isNull()) image = QPixmap(dir.absolutePath() + "/resources/images/missingImg.jpg");
-        image = image.scaled(120, 120, Qt::KeepAspectRatio);
+        image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
         ui->editRecord_CoverLabel->setPixmap(image);
     }
     else { // Invalid selection made of myRecords
@@ -450,45 +439,36 @@ void MainWindow::on_editRecord_EditTagsList_itemClicked(QListWidgetItem *item) /
 {
     if (selectedMyRecord){
         int tableRow = ui->myRecord_Table->currentRow();
-        for (int i = 0; i < allMyRecords.size(); i++){
-            if (allMyRecords.at(i).getCover().compare(recordsList.at(ui->myRecord_Table->currentRow())->getCover()) == 0){
-                // If selected record in list matches record in allMyRecords
-                std::vector<QString> recordTags = allMyRecords.at(i).getTags();
-                int rowSave = ui->editRecord_EditTagsList->currentRow();
-                if (allMyRecords.at(i).addTag(item->text()) == 1){ // Try to add tag to record
-                    allMyRecords.at(i).removeTag(item->text()); // if record already has tag, REMOVE TAG
-                    ui->editRecord_EditTagsList->takeItem(rowSave);
-                    ui->editRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), item->text()));
-                    ui->editRecord_EditTagsList->sortItems();
-                    tags.at(rowSave).decCount();
-                    recordsList.at(ui->myRecord_Table->currentRow())->removeTag(item->text()); // Remove tag from record object
-                }
-                else { // Adding tag, set the check box to checked
-                    ui->editRecord_EditTagsList->takeItem(rowSave);
-                    ui->editRecord_EditTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), item->text()));
-                    ui->editRecord_EditTagsList->sortItems();
-                    tags.at(rowSave).incCount();
-                    recordsList.at(ui->myRecord_Table->currentRow())->addTag(item->text()); // Add tag to record object
-                }
-                ui->editRecord_EditTagsList->setCurrentRow(rowSave); // Set the edit tags list row back to what it was
-
-                // Update the filter tags list number
-                ui->myRecord_FilterTagsList->takeItem(rowSave); // Remove the filter item to be readded
-                if (tags.at(rowSave).getChecked()) { // Add tag that is being filtered
-                    ui->myRecord_FilterTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tags.at(rowSave).getName() + " (" + QString::number(tags.at(rowSave).getCount()) + ")"));
-                }
-                else { // Add a tag that is not being filtered
-                    ui->myRecord_FilterTagsList->insertItem(rowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tags.at(rowSave).getName() + " (" + QString::number(tags.at(rowSave).getCount()) + ")"));
-                }
-                ui->myRecord_FilterTagsList->setCurrentRow(-1); // Set filter record to not have anything selected
-
-                break;
-            }
+        int id = recordsList[tableRow]->getId();
+        std::vector<QString> recordTags = allMyRecords.at(id).getTags();
+        int tagRowSave = ui->editRecord_EditTagsList->currentRow();
+        if (allMyRecords[id].addTag(item->text()) == 1){ // Try to add tag to record
+            allMyRecords[id].removeTag(item->text()); // if record already has tag, REMOVE TAG
+            ui->editRecord_EditTagsList->takeItem(tagRowSave);
+            ui->editRecord_EditTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), item->text()));
+            ui->editRecord_EditTagsList->sortItems();
+            tags.at(tagRowSave).decCount();
+            recordsList.at(ui->myRecord_Table->currentRow())->removeTag(item->text()); // Remove tag from record object
         }
-        updateRecordsListOrder(); // Update record table
-        updateMyRecordsTable();
+        else { // Adding tag, set the check box to checked
+            ui->editRecord_EditTagsList->takeItem(tagRowSave);
+            ui->editRecord_EditTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), item->text()));
+            ui->editRecord_EditTagsList->sortItems();
+            tags.at(tagRowSave).incCount();
+            recordsList.at(ui->myRecord_Table->currentRow())->addTag(item->text()); // Add tag to record object
+        }
+        ui->editRecord_EditTagsList->setCurrentRow(tagRowSave); // Set the edit tags list row back to what it was
+
+        // Update the filter tags list number
+        ui->myRecord_FilterTagsList->takeItem(tagRowSave); // Remove the filter item to be readded
+        if (tags.at(tagRowSave).getChecked()) { // Add tag that is being filtered
+            ui->myRecord_FilterTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/check.png"), tags.at(tagRowSave).getName() + " (" + QString::number(tags.at(tagRowSave).getCount()) + ")"));
+        }
+        else { // Add a tag that is not being filtered
+            ui->myRecord_FilterTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tags.at(tagRowSave).getName() + " (" + QString::number(tags.at(tagRowSave).getCount()) + ")"));
+        }
+        ui->myRecord_FilterTagsList->setCurrentRow(-1); // Set filter record to not have anything selected
         ui->myRecord_Table->setCurrentCell(tableRow, 0); // Set the record table back to the current record
-        json.writeRecords(&allMyRecords); // Save new tags to json
     }
 }
 
@@ -520,6 +500,7 @@ void MainWindow::on_editRecord_ManageTagButton_clicked() // Open and handle mana
 {
     TagsWindow* popup = new TagsWindow(&tags, &prefs);
     std::vector<ListTag> saveTags = tags;
+    int savedTableRow = ui->myRecord_Table->currentRow();
 
     // Do after popup closes
     connect(popup, &QDialog::finished, this, [=]() {
@@ -554,6 +535,7 @@ void MainWindow::on_editRecord_ManageTagButton_clicked() // Open and handle mana
             updateMyRecordsTable();
             json.writeRecords(&allMyRecords);
         }
+        ui->myRecord_Table->setCurrentCell(savedTableRow, 0); // Reset table selection to what it was before
     });
 
     popup->setModal(true);
@@ -770,7 +752,7 @@ void MainWindow::on_settings_actionToggleTheme_triggered() // Toggle theme menu 
 
 void MainWindow::on_actionSelect_File_and_Import_triggered() // Import discogs file menu button clicked
 {
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection - My Record Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
 
     // Import discogs threaded
     if (!filePath.isEmpty()) { // If file is chosen...
@@ -839,7 +821,7 @@ void MainWindow::on_actionDelete_All_User_Data_triggered() // Delete all user da
     msgBox.setDefaultButton(QMessageBox::Cancel);
     msgBox.setIcon(QMessageBox::Warning);
     msgBox.setWindowIcon(QIcon(dir.absolutePath() + "/resources/images/appico.ico"));
-    msgBox.setWindowTitle("Erase User Data - My Record Collection");
+    msgBox.setWindowTitle("Erase User Data?");
     int ret = msgBox.exec();
 
     if (ret == QMessageBox::Yes){
@@ -935,12 +917,12 @@ void MainWindow::toggleEditRecordFrame() // Toggle view of edit record frame
 {
     if (ui->editRecordFrame->isVisible()) {
         ui->editFrameBlockerFrame->setVisible(false);
-        ui->myRecord_Table->setFocus();
-        setFocus(ui->editRecordFrame, Qt::ClickFocus);
+        ui->myRecord_Table->setFocus(); // So that "Done" button cannot be pressed while it is not on screen
+        setFocus(ui->editRecordFrame, Qt::ClickFocus); // Set everything back to click focus
     }
     else {
         ui->editFrameBlockerFrame->setVisible(true);
-        ui->editRecord_TitleEdit->setFocusPolicy(Qt::StrongFocus);
+        ui->editRecord_TitleEdit->setFocusPolicy(Qt::StrongFocus); // Set these to strong focus so tab works
         ui->editRecord_ArtistEdit->setFocusPolicy(Qt::StrongFocus);
         ui->editRecord_EditTagsList->setFocusPolicy(Qt::StrongFocus);
         ui->editRecord_ManageTagButton->setFocusPolicy(Qt::StrongFocus);
@@ -961,10 +943,10 @@ void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
     allMyRecords[id].setArtist(ui->editRecord_ArtistEdit->text());
     allMyRecords[id].setRating(ui->editRecord_RatingSlider->value());
 
-    updateRecordsListOrder();
-    updateMyRecordsTable();
-    json.writeRecords(&allMyRecords);
-    for (int i = 0; i < recordsList.size(); i++){ // Set table to same record is selected
+    updateRecordsListOrder(); // Update record table order
+    updateMyRecordsTable(); // and info
+    json.writeRecords(&allMyRecords); // Save changes to json
+    for (int i = 0; i < recordsList.size(); i++){ // Set table record selected to same record as was selected before
         if (recordsList[i]->getId() == id){
             ui->myRecord_Table->setCurrentCell(i, 0);
             break;
@@ -972,13 +954,13 @@ void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
     }
 }
 
-void MainWindow::on_myRecord_customRecordButton_clicked()
+void MainWindow::on_myRecord_customRecordButton_clicked() // Create a custom record
 {
-    allMyRecords.push_back(Record("Custom Record", "", "", 0, allMyRecords.size()));
+    allMyRecords.push_back(Record("Custom Record", "", "", 0, allMyRecords.size())); // Add new record to allMyRecords vector
     updateRecordsListOrder();
     updateMyRecordsTable();
     json.writeRecords(&allMyRecords);
-    for (int i = 0; i < recordsList.size(); i++){ // Set table to same record is selected
+    for (int i = 0; i < recordsList.size(); i++){ // Set table to same record that was selected
         if (recordsList[i]->getId() == recordsList.size()-1){
             ui->myRecord_Table->setCurrentCell(i, 0);
             break;
@@ -987,14 +969,43 @@ void MainWindow::on_myRecord_customRecordButton_clicked()
 }
 
 
-void MainWindow::on_editRecord_ArtistEdit_returnPressed()
+void MainWindow::on_editRecord_ArtistEdit_returnPressed() // album artist edit line edit return pressed
 {
     on_editRecord_DoneButton_clicked();
 }
 
 
-void MainWindow::on_editRecord_TitleEdit_returnPressed()
+void MainWindow::on_editRecord_TitleEdit_returnPressed() // album title edit line edit return pressed
 {
     on_editRecord_DoneButton_clicked();
+}
+
+
+void MainWindow::on_editRecord_CoverEdit_clicked()
+{
+    QFileInfo fileInfo = QFileInfo(QFileDialog::getOpenFileName(this, tr("Change Record Cover"), "/", tr("Image files (*.jpg *.jpeg *.png)"))); // Open file selector popup
+
+    if (fileInfo.isFile()) { // If file is chosen...
+        int fileNum = 0; // Keep track of number of duplicate names
+        if (QFile::copy(fileInfo.absoluteFilePath(), dir.absolutePath() + "/resources/user data/covers/" + fileInfo.fileName())); // If file is copied, all good
+        else { // If file cannot be copied, add (1), (2)... until it can be
+            while (!QFile::copy(fileInfo.absoluteFilePath(), dir.absolutePath() + "/resources/user data/covers/" + fileInfo.baseName() + " (" + QString::number(++fileNum) + ")." + fileInfo.suffix()));
+        }
+
+        qint64 id = recordsList.at(ui->myRecord_Table->currentRow())->getId(); // id of record being edited
+        json.deleteCover(allMyRecords[id].getCover()); // Delete old cover
+        if (fileNum == 0) { // Set record object to have new cover file
+            allMyRecords[id].setCover(fileInfo.fileName());
+        }
+        else {
+            allMyRecords[id].setCover(fileInfo.baseName() + " (" + QString::number(fileNum) + ")." + fileInfo.suffix());
+        }
+
+        // Update the preview cover image
+        QPixmap image(dir.absolutePath() + "/resources/user data/covers/" + allMyRecords[id].getCover());
+        if (image.isNull()) image = QPixmap(dir.absolutePath() + "/resources/images/missingImg.jpg");
+        image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
+        ui->editRecord_CoverLabel->setPixmap(image);
+    }
 }
 
