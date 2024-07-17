@@ -17,7 +17,7 @@ ImportDiscogs::ImportDiscogs(bool addTags, QObject *parent) : QObject{parent}
     done = false;
 }
 
-void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) {
+void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) { // Not used, possibly depreiciated
     QFile myFile(file); // File of playlists JSON
     Json json;
     if (myFile.exists()){
@@ -88,7 +88,7 @@ void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) {
                     }
                 }
                 if (!copy){ // Record is not in collection
-                    Record returningRec(newName, newArtist, json.downloadCover(coverUrl), newRating, 0); //FIX TO HAVE UNIQUE VALUE
+                    Record returningRec(newName, newArtist, json.downloadCover(coverUrl), newRating, allRecords->size());
                     if (addTags){
                         std::vector<ListTag> tags = json.wikiTags(newName, newArtist);
                         for (ListTag tag : tags){
