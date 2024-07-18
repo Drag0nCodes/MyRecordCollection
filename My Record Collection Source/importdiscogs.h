@@ -19,20 +19,18 @@ public:
     void run() Q_DECL_OVERRIDE;
 
 signals:
-    void finished();
+    void finished(Record *record, bool skipped);
 
 public slots:
     void importAll(QString file, std::vector<Record> *allRecordsPoint);
-    void importSingle();
     Record* getProcessedRec();
-    bool isDone();
 
 private:
     QString recordLine;
     std::vector<Record> *allRecords;
     Record *processedRec;
     bool addTags;
-    bool done;
+    void importSingle();
 };
 
 #endif // IMPORTDISCOGS_H

@@ -8,13 +8,11 @@ ImportDiscogs::ImportDiscogs(QString line, std::vector<Record> *allRecordPointer
     allRecords = allRecordPointer;
     processedRec = NULL;
     this->addTags = addTags;
-    done = false;
 }
 
 ImportDiscogs::ImportDiscogs(bool addTags, QObject *parent) : QObject{parent}
 {
     this->addTags = addTags;
-    done = false;
 }
 
 void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) { // Not used, possibly depreiciated
@@ -175,8 +173,7 @@ void ImportDiscogs::importSingle() {
             }
         }
     }
-    done = true;
-    emit finished();
+    emit finished(processedRec, copy);
 }
 
 
@@ -191,9 +188,4 @@ void ImportDiscogs::run() {
 Record* ImportDiscogs::getProcessedRec(){
     //std::cerr << "Returning: " + processedRec->getArtist().toStdString() + " - " + processedRec->getName().toStdString() << std::endl;
     return processedRec;
-}
-
-bool ImportDiscogs::isDone()
-{
-    return done;
 }

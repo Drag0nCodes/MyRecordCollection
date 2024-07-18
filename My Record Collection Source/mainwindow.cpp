@@ -68,7 +68,6 @@ MainWindow::MainWindow(QWidget *parent)
     setStyleSheet(prefs.getStyle());
 
     // Fill tables
-    //QTimer::singleShot(1, [=](){ emit updateMyRecords(); }); // Fill my records table a second after program startup
     updateTagCount();
     updateTagList();
     updateMyRecordsTable();
@@ -91,6 +90,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Set editRecordsFrame options
     ui->editFrameBlockerFrame->setVisible(false);
+
+    // Setup the progress bar to be hiden
+    ui->myRecord_DiscogsProgressBar->setVisible(false);
+    connect(ui->myRecord_DiscogsProgressBar, &QProgressBar::valueChanged, this, &MainWindow::onProgressBarValueChanged);
 }
 
 MainWindow::~MainWindow()
@@ -285,14 +288,15 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
         }
     }
 
-    updateTagCount();
-    updateTagList();
-    json.writeTags(&tags);
-
     allMyRecords.push_back(addRecord);
     on_myRecord_SearchBar_textChanged();
     updateMyRecordsTable();
     json.writeRecords(&allMyRecords);
+
+    updateTagCount();
+    updateTagList();
+    json.writeTags(&tags);
+
     if (copy) ui->searchRecord_InfoLabel->setText("Added to My Collection\nRecord may be duplicate");
     else ui->searchRecord_InfoLabel->setText("Added to My Collection");
 }
@@ -674,11 +678,19 @@ void MainWindow::on_searchRecord_Table_cellClicked(int row, int column) // Click
 {
     ui->searchRecord_SuggestedTagsList->clear();
     suggestedTags.clear();
+    ui->searchRecord_SuggestedTagsList->setEnabled(false);
+    ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem("Loading tags"));
     suggestedTags = json.wikiTags(results.at(ui->searchRecord_Table->currentRow()).getName(), results.at(ui->searchRecord_Table->currentRow()).getArtist());
-    sortTagsAlpha(&suggestedTags);
     ui->searchRecord_SuggestedTagsList->clear();
-    for (ListTag tag : suggestedTags) {
-        ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag.getName()));
+    if (suggestedTags.empty()){
+        ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem("No tags found"));
+    }
+    else {
+        sortTagsAlpha(&suggestedTags);
+        for (ListTag tag : suggestedTags) {
+            ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem(QIcon(dir.absolutePath() + "/resources/images/uncheck.png"), tag.getName()));
+        }
+        ui->searchRecord_SuggestedTagsList->setEnabled(true);
     }
 }
 
@@ -752,62 +764,95 @@ void MainWindow::on_settings_actionToggleTheme_triggered() // Toggle theme menu 
 
 void MainWindow::on_actionSelect_File_and_Import_triggered() // Import discogs file menu button clicked
 {
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Open file selector popup
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Get discogs file
 
-    // Import discogs threaded
-    if (!filePath.isEmpty()) { // If file is chosen...
-        QFile myFile(filePath); // File of playlists JSON
-        if (myFile.exists()){
-            if (myFile.open(QIODevice::ReadOnly)){ // Erase all text in playlists json
-                QString line = myFile.readLine();
-                if (!line.startsWith("Catalog#,Artist,Title")){ // Not a discogs collection, invalid file
-                    myFile.close();
-                    std::cerr << "Inavlid collection file" << std::endl;
-                    ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
-                }
-                else {
-                    line = myFile.readLine(); // Get first discogs record
-                    int tot = 0; // The total number of records in the discogs file
-                    std::vector<QThread*> threads; // Thread for each record import
-                    std::vector<ImportDiscogs*> imports; // The ImportDiscogs class for each record import, will be moved to thread in vector threads
-                    while (!line.isEmpty()) { // Loop until all discogs record read in
-                        if (ui->importDiscogsAddTagsOpt->isChecked()) imports.push_back(new ImportDiscogs(line, &allMyRecords, true)); // Create and add ImportDiscogs class to vector, add suggested tags
-                        else imports.push_back(new ImportDiscogs(line, &allMyRecords, false)); // Dont add suggested tags to record
-                        threads.push_back(new QThread); // Create a QThread for record
-                        imports.at(tot)->moveToThread(threads.at(tot)); // Move the ImportDiscogs to its own thread
-
-                        // Connect for started and finished signals
-                        QObject::connect(threads.at(tot), &QThread::started, imports.at(tot), &ImportDiscogs::run); // Run import method when thread starts
-                        QObject::connect(imports.at(tot), &ImportDiscogs::finished, threads.at(tot), &QThread::quit); // When ImportDiscogs run finished, quit QThread
-                        QObject::connect(threads.at(tot), &QThread::finished, threads.at(tot), &QThread::deleteLater); // When thread finished, delete thread
-
-                        threads.at(tot)->start(); // Start thread
-                        line = myFile.readLine(); // Get next discogs record
-                        tot++;
+    if (!filePath.isEmpty()) { // File is selected
+        QFile myFile(filePath);
+        if (myFile.exists() && myFile.open(QIODevice::ReadOnly)) { // Open the file
+            totalImports = 0; // Reset/initialize two vars
+            totalSkipped = 0;
+            ui->myRecord_InfoLabel->setText("Importing Discogs collection\n\n\nSkipped: " + QString::number(totalSkipped) + " / ..."); // Setup the gui to show progress
+            ui->myRecord_DiscogsProgressBar->setValue(0);
+            ui->myRecord_DiscogsProgressBar->setVisible(true);
+            this->repaint();
+            QString line = myFile.readLine(); // Read in the first line
+            if (!line.startsWith("Catalog#,Artist,Title")) { // Make sure it is what it should be, if not, stop
+                myFile.close();
+                std::cerr << "Invalid collection file" << std::endl;
+                ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
+            } else { // File is a discogs csv
+                line = myFile.readLine(); // Get first record
+                finishedImportsCount = 0;
+                while (!line.isEmpty()) {
+                    ImportDiscogs *importer = nullptr;
+                    if (ui->importDiscogsAddTagsOpt->isChecked()) { // Create an ImportDiscogs object with either adding tags or not
+                        importer = new ImportDiscogs(line, &allMyRecords, true);
+                    } else {
+                        importer = new ImportDiscogs(line, &allMyRecords, false);
                     }
-                    for (int i = 0; i < tot; i++){ // Get results from each record
-                        while (!imports.at(i)->isDone()); // Loop main until import is finished
-                        Record *importedRec = imports.at(i)->getProcessedRec(); // Get the new Record
-                        if (!(importedRec->getName().compare("") == 0 & importedRec->getArtist().compare("") == 0 && importedRec->getCover().compare("") == 0 && importedRec->getRating() == -1)){
-                            allMyRecords.push_back(*imports.at(i)->getProcessedRec()); // Record is new, add to collection, don't add duplicates
-                            for (QString tag : imports.at(i)->getProcessedRec()->getTags()){
-                                tags.push_back(ListTag(tag));
-                            }
-                        }
-                        imports.at(i)->deleteLater(); // Delete object
-                    }
-                    sortTagsAlpha(&tags, true);
-                    json.writeTags(&tags);
-                    json.writeRecords(&allMyRecords); // Write changes to json
+
+                    QThread *thread = new QThread; // Create a thread and move object to thread
+                    importer->moveToThread(thread);
+
+                    // Setup signals and slots
+                    connect(thread, &QThread::started, importer, &ImportDiscogs::run);
+                    connect(importer, &ImportDiscogs::finished, this, &MainWindow::handleImportFinished);
+                    connect(importer, &ImportDiscogs::finished, thread, &QThread::quit);
+                    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+                    connect(thread, &QThread::finished, importer, &ImportDiscogs::deleteLater);
+
+                    thread->start(); // Start thread
+                    line = myFile.readLine(); // Get next record
+                    totalImports++;
                 }
+
+                ui->myRecord_InfoLabel->setText("Importing Discogs collection\n\n\nSkipped: " + QString::number(totalSkipped) + " / " + QString::number(totalImports)); // Update the progress label with total import number
+                ui->myRecord_DiscogsProgressBar->setMaximum(totalImports);
+                this->repaint();
             }
         }
     }
+}
 
-    updateRecordsListOrder(); // Update the vector with the record collection table elements
-    updateTagCount();
-    updateTagList();
-    updateMyRecordsTable(); // Visably update the record collection table*/
+
+void MainWindow::handleImportFinished(Record *importedRec, bool skipped)
+{
+    if (importedRec && !(importedRec->getName().isEmpty() && importedRec->getArtist().isEmpty() && importedRec->getCover().isEmpty() && importedRec->getRating() == -1)) {
+        importedRec->setId(allMyRecords.size()); // Record is new, add to collection, don't add duplicates
+        allMyRecords.push_back(*importedRec);
+        for (const QString &tag : importedRec->getTags()) {
+            tags.push_back(ListTag(tag));
+        }
+    }
+
+    // Update vars and progress ui
+    finishedImportsCount++;
+    if (skipped) totalSkipped++;
+    ui->myRecord_InfoLabel->setText("Importing Discogs collection\n\n\nSkipped: " + QString::number(totalSkipped) + " / " + QString::number(totalImports));
+    ui->myRecord_DiscogsProgressBar->setValue(finishedImportsCount);
+    repaint();  // Force UI update
+
+    if (finishedImportsCount == totalImports) { // Once all records have been processed
+        sortTagsAlpha(&tags, true);
+        json.writeTags(&tags); // Write tags and records to json
+        json.writeRecords(&allMyRecords);
+        ui->myRecord_InfoLabel->setText("Import completed\n\n\nSkipped: " + QString::number(totalSkipped) + " / " + QString::number(totalImports));
+
+        // Update tags and lists
+        updateRecordsListOrder();
+        updateTagCount();
+        updateTagList();
+        updateMyRecordsTable();
+
+        // Hide the progress ui after five seconds
+        QTimer *timer = new QTimer(this);
+        connect(timer, &QTimer::timeout, this, [=]() {
+            ui->myRecord_InfoLabel->setText("");
+            ui->myRecord_DiscogsProgressBar->setVisible(false);
+            timer->deleteLater();
+        });
+        timer->start(5000);
+    }
 }
 
 
@@ -1007,5 +1052,19 @@ void MainWindow::on_editRecord_CoverEdit_clicked()
         image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
         ui->editRecord_CoverLabel->setPixmap(image);
     }
+}
+
+void MainWindow::onProgressBarValueChanged(int value) // When the progress bar gets updated
+{
+    value = (float)value/(float)totalImports*100.0; // Turn value into a percentage of the completed records
+    int radius = qBound(1, value, 14); // Get the radius that the chunk of the progress bar should be, unto 14
+    if (value < 15) radius--; // If its less than 15, subtraact it by one to avoid random square chunks
+    QString styleSheet = QString( // Update the progress bars style
+                             "QProgressBar::chunk {"
+                             "    border-radius: %1px;"
+                             "}"
+                             ).arg(radius);
+
+    ui->myRecord_DiscogsProgressBar->setStyleSheet(styleSheet);
 }
 

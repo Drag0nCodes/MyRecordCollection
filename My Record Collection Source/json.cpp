@@ -118,13 +118,13 @@ std::vector<Record> Json::searchRecords(QString search, int limit) {
 }
 
 void Json::writeRecords(std::vector<Record>* myRecords){
-    QFile myFile(dir.absolutePath() + "/resources/user data/records.json"); // File of playlists JSON
+    QFile myFile(dir.absolutePath() + "/resources/user data/records.json"); // File of records JSON
 
     if (myFile.exists()){
-        if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in playlists json
+        if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in records json
             myFile.close();
         }
-        if (myFile.open(QIODevice::ReadWrite | QIODevice::Text)){ // Write all playlists to JSON
+        if (myFile.open(QIODevice::ReadWrite | QIODevice::Text)){ // Write all records to JSON
             QJsonDocument doc;
             QJsonObject root; // Array of all Record object information
             QJsonArray recs; // Array of all records
@@ -428,11 +428,25 @@ void Json::deleteUserData()
 
     if (tagsFile.exists()){
         if (tagsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
+            QJsonDocument doc;
+            QJsonObject root; // Array of all tags
+            QJsonArray tagsArr;
+            root.insert("_json_version", CURRVERSION);
+            root.insert("tags", tagsArr);
+            doc.setObject(root);
+            tagsFile.write(doc.toJson()); // Write names to json file
             tagsFile.close();
         }
     }
     if (recordsFile.exists()){
-        if (recordsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
+        if (recordsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in records json
+            QJsonDocument doc;
+            QJsonObject root; // Array of all Record object information
+            QJsonArray recs; // Array of all records
+            root.insert("_json_version", CURRVERSION);
+            root.insert("records", recs);
+            doc.setObject(root);
+            recordsFile.write(doc.toJson());
             recordsFile.close();
         }
     }

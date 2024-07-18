@@ -107,5 +107,10 @@ private:
     void toggleEditRecordFrame();
     void checkClickEditRecordFrame();
     void setFocus(QWidget* parent, enum Qt::FocusPolicy focus);
+    void handleImportFinished(Record *importedRec, bool skipped);
+    int finishedImportsCount;
+    int totalImports;
+    int totalSkipped;
+    void onProgressBarValueChanged(int value);
 };
 #endif // MAINWINDOW_H

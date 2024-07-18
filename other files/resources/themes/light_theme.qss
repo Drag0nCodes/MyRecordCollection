@@ -148,3 +148,15 @@ QLabel#editRecord_CoverLabel {
 	border-radius: 6px;
 	background-color: rgb(225, 225, 225);
 }
+
+QProgressBar {
+	text-align: center;
+	background-color: rgb(230, 230, 230);
+	border-radius: 14px;
+	color: black;
+}
+
+QProgressBar::chunk {
+	background-color: #1E73FF;
+	border-radius: 14px;
+}
