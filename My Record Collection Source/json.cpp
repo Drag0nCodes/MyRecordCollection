@@ -16,8 +16,8 @@ std::vector<Record> Json::getRecords(int recordCount){
     std::vector<Record> allRecords;
     try{
         QString jsonStr;
-        dir.mkpath(dir.absolutePath() + "/resources/user data");
-        QFile myFile(dir.absolutePath() + "/resources/user data/records.json"); // File of records JSON
+        dir.mkpath(QDir::currentPath() + "/resources/user data");
+        QFile myFile(QDir::currentPath() + "/resources/user data/records.json"); // File of records JSON
 
 
         if (myFile.exists()){
@@ -118,7 +118,7 @@ std::vector<Record> Json::searchRecords(QString search, int limit) {
 }
 
 void Json::writeRecords(std::vector<Record>* myRecords){
-    QFile myFile(dir.absolutePath() + "/resources/user data/records.json"); // File of records JSON
+    QFile myFile(QDir::currentPath() + "/resources/user data/records.json"); // File of records JSON
 
     if (myFile.exists()){
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in records json
@@ -155,8 +155,8 @@ std::vector<ListTag> Json::getTags(){
     std::vector<ListTag> allTags;
     try{
         QString jsonStr;
-        dir.mkpath(dir.absolutePath() + "/resources/user data");
-        QFile myFile(dir.absolutePath() + "/resources/user data/tags.json"); // File of tags JSON
+        dir.mkpath(QDir::currentPath() + "/resources/user data");
+        QFile myFile(QDir::currentPath() + "/resources/user data/tags.json"); // File of tags JSON
 
         if (myFile.exists()){
             if (myFile.open(QIODevice::ReadOnly | QIODevice::Text)){
@@ -194,7 +194,7 @@ std::vector<ListTag> Json::getTags(){
 }
 
 void Json::writeTags(std::vector<ListTag>* tags){
-    QFile myFile(dir.absolutePath() + "/resources/user data/tags.json"); // File of tags JSON
+    QFile myFile(QDir::currentPath() + "/resources/user data/tags.json"); // File of tags JSON
 
     if (myFile.exists()){
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in tags json
@@ -302,7 +302,7 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
             break;
         }
     }
-    QString savePath = dir.absolutePath() + "/resources/user data/covers/" + fileName;
+    QString savePath = QDir::currentPath() + "/resources/user data/covers/" + fileName;
     QFileInfo fileInfo(savePath);
 
     QNetworkAccessManager manager;
@@ -344,7 +344,7 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
 }
 
 bool Json::deleteCover(const QString& coverName) { // Delete album cover from covers subfolder
-    QFile file(dir.absolutePath() + "/resources/user data/covers/" + coverName);
+    QFile file(QDir::currentPath() + "/resources/user data/covers/" + coverName);
 
     if (file.exists()) {
         if (file.remove()) {
@@ -363,8 +363,8 @@ bool Json::deleteCover(const QString& coverName) { // Delete album cover from co
 Prefs Json::getPrefs(){
     try{
         QString jsonStr;
-        dir.mkpath(dir.absolutePath() + "/resources/user data");
-        QFile myFile(dir.absolutePath() + "/resources/user data/prefs.json"); // File of tags JSON
+        dir.mkpath(QDir::currentPath() + "/resources/user data");
+        QFile myFile(QDir::currentPath() + "/resources/user data/prefs.json"); // File of tags JSON
 
         if (myFile.exists()){
             if (myFile.open(QIODevice::ReadOnly | QIODevice::Text)){
@@ -402,7 +402,7 @@ Prefs Json::getPrefs(){
 }
 
 void Json::writePrefs(Prefs *prefs){
-    QFile myFile(dir.absolutePath() + "/resources/user data/prefs.json"); // File of preferences JSON
+    QFile myFile(QDir::currentPath() + "/resources/user data/prefs.json"); // File of preferences JSON
 
     if (myFile.exists()){
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
@@ -421,33 +421,37 @@ void Json::writePrefs(Prefs *prefs){
     }
 }
 
-void Json::deleteUserData()
+void Json::deleteUserData(bool delRecords, bool delTags)
 {
-    QFile tagsFile(dir.absolutePath() + "/resources/user data/tags.json");
-    QFile recordsFile(dir.absolutePath() + "/resources/user data/records.json");
+    QFile tagsFile(QDir::currentPath() + "/resources/user data/tags.json");
+    QFile recordsFile(QDir::currentPath() + "/resources/user data/records.json");
 
-    if (tagsFile.exists()){
-        if (tagsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
-            QJsonDocument doc;
-            QJsonObject root; // Array of all tags
-            QJsonArray tagsArr;
-            root.insert("_json_version", CURRVERSION);
-            root.insert("tags", tagsArr);
-            doc.setObject(root);
-            tagsFile.write(doc.toJson()); // Write names to json file
-            tagsFile.close();
+    if (delTags){
+        if (tagsFile.exists()){
+            if (tagsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
+                QJsonDocument doc;
+                QJsonObject root; // Array of all tags
+                QJsonArray tagsArr;
+                root.insert("_json_version", CURRVERSION);
+                root.insert("tags", tagsArr);
+                doc.setObject(root);
+                tagsFile.write(doc.toJson()); // Write names to json file
+                tagsFile.close();
+            }
         }
     }
-    if (recordsFile.exists()){
-        if (recordsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in records json
-            QJsonDocument doc;
-            QJsonObject root; // Array of all Record object information
-            QJsonArray recs; // Array of all records
-            root.insert("_json_version", CURRVERSION);
-            root.insert("records", recs);
-            doc.setObject(root);
-            recordsFile.write(doc.toJson());
-            recordsFile.close();
+    if (delRecords){
+        if (recordsFile.exists()){
+            if (recordsFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in records json
+                QJsonDocument doc;
+                QJsonObject root; // Array of all Record object information
+                QJsonArray recs; // Array of all records
+                root.insert("_json_version", CURRVERSION);
+                root.insert("records", recs);
+                doc.setObject(root);
+                recordsFile.write(doc.toJson());
+                recordsFile.close();
+            }
         }
     }
 }

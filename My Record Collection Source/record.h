@@ -26,6 +26,7 @@ public:
     void setCover(QString cover);
     int addTag(QString tag);
     void removeTag(QString tag);
+    void removeAllTags();
     bool hasTag(QString tag);
     void setRating(qint64 rating);
     bool contains(QString search);

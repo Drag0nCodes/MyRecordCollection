@@ -343,7 +343,7 @@
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>310</y>
+        <y>374</y>
         <width>191</width>
         <height>81</height>
        </rect>
@@ -361,12 +361,12 @@
        <set>Qt::AlignHCenter|Qt::AlignTop</set>
       </property>
      </widget>
-     <widget class="QPushButton" name="myRecord_ResetTagsFilterButton">
+     <widget class="QPushButton" name="myRecord_ResetFiltersButton">
       <property name="geometry">
        <rect>
-        <x>930</x>
-        <y>273</y>
-        <width>61</width>
+        <x>910</x>
+        <y>300</y>
+        <width>81</width>
         <height>28</height>
        </rect>
       </property>
@@ -377,7 +377,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Reset</string>
+       <string>Reset Filters</string>
       </property>
      </widget>
      <widget class="QPushButton" name="myRecord_customRecordButton">
@@ -406,7 +406,7 @@
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>326</y>
+        <y>390</y>
         <width>191</width>
         <height>28</height>
        </rect>
@@ -417,7 +417,79 @@
        </font>
       </property>
       <property name="value">
-       <number>50</number>
+       <number>0</number>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="myRecord_FilterRatingMinSpinBox">
+      <property name="geometry">
+       <rect>
+        <x>800</x>
+        <y>300</y>
+        <width>81</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="buttonSymbols">
+       <enum>QAbstractSpinBox::PlusMinus</enum>
+      </property>
+      <property name="prefix">
+       <string> Min: </string>
+      </property>
+      <property name="maximum">
+       <number>10</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="myRecord_FilterRatingLabel">
+      <property name="geometry">
+       <rect>
+        <x>800</x>
+        <y>275</y>
+        <width>131</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Filter by Rating:</string>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="myRecord_FilterRatingMaxSpinBox">
+      <property name="geometry">
+       <rect>
+        <x>800</x>
+        <y>338</y>
+        <width>81</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="buttonSymbols">
+       <enum>QAbstractSpinBox::PlusMinus</enum>
+      </property>
+      <property name="prefix">
+       <string> Max: </string>
+      </property>
+      <property name="maximum">
+       <number>10</number>
+      </property>
+      <property name="value">
+       <number>10</number>
       </property>
      </widget>
     </widget>
@@ -985,8 +1057,6 @@ Collection</string>
      </widget>
     </widget>
    </widget>
-   <zorder>editFrameBlockerFrame</zorder>
-   <zorder>pages</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1016,9 +1086,20 @@ Collection</string>
      <addaction name="separator"/>
      <addaction name="actionSelect_File_and_Import"/>
     </widget>
+    <widget class="QMenu" name="menuDelete_MRC_Collection">
+     <property name="title">
+      <string>Delete MRC Collection</string>
+     </property>
+     <addaction name="actionDelete_All_User_Data"/>
+     <addaction name="actionDelete_All_Records"/>
+     <addaction name="actionDelete_All_Tags"/>
+    </widget>
     <addaction name="settings_actionToggleTheme"/>
     <addaction name="menuImport_Discogs_Collection"/>
-    <addaction name="actionDelete_All_User_Data"/>
+    <addaction name="separator"/>
+    <addaction name="actionImport_MRC_Collection"/>
+    <addaction name="actionExport_MRC_Collection"/>
+    <addaction name="menuDelete_MRC_Collection"/>
     <addaction name="separator"/>
     <addaction name="settings_actionExit"/>
    </widget>
@@ -1028,11 +1109,6 @@ Collection</string>
   <action name="settings_actionToggleTheme">
    <property name="text">
     <string>Toggle Theme</string>
-   </property>
-  </action>
-  <action name="actionyes">
-   <property name="text">
-    <string>yes</string>
    </property>
   </action>
   <action name="help_actionAbout">
@@ -1050,17 +1126,6 @@ Collection</string>
     <string>Contact</string>
    </property>
   </action>
-  <action name="importDiscogsTheadedOpt">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Multithreaded</string>
-   </property>
-  </action>
   <action name="importDiscogsAddTagsOpt">
    <property name="checkable">
     <bool>true</bool>
@@ -1074,12 +1139,32 @@ Collection</string>
   </action>
   <action name="actionDelete_All_User_Data">
    <property name="text">
-    <string>Delete All User Data</string>
+    <string>All User Data</string>
    </property>
   </action>
   <action name="actionSelect_File_and_Import">
    <property name="text">
     <string>Select File and Import</string>
+   </property>
+  </action>
+  <action name="actionDelete_All_Tags">
+   <property name="text">
+    <string>Only Tags</string>
+   </property>
+  </action>
+  <action name="actionDelete_All_Records">
+   <property name="text">
+    <string>Only Records</string>
+   </property>
+  </action>
+  <action name="actionImport_MRC_Collection">
+   <property name="text">
+    <string>Import MRC Collection</string>
+   </property>
+  </action>
+  <action name="actionExport_MRC_Collection">
+   <property name="text">
+    <string>Export MRC Collection</string>
    </property>
   </action>
  </widget>

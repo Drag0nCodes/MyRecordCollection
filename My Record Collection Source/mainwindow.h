@@ -58,9 +58,7 @@ private slots:
 
     void on_actionSelect_File_and_Import_triggered();
 
-    void on_actionDelete_All_User_Data_triggered();
-
-    void on_myRecord_ResetTagsFilterButton_clicked();
+    void on_myRecord_ResetFiltersButton_clicked();
 
     void on_help_actionAbout_triggered();
 
@@ -80,6 +78,18 @@ private slots:
 
     void on_editRecord_CoverEdit_clicked();
 
+    void on_actionDelete_All_User_Data_triggered();
+
+    void on_actionDelete_All_Records_triggered();
+
+    void on_actionDelete_All_Tags_triggered();
+
+    void on_myRecord_FilterRatingMaxSpinBox_valueChanged(int arg1);
+
+    void on_myRecord_FilterRatingMinSpinBox_valueChanged(int arg1);
+
+    void on_actionExport_MRC_Collection_triggered();
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);
@@ -92,7 +102,6 @@ private:
     void sortTagsAlpha(std::vector<ListTag> *list, bool delDups = false);
     void updateTagCount();
     Json json;
-    QDir dir;
     Prefs prefs;
     std::vector<Record> results; // Search records results
     std::vector<Record> allMyRecords; // All records in collection
@@ -112,5 +121,7 @@ private:
     int totalImports;
     int totalSkipped;
     void onProgressBarValueChanged(int value);
+    void deleteUserData(bool delRecords, bool delTags);
+    bool copyDirectory(const QString &sourceDir, const QString &destinationDir);
 };
 #endif // MAINWINDOW_H

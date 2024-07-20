@@ -72,6 +72,13 @@ void Record::removeTag(QString tag){
     }
 }
 
+
+void Record::removeAllTags()
+{
+    tags.clear();
+}
+
+
 void Record::setRating(qint64 rating){
     this->rating = rating;
 }

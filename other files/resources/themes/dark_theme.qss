@@ -164,3 +164,28 @@ QProgressBar::chunk {
 	background-color: #1E73FF;
 	border-radius: 14px;
 }
+
+QSpinBox {
+	background-color: rgb(95, 95, 95);
+	color: white;
+	border-radius: 14px;
+}
+
+QSpinBox::hover { 
+	background-color: rgb(70, 70, 70);
+}
+
+QPushButton#myRecord_ToSearchRecordsButton, QPushButton#searchRecord_ToMyRecordsButton, 
+QPushButton#editRecord_DoneButton {
+	background-color: #1E73FF;
+}
+
+QPushButton#myRecord_ToSearchRecordsButton::hover, QPushButton#searchRecord_ToMyRecordsButton::hover, 
+QPushButton#editRecord_DoneButton::hover {
+	background-color: #075CE8;
+}
+
+QPushButton#myRecord_ToSearchRecordsButton::pressed, QPushButton#searchRecord_ToMyRecordsButton::pressed, 
+QPushButton#editRecord_DoneButton::pressed {
+	background-color: #1E73FF;
+}

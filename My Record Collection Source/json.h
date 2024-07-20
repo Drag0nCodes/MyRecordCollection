@@ -21,7 +21,7 @@ public:
     bool deleteCover(const QString& coverName);
     Prefs getPrefs();
     void writePrefs(Prefs *prefs);
-    void deleteUserData();
+    void deleteUserData(bool delRecords, bool delTags);
 
 private:
     QDir dir;
