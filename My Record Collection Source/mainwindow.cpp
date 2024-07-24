@@ -38,11 +38,11 @@ MainWindow::MainWindow(QWidget *parent)
     font.setPixelSize(14);
 
     // Fill the records vectors and tag vector
-    allMyRecords = json.getRecords(0);
+    allMyRecords = json.getRecords(0, QDir::currentPath() + "/resources/user data/records.json", false);
     for (Record& rec : allMyRecords){
         recordsList.push_back(&rec);
     }
-    tags = json.getTags();
+    tags = json.getTags(QDir::currentPath() + "/resources/user data/tags.json");
     prefs = json.getPrefs();
     sortTagsAlpha(&tags);
 
@@ -784,13 +784,7 @@ void MainWindow::on_actionSelect_File_and_Import_triggered() // Import discogs f
                 myFile.close();
                 std::cerr << "Invalid collection file" << std::endl;
                 ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
-                QTimer *timer = new QTimer(this);
-                connect(timer, &QTimer::timeout, this, [=]() {
-                    ui->myRecord_InfoLabel->setText("");
-                    ui->myRecord_DiscogsProgressBar->setVisible(false);
-                    timer->deleteLater();
-                });
-                timer->start(5000);
+                hideInfoTimed(5000);
             } else { // File is a discogs csv
                 line = myFile.readLine(); // Get first record
                 finishedImportsCount = 0;
@@ -854,14 +848,7 @@ void MainWindow::handleImportFinished(Record *importedRec, bool skipped)
         updateTagList();
         updateMyRecordsTable();
 
-        // Hide the progress ui after five seconds
-        QTimer *timer = new QTimer(this);
-        connect(timer, &QTimer::timeout, this, [=]() {
-            ui->myRecord_InfoLabel->setText("");
-            ui->myRecord_DiscogsProgressBar->setVisible(false);
-            timer->deleteLater();
-        });
-        timer->start(5000);
+        hideInfoTimed(5000);
     }
 }
 
@@ -1179,11 +1166,11 @@ bool MainWindow::copyDirectory(const QString &sourceDir, const QString &destinat
     }
 
     QDir destDir(destinationDir);
-    if (!destDir.exists()) {
+    if (!destDir.exists()) { // Create directory if it doesn't exist
         destDir.mkpath(destinationDir);
     }
 
-    foreach (QString file, dir.entryList(QDir::Files)) {
+    foreach (QString file, dir.entryList(QDir::Files)) { // Copy each file
         QString srcName = sourceDir + "/" + file;
         QString destName = destinationDir + "/" + file;
         if (!QFile::copy(srcName, destName)) {
@@ -1192,7 +1179,7 @@ bool MainWindow::copyDirectory(const QString &sourceDir, const QString &destinat
         }
     }
 
-    foreach (QString subDir, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+    foreach (QString subDir, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) { // Copy each directory (recursively)
         QString srcName = sourceDir + "/" + subDir;
         QString destName = destinationDir + "/" + subDir;
         if (!copyDirectory(srcName, destName)) {
@@ -1204,3 +1191,70 @@ bool MainWindow::copyDirectory(const QString &sourceDir, const QString &destinat
     return true;
 }
 
+void MainWindow::on_actionImport_MRC_Collection_triggered()
+{
+    if (ui->editRecordFrame->isVisible()) { // Close edit frame if its open
+        toggleEditRecordFrame();
+    }
+    QString dirPath = QFileDialog::getExistingDirectory(this, tr("Import MRC Collection"), QDir::homePath()); // Get folder from user
+
+    if (dirPath.isEmpty()) {
+        return; // User canceled the dialog
+    }
+
+    QDir dir(dirPath); // Make sure directory has all required files, if not, give error message
+    if (!dir.exists("records.json") && !dir.exists("tags.json") && !dir.exists("covers")) {
+        std::cerr << "Could not find required files for import" << std::endl;
+        ui->myRecord_InfoLabel->setText("Could not find import files.\nPlease select folder that\ncontains \'records.json\',\n\'tags.json\', and \'covers\' folder.");
+        hideInfoTimed(7000);
+        return;
+    }
+
+    std::vector<Record> newRecs = json.getRecords(allMyRecords.size(), dirPath + "/records.json", true); // Get vector of imported records
+    QDir coverDir(dir.absolutePath() + "/covers"); // Get directory of record covers
+
+    for (int i = 0; i < coverDir.entryList(QDir::Files).size(); i++) { // Copy each cover file to resoruces
+        QString file = coverDir.entryList(QDir::Files)[i];
+        QString srcName = coverDir.absolutePath() + "/" + file;
+        QFileInfo destFile(QDir::currentPath() + "/resources/user data/covers/" + file);
+        int fileNum = 0; // Keep track of number of duplicate names
+        if (QFile::copy(srcName, destFile.filePath())); // If file is copied, all good
+        else { // If file cannot be copied, add (1), (2)... until it can be
+            while (!QFile::copy(srcName, QDir::currentPath() + "/resources/user data/covers/" + destFile.baseName() + " (" + QString::number(++fileNum) + ")." + destFile.suffix()));
+            for (Record &rec : newRecs) {
+                if (rec.getCover().compare(destFile.fileName()) == 0) { // Rename cover in record object if it already exists in resources
+                    rec.setCover(destFile.baseName() + " (" + QString::number(fileNum) + ")." + destFile.suffix());
+                    break;
+                }
+            }
+        }
+    }
+
+    std::vector<ListTag> newTags = json.getTags(dirPath + "/tags.json"); // Get vector of all imported tags
+
+    allMyRecords.insert(allMyRecords.end(), newRecs.begin(), newRecs.end()); // Add new records to allmyrecords vector
+    json.writeRecords(&allMyRecords); // Save records to json
+
+    tags.insert(tags.end(), newTags.begin(), newTags.end()); // Add new tags to tags vector
+    sortTagsAlpha(&tags, true); // Sort tags by alpha and delete duplicates
+    json.writeTags(&tags); // Save tags to json
+
+    ui->myRecord_InfoLabel->setText("Imported " + QString::number(newRecs.size()) + " records from\nMRC collection.");
+    hideInfoTimed(5000);
+
+    updateRecordsListOrder(); // Update tables
+    updateMyRecordsTable();
+    updateTagCount();
+    updateTagList();
+}
+
+void MainWindow::hideInfoTimed(int ms) {
+    // Hide the progress ui after specified ms
+    QTimer *timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, [=]() {
+        ui->myRecord_InfoLabel->setText("");
+        ui->myRecord_DiscogsProgressBar->setVisible(false);
+        timer->deleteLater();
+    });
+    timer->start(ms);
+}

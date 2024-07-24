@@ -12,13 +12,12 @@
 
 const int CURRVERSION = 3; // The current version of all JSON versions
 
-std::vector<Record> Json::getRecords(int recordCount){
+std::vector<Record> Json::getRecords(int recordCount, QString path, bool import){
     std::vector<Record> allRecords;
     try{
         QString jsonStr;
         dir.mkpath(QDir::currentPath() + "/resources/user data");
-        QFile myFile(QDir::currentPath() + "/resources/user data/records.json"); // File of records JSON
-
+        QFile myFile(path); // File of records JSON
 
         if (myFile.exists()){
             if (myFile.open(QIODevice::ReadOnly | QIODevice::Text)){
@@ -48,7 +47,7 @@ std::vector<Record> Json::getRecords(int recordCount){
                 } else {
                     for (int i = 0; i < recs.size(); i++){
                         val = recs.at(i).toObject();
-                        if (jsonVersion <= 2) { // If json is version 2 or later, create an id for each record
+                        if (jsonVersion <= 2 || import) { // If json is version 2 or later or an import, create an id for each record
                             id = recordCount + i;
                         }
                         else {
@@ -151,12 +150,12 @@ void Json::writeRecords(std::vector<Record>* myRecords){
     }
 }
 
-std::vector<ListTag> Json::getTags(){
+std::vector<ListTag> Json::getTags(QString path){
     std::vector<ListTag> allTags;
     try{
         QString jsonStr;
         dir.mkpath(QDir::currentPath() + "/resources/user data");
-        QFile myFile(QDir::currentPath() + "/resources/user data/tags.json"); // File of tags JSON
+        QFile myFile(path); // File of tags JSON
 
         if (myFile.exists()){
             if (myFile.open(QIODevice::ReadOnly | QIODevice::Text)){

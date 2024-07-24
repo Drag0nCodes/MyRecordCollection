@@ -11,10 +11,10 @@ class Json
 {
 public:
     Json(QObject *parent = nullptr) {}
-    std::vector<Record> getRecords(int recordCount);
+    std::vector<Record> getRecords(int recordCount, QString path, bool import);
     std::vector<Record> searchRecords(QString search, int limit);
     void writeRecords(std::vector<Record>* myRecords);
-    std::vector<ListTag> getTags();
+    std::vector<ListTag> getTags(QString path);
     void writeTags(std::vector<ListTag>* tags);
     std::vector<ListTag> wikiTags(QString name, QString artist);
     QString downloadCover(QUrl imageUrl);

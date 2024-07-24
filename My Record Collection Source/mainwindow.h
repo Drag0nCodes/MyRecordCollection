@@ -6,7 +6,6 @@
 #include "listtag.h"
 #include "record.h"
 #include "json.h"
-#include <QDir>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -90,6 +89,8 @@ private slots:
 
     void on_actionExport_MRC_Collection_triggered();
 
+    void on_actionImport_MRC_Collection_triggered();
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);
@@ -123,5 +124,6 @@ private:
     void onProgressBarValueChanged(int value);
     void deleteUserData(bool delRecords, bool delTags);
     bool copyDirectory(const QString &sourceDir, const QString &destinationDir);
+    void hideInfoTimed(int ms);
 };
 #endif // MAINWINDOW_H
