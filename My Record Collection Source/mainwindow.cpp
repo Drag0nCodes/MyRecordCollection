@@ -1213,6 +1213,11 @@ void MainWindow::on_actionImport_MRC_Collection_triggered()
     std::vector<Record> newRecs = json.getRecords(allMyRecords.size(), dirPath + "/records.json", true); // Get vector of imported records
     QDir coverDir(dir.absolutePath() + "/covers"); // Get directory of record covers
 
+    QDir destCoversDir(QDir::currentPath() + "/resources/user data/covers");
+    if (!destCoversDir.exists()) { // Create covers directory if it doesn't exist
+        destCoversDir.mkpath(QDir::currentPath() + "/resources/user data/covers");
+    }
+
     for (int i = 0; i < coverDir.entryList(QDir::Files).size(); i++) { // Copy each cover file to resoruces
         QString file = coverDir.entryList(QDir::Files)[i];
         QString srcName = coverDir.absolutePath() + "/" + file;
