@@ -1,9 +1,9 @@
 QTableWidget {
-	background-color: rgb(230, 230, 230);
+	background-color: rgb(240, 240, 240);
 	color: black;
 	selection-color: black;
-	selection-background-color: white;
-	alternate-background-color: rgb(210, 210, 210);
+	selection-background-color: rgb(225, 225, 225);
+	alternate-background-color: white;
 	border: 0px;
 }
 
@@ -37,7 +37,6 @@ QListWidget:item {
 QPushButton {
 	background-color: rgb(230, 230, 230);
 	color: black;
-	border-style: outset;
 	border-radius: 14px;
 }
 
@@ -124,15 +123,66 @@ QMenuBar::item {
 }
 
 QMenuBar::item:selected { 
-	background-color: rgb(210, 210, 210);
+	background-color: rgb(230, 230, 230);
 }
 
 QMenu {
-	background-color: rgb(230, 230, 230);
-	border: 2px solid rgb(210, 210, 210);
+	background-color: rgb(245, 245, 245);
+	border: 2px solid rgb(230, 230, 230);
 }
 
 QMenu::item:selected { 
-	background-color: rgb(210, 210, 210);
+	background-color: rgb(230, 230, 230);
 	color: black;
+}
+
+
+QFrame#editRecordFrame {
+	background-color: white;
+	border: 3px solid rgb(225, 225, 225);
+	border-radius: 14px;
+}
+
+QLabel#editRecord_CoverLabel {
+	border: 4px solid rgb(225, 225, 225);
+	border-radius: 6px;
+	background-color: rgb(225, 225, 225);
+}
+
+QProgressBar {
+	text-align: center;
+	background-color: rgb(230, 230, 230);
+	border-radius: 14px;
+	color: black;
+}
+
+QProgressBar::chunk {
+	background-color: #1E73FF;
+	border-radius: 14px;
+}
+
+QSpinBox {
+	background-color: rgb(225, 225, 225);
+	color: black;
+	border-radius: 14px;
+}
+
+QSpinBox::hover { 
+	background-color: rgb(210, 210, 210);
+}
+
+QPushButton#myRecord_ToSearchRecordsButton, QPushButton#searchRecord_ToMyRecordsButton, 
+QPushButton#editRecord_DoneButton {
+	background-color: #1E73FF;
+	color: white;
+}
+
+QPushButton#myRecord_ToSearchRecordsButton::hover, QPushButton#searchRecord_ToMyRecordsButton::hover, 
+QPushButton#editRecord_DoneButton::hover {
+	background-color: #075CE8;
+}
+
+QPushButton#myRecord_ToSearchRecordsButton::pressed, QPushButton#searchRecord_ToMyRecordsButton::pressed, 
+QPushButton#editRecord_DoneButton::pressed {
+	background-color: #1E73FF;
 }
