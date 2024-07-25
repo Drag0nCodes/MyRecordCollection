@@ -171,6 +171,14 @@ QSpinBox::hover {
 	background-color: rgb(210, 210, 210);
 }
 
+QScrollArea QWidget {
+    background-color: white;
+}
+
+QScrollArea { 
+	border: none;
+}
+
 QPushButton#myRecord_ToSearchRecordsButton, QPushButton#searchRecord_ToMyRecordsButton, 
 QPushButton#editRecord_DoneButton {
 	background-color: #1E73FF;

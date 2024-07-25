@@ -111,6 +111,9 @@ std::vector<Record> Json::searchRecords(QString search, int limit) {
             records.push_back(Record(name, artist, coverUrl, 0, 0));
         }
     }
+    else {
+        records.push_back(Record("", "", "", -1, -1));
+    }
 
     delete reply;
     return records;
@@ -284,7 +287,7 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
                         }
 
                         tags.push_back(ListTag(genre.replace("&nbsp;", " "))); // Add the genre tag to the vector that will be returned. If it has "&nbsp;" remove that,
-                        }
+                    }
                 }
             }
         }

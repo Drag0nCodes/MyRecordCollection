@@ -155,28 +155,38 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
 {
     ui->searchRecord_InfoLabel->setText("");
     ui->searchRecord_Table->clear();
+    ui->searchRecord_Table->setEnabled(true);
     ui->searchRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
     results = json.searchRecords(ui->searchRecord_SearchBar->text(), 10);
     ui->searchRecord_Table->setRowCount(results.size());
 
-    for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's text info into table
-        QTableWidgetItem *nameItem = new QTableWidgetItem(results.at(recordNum).getName());
-        QTableWidgetItem *artistItem = new QTableWidgetItem(results.at(recordNum).getArtist());
+    if (!results.empty() && results[0].getRating() == -1) { // Network error with search records
+        ui->searchRecord_Table->setEnabled(false);
+        QTableWidgetItem *nameItem = new QTableWidgetItem("Network Error");
 
-        ui->searchRecord_Table->setItem(recordNum, 1, nameItem);
-        ui->searchRecord_Table->setItem(recordNum, 2, artistItem);
-        ui->searchRecord_Table->setRowHeight(recordNum, 130);
+        ui->searchRecord_Table->setItem(0, 1, nameItem);
+        ui->searchRecord_Table->setRowHeight(0, 130);
     }
+    else { // No network error, search record returned
+        for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's text info into table
+            QTableWidgetItem *nameItem = new QTableWidgetItem(results.at(recordNum).getName());
+            QTableWidgetItem *artistItem = new QTableWidgetItem(results.at(recordNum).getArtist());
 
-    for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's cover into table
-        QTableWidgetItem *coverItem = new QTableWidgetItem();
+            ui->searchRecord_Table->setItem(recordNum, 1, nameItem);
+            ui->searchRecord_Table->setItem(recordNum, 2, artistItem);
+            ui->searchRecord_Table->setRowHeight(recordNum, 130);
+        }
 
-        QUrl imageUrl(results.at(recordNum).getCover());
-        QPixmap image(getPixmapFromUrl(imageUrl));
+        for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's cover into table
+            QTableWidgetItem *coverItem = new QTableWidgetItem();
 
-        QTableWidgetItem *item = new QTableWidgetItem();
-        item->setData(Qt::DecorationRole, image);
-        ui->searchRecord_Table->setItem(recordNum, 0, item);
+            QUrl imageUrl(results.at(recordNum).getCover());
+            QPixmap image(getPixmapFromUrl(imageUrl));
+
+            QTableWidgetItem *item = new QTableWidgetItem();
+            item->setData(Qt::DecorationRole, image);
+            ui->searchRecord_Table->setItem(recordNum, 0, item);
+        }
     }
 }
 
@@ -771,6 +781,7 @@ void MainWindow::on_actionSelect_File_and_Import_triggered() // Import discogs f
     QString filePath = QFileDialog::getOpenFileName(this, tr("Import Discogs Collection"), "/", tr("CSV files (*.csv)")); // Get discogs file
 
     if (!filePath.isEmpty()) { // File is selected
+        ui->pages->setCurrentIndex(0); // Change to my records page
         QFile myFile(filePath);
         if (myFile.exists() && myFile.open(QIODevice::ReadOnly)) { // Open the file
             totalImports = 0; // Reset/initialize two vars
@@ -1202,6 +1213,7 @@ void MainWindow::on_actionImport_MRC_Collection_triggered()
         return; // User canceled the dialog
     }
 
+    ui->pages->setCurrentIndex(0); // Change to my records page
     QDir dir(dirPath); // Make sure directory has all required files, if not, give error message
     if (!dir.exists("records.json") && !dir.exists("tags.json") && !dir.exists("covers")) {
         std::cerr << "Could not find required files for import" << std::endl;
