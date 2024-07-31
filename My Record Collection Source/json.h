@@ -16,7 +16,9 @@ public:
     void writeRecords(std::vector<Record>* myRecords);
     std::vector<ListTag> getTags(QString path);
     void writeTags(std::vector<ListTag>* tags);
-    std::vector<ListTag> wikiTags(QString name, QString artist);
+    std::vector<ListTag> wikiTags(QString name, QString artist, bool release);
+    int wikiRelease(QString name, QString artist);
+    int wikiRelease(QString data);
     QString downloadCover(QUrl imageUrl);
     bool deleteCover(const QString& coverName);
     Prefs getPrefs();

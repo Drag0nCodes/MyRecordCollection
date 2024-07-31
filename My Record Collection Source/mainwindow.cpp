@@ -22,6 +22,7 @@
 #include <QCoreApplication>
 #include <QtConcurrent>
 #include <QMessageBox>
+#include <QHBoxLayout>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -47,11 +48,12 @@ MainWindow::MainWindow(QWidget *parent)
     sortTagsAlpha(&tags);
 
     // Set the style of the tables
-    ui->myRecord_Table->setColumnWidth(0, 140);
-    ui->myRecord_Table->setColumnWidth(1, 250);
-    ui->myRecord_Table->setColumnWidth(2, 130);
-    ui->myRecord_Table->setColumnWidth(3, 50);
-    ui->myRecord_Table->setColumnWidth(4, 194);
+    ui->myRecord_Table->setColumnWidth(0, 135);
+    ui->myRecord_Table->setColumnWidth(1, 220);
+    ui->myRecord_Table->setColumnWidth(2, 110);
+    ui->myRecord_Table->setColumnWidth(3, 40);
+    ui->myRecord_Table->setColumnWidth(4, 199);
+    ui->myRecord_Table->setColumnWidth(5, 60);
     ui->myRecord_Table->verticalHeader()->hide();
     ui->myRecord_Table->setFont(font);
 
@@ -145,16 +147,20 @@ void MainWindow::on_searchRecord_ToMyRecordsButton_clicked() // change screen to
 void MainWindow::on_myRecord_ToSearchRecordsButton_clicked() // Change screen to search records
 {
     ui->pages->setCurrentIndex(1);
-    ui->searchRecord_SuggestedTagsList->clear();
-    suggestedTags.clear();
     ui->searchRecord_InfoLabel->setText("");
 }
 
 
 void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm records
 {
+    // Reset page
     ui->searchRecord_InfoLabel->setText("");
     ui->searchRecord_Table->clear();
+    ui->searchRecord_SuggestedTagsList->clear();
+    suggestedTags.clear();
+    ui->searchRecord_ReleaseEdit->setValue(1900);
+    ui->searchRecord_AddToMyRecordButton->setEnabled(false);
+
     ui->searchRecord_Table->setEnabled(true);
     ui->searchRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
     results = json.searchRecords(ui->searchRecord_SearchBar->text(), 10);
@@ -193,13 +199,16 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
 
 void MainWindow::updateMyRecordsTable(){ // Update my records list
     ui->myRecord_Table->clear();
-    ui->myRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist", "Rating", "Tags"});
+    ui->myRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist", "Rating", "Tags", "Release"});
     ui->myRecord_Table->setRowCount(recordsList.size());
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert record's text info into table
         QTableWidgetItem *nameItem = new QTableWidgetItem(recordsList.at(recordNum)->getName());
         QTableWidgetItem *artistItem = new QTableWidgetItem(recordsList.at(recordNum)->getArtist());
         QTableWidgetItem *ratingItem = new QTableWidgetItem(QString::number(recordsList.at(recordNum)->getRating()));
+        ratingItem->setTextAlignment(Qt::AlignCenter);
+        QTableWidgetItem *releaseItem = new QTableWidgetItem(QString::number(recordsList.at(recordNum)->getRelease()));
+        releaseItem->setTextAlignment(Qt::AlignCenter);
 
         QString tagString = "";
         for (QString tag : recordsList.at(recordNum)->getTags()) {
@@ -213,19 +222,28 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
         ui->myRecord_Table->setItem(recordNum, 2, artistItem);
         ui->myRecord_Table->setItem(recordNum, 3, ratingItem);
         ui->myRecord_Table->setItem(recordNum, 4, tagsItem);
-        ui->myRecord_Table->setRowHeight(recordNum, 130);
+        ui->myRecord_Table->setItem(recordNum, 5, releaseItem);
+        ui->myRecord_Table->setRowHeight(recordNum, 140);
     }
 
-    for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert record's covers into table
+    for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert records covers into table
         QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + recordsList.at(recordNum)->getCover());
         if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
-        image = image.scaled(130, 130, Qt::IgnoreAspectRatio);
+        image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
 
-        QTableWidgetItem *item = new QTableWidgetItem();
-        item->setData(Qt::DecorationRole, image);
-        ui->myRecord_Table->setItem(recordNum, 0, item);
+        QLabel *label = new QLabel();
+        label->setPixmap(image);
+        label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
-        ui->myRecord_Table->setRowHeight(recordNum, 130);
+        // Create a container widget with a layout
+        QWidget *containerWidget = new QWidget();
+        QHBoxLayout *layout = new QHBoxLayout(containerWidget);
+        layout->addWidget(label);
+        layout->setAlignment(label, Qt::AlignRight); // Align the QLabel right
+        layout->setContentsMargins(0, 0, 5, 0); // Remove margins with 5px on right still
+
+        // Set the container widget as the cell widget
+        ui->myRecord_Table->setCellWidget(recordNum, 0, containerWidget);
     }
 
     // Set record count label text
@@ -233,10 +251,11 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
 }
 
 
-void MainWindow::updateMyRecordsInfo(){ // Update my records list (not images)
+void MainWindow::updateMyRecordsInfo(){ // Update my records list (not images) DEPRECIATED (need to update cover set)
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){
         QTableWidgetItem *nameItem = new QTableWidgetItem(recordsList.at(recordNum)->getName());
+        QTableWidgetItem *releaseItem = new QTableWidgetItem(recordsList.at(recordNum)->getRelease());
         QTableWidgetItem *artistItem = new QTableWidgetItem(recordsList.at(recordNum)->getArtist());
         QTableWidgetItem *ratingItem = new QTableWidgetItem(QString::number(recordsList.at(recordNum)->getRating()));
 
@@ -248,16 +267,18 @@ void MainWindow::updateMyRecordsInfo(){ // Update my records list (not images)
 
         QTableWidgetItem *tagsItem = new QTableWidgetItem(tagString);
 
-        ui->myRecord_Table->setItem(recordNum, 1, nameItem);
-        ui->myRecord_Table->setItem(recordNum, 2, artistItem);
-        ui->myRecord_Table->setItem(recordNum, 3, ratingItem);
-        ui->myRecord_Table->setItem(recordNum, 4, tagsItem);
+        ui->myRecord_Table->setItem(recordNum, 1, releaseItem);
+        ui->myRecord_Table->setItem(recordNum, 2, nameItem);
+        ui->myRecord_Table->setItem(recordNum, 3, artistItem);
+        ui->myRecord_Table->setItem(recordNum, 4, ratingItem);
+        ui->myRecord_Table->setItem(recordNum, 5, tagsItem);
     }
 }
 
 
 void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched record to my collection
 {
+    if (ui->searchRecord_Table->currentRow() < 0) return; // If no records in list, do not do anything
     bool copy = false;
     for (Record record : allMyRecords){ // Check all my records to see if name matches requested add, possible duplicate
         if (record.getName().compare(results.at(ui->searchRecord_Table->currentRow()).getName()) == 0) {
@@ -276,6 +297,8 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
             addRecord.addTag(ui->searchRecord_SuggestedTagsList->item(i)->text());
         }
     }
+
+    addRecord.setRelease(ui->searchRecord_ReleaseEdit->value()); // Get release year from QSpinBox
 
     // Create new tags if they don't exist
     for (QString newTag : addRecord.getTags()){
@@ -298,14 +321,14 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
         }
     }
 
-    allMyRecords.push_back(addRecord);
-    on_myRecord_SearchBar_textChanged();
-    updateMyRecordsTable();
+    allMyRecords.push_back(addRecord); // Add and write data
     json.writeRecords(&allMyRecords);
+    json.writeTags(&tags);
 
+    updateRecordsListOrder(); // update tables
     updateTagCount();
     updateTagList();
-    json.writeTags(&tags);
+    updateMyRecordsTable();
 
     if (copy) ui->searchRecord_InfoLabel->setText("Added to My Collection\nRecord may be duplicate");
     else ui->searchRecord_InfoLabel->setText("Added to My Collection");
@@ -376,6 +399,7 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
         // Update editRecordsFrame
         ui->editRecord_ArtistEdit->setText(recordsList.at(ui->myRecord_Table->currentRow())->getArtist());
         ui->editRecord_TitleEdit->setText(recordsList.at(ui->myRecord_Table->currentRow())->getName());
+        ui->editRecord_ReleaseEdit->setValue(recordsList.at(ui->myRecord_Table->currentRow())->getRelease());
 
         QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + recordsList.at(ui->myRecord_Table->currentRow())->getCover());
         if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
@@ -392,14 +416,6 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
         ui->editRecord_EditTagsList->setDisabled(true);
         selectedMyRecord = false;
     }
-}
-
-
-void MainWindow::on_searchRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn) // Search records page record selcted
-{
-    if (currentRow >= 0 || currentRow < results.size()) ui->searchRecord_AddToMyRecordButton->setDisabled(false); // Valid selection made of searchRecords
-    else ui->searchRecord_AddToMyRecordButton->setDisabled(true); // Invalid selection made
-    if (results.empty()) ui->searchRecord_AddToMyRecordButton->setDisabled(true); // Search list is empty
 }
 
 
@@ -558,17 +574,18 @@ void MainWindow::on_editRecord_ManageTagButton_clicked() // Open and handle mana
 
 
 void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correct records and order based on the options given (tags and sort) (Does not visably update the table)
-
     // Only show records with selected tags
-    std::vector<Record*> newRecordsList; // New vector to hold records than have required tags
+    std::vector<Record*> newRecordsList; // New vector to hold records that have required tags
     for (Record& record : allMyRecords){
         bool matches = true;
+
         for (int i = 0; i < tags.size(); i++){
             if (tags.at(i).getChecked() && !record.hasTag(tags.at(i).getName())){ // Record should have tag but does not
                 matches = false;
             }
         }
-        if (record.getRating() > ui->myRecord_FilterRatingMaxSpinBox->value() || record.getRating() < ui->myRecord_FilterRatingMinSpinBox->value()) continue; // If rating is not in range of filter, skip
+        if (record.getRating() > ui->myRecord_FilterRatingMaxSpinBox->value() || record.getRating() < ui->myRecord_FilterRatingMinSpinBox->value()) continue; // If rating is not in range of rating filter, skip
+        if (record.getRelease() > ui->myRecord_FilterReleaseMaxSpinBox->value() || record.getRelease() < ui->myRecord_FilterReleaseMinSpinBox->value()) continue; // If release is not in range of release filter, skip
         if ((ui->myRecord_SearchBar->text().isEmpty() && matches) || (record.contains(ui->myRecord_SearchBar->text()) && matches)) { // Record has required tags and matches search bar
             newRecordsList.push_back(&record);
         }
@@ -579,17 +596,11 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
     // Show records in order according to dropdown
     switch (ui->myRecord_SortBox->currentIndex()) {
     case 0: // Oldest to newest
-        recordsList.clear();
-        for (Record *rec : newRecordsList){
-            recordsList.push_back(rec);
-        }
+        recordsList = newRecordsList;
         break;
     case 1: // Newest to oldest
         std::reverse(newRecordsList.begin(),newRecordsList.end());
-        recordsList.clear();
-        for (Record *rec : newRecordsList){
-            recordsList.push_back(rec);
-        }
+        recordsList = newRecordsList;
         break;
     case 2: // Title ascending
         while (!newRecordsList.empty()){
@@ -603,10 +614,7 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             sortedRecords.push_back(newRecordsList.at(littlest));
             newRecordsList.erase(newRecordsList.begin()+littlest);
         }
-        recordsList.clear();
-        for (Record *rec : sortedRecords){
-            recordsList.push_back(rec);
-        }
+        recordsList = sortedRecords;
         break;
     case 3: // Title descending
         while (!newRecordsList.empty()){
@@ -620,10 +628,7 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             sortedRecords.push_back(newRecordsList.at(littlest));
             newRecordsList.erase(newRecordsList.begin()+littlest);
         }
-        recordsList.clear();
-        for (Record *rec : sortedRecords){
-            recordsList.push_back(rec);
-        }
+        recordsList = sortedRecords;
         break;
     case 4: // Artist ascending
         while (!newRecordsList.empty()){
@@ -637,10 +642,8 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             sortedRecords.push_back(newRecordsList.at(littlest));
             newRecordsList.erase(newRecordsList.begin()+littlest);
         }
-        recordsList.clear();
-        for (Record *rec : sortedRecords){
-            recordsList.push_back(rec);
-        }
+
+        recordsList = sortedRecords;
         break;
     case 5: // Artist descending
         while (!newRecordsList.empty()){
@@ -654,32 +657,32 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
             sortedRecords.push_back(newRecordsList.at(littlest));
             newRecordsList.erase(newRecordsList.begin()+littlest);
         }
-        recordsList.clear();
-        for (Record *rec : sortedRecords){
-            recordsList.push_back(rec);
-        }
+
+        recordsList = sortedRecords;
         break;
     case 6: // Rating ascending
-        for (int i = 0; i <= 10; i++){
-            for (Record *record : newRecordsList){
-                if (record->getRating() == i) sortedRecords.push_back(record);
-            }
-        }
-        recordsList.clear();
-        for (Record *rec : sortedRecords){
-            recordsList.push_back(rec);
-        }
+        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+            return a->getRating() < b->getRating();
+        });
+        recordsList = newRecordsList;
         break;
     case 7: // Rating ascending
-        for (int i = 10; i >= 0; i--){
-            for (Record *record : newRecordsList){
-                if (record->getRating() == i) sortedRecords.push_back(record);
-            }
-        }
-        recordsList.clear();
-        for (Record *rec : sortedRecords){
-            recordsList.push_back(rec);
-        }
+        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+            return a->getRating() > b->getRating();
+        });
+        recordsList = newRecordsList;
+        break;
+    case 8:
+        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+            return a->getRelease() < b->getRelease();
+        });
+        recordsList = newRecordsList;
+        break;
+    case 9:
+        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+            return a->getRelease() > b->getRelease();
+        });
+        recordsList = newRecordsList;
         break;
     }
 }
@@ -690,18 +693,30 @@ void MainWindow::on_searchRecord_Table_cellClicked(int row, int column) // Click
     ui->searchRecord_SuggestedTagsList->clear();
     suggestedTags.clear();
     ui->searchRecord_SuggestedTagsList->setEnabled(false);
+    ui->searchRecord_ReleaseEdit->setEnabled(false);
+    ui->searchRecord_AddToMyRecordButton->setEnabled(false);
     ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem("Loading tags"));
-    suggestedTags = json.wikiTags(results.at(ui->searchRecord_Table->currentRow()).getName(), results.at(ui->searchRecord_Table->currentRow()).getArtist());
+    suggestedTags = json.wikiTags(results.at(ui->searchRecord_Table->currentRow()).getName(), results.at(ui->searchRecord_Table->currentRow()).getArtist(), true);
+
     ui->searchRecord_SuggestedTagsList->clear();
     if (suggestedTags.empty()){
         ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem("No tags found"));
     }
     else {
+        if (suggestedTags[0].getName().toInt() != 0) {
+            ui->searchRecord_ReleaseEdit->setValue(suggestedTags[0].getName().toInt());
+        }
+        else {
+            ui->searchRecord_ReleaseEdit->setValue(1900);
+            ui->searchRecord_InfoLabel->setText("Error fetching release year");
+        }
         sortTagsAlpha(&suggestedTags);
-        for (ListTag tag : suggestedTags) {
-            ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), tag.getName()));
+        for (int i = 1; i < suggestedTags.size(); i++) {
+            ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), suggestedTags[i].getName()));
         }
         ui->searchRecord_SuggestedTagsList->setEnabled(true);
+        ui->searchRecord_ReleaseEdit->setEnabled(true);
+        ui->searchRecord_AddToMyRecordButton->setEnabled(true);
     }
 }
 
@@ -871,6 +886,8 @@ void MainWindow::on_myRecord_ResetFiltersButton_clicked() // "Reset" tags filter
     }
     ui->myRecord_FilterRatingMaxSpinBox->setValue(10);
     ui->myRecord_FilterRatingMinSpinBox->setValue(0);
+    ui->myRecord_FilterReleaseMaxSpinBox->setValue(9999);
+    ui->myRecord_FilterReleaseMinSpinBox->setValue(1);
     updateRecordsListOrder();
     updateTagCount();
     updateTagList();
@@ -969,6 +986,7 @@ void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
     allMyRecords[id].setName(ui->editRecord_TitleEdit->text());
     allMyRecords[id].setArtist(ui->editRecord_ArtistEdit->text());
     allMyRecords[id].setRating(ui->editRecord_RatingSlider->value());
+    allMyRecords[id].setRelease(ui->editRecord_ReleaseEdit->value());
 
     updateRecordsListOrder(); // Update record table order
     updateMyRecordsTable(); // and info
@@ -983,7 +1001,7 @@ void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
 
 void MainWindow::on_myRecord_customRecordButton_clicked() // Create a custom record
 {
-    allMyRecords.push_back(Record("Custom Record", "", "", 0, allMyRecords.size())); // Add new record to allMyRecords vector
+    allMyRecords.push_back(Record("Custom Record", "", "", 0, allMyRecords.size(), 1900)); // Add new record to allMyRecords vector
     updateRecordsListOrder();
     updateMyRecordsTable();
     json.writeRecords(&allMyRecords);
@@ -993,6 +1011,8 @@ void MainWindow::on_myRecord_customRecordButton_clicked() // Create a custom rec
             break;
         }
     }
+    ui->myRecord_InfoLabel->setText("Created custom record");
+    hideInfoTimed(5000);
 }
 
 
@@ -1135,9 +1155,9 @@ void MainWindow::on_myRecord_FilterRatingMaxSpinBox_valueChanged(int arg1)
         ui->myRecord_FilterRatingMaxSpinBox->setValue(ui->myRecord_FilterRatingMinSpinBox->value());
     }
     updateRecordsListOrder(); // Update tables
-    updateMyRecordsTable();
     updateTagCount();
     updateTagList();
+    updateMyRecordsTable();
 }
 
 
@@ -1147,9 +1167,9 @@ void MainWindow::on_myRecord_FilterRatingMinSpinBox_valueChanged(int arg1)
         ui->myRecord_FilterRatingMinSpinBox->setValue(ui->myRecord_FilterRatingMaxSpinBox->value());
     }
     updateRecordsListOrder(); // Update tables
-    updateMyRecordsTable();
     updateTagCount();
     updateTagList();
+    updateMyRecordsTable();
 }
 
 void MainWindow::on_actionExport_MRC_Collection_triggered()
@@ -1260,9 +1280,9 @@ void MainWindow::on_actionImport_MRC_Collection_triggered()
     hideInfoTimed(5000);
 
     updateRecordsListOrder(); // Update tables
-    updateMyRecordsTable();
     updateTagCount();
     updateTagList();
+    updateMyRecordsTable();
 }
 
 void MainWindow::hideInfoTimed(int ms) {
@@ -1275,3 +1295,48 @@ void MainWindow::hideInfoTimed(int ms) {
     });
     timer->start(ms);
 }
+
+void MainWindow::on_editRecord_ReleaseEdit_valueChanged(int arg1) // Enter 0 in edit record release year, get release from Wikipedia
+{
+    if (arg1 == 0) {
+        ui->editRecord_ReleaseInfoLabel->setText("Tip: Enter '0' to get\nestimated release");
+        qint64 id = recordsList.at(ui->myRecord_Table->currentRow())->getId(); // id of record being edited
+        ui->editRecord_ReleaseEdit->setValue(json.wikiRelease(ui->editRecord_TitleEdit->text(), ui->editRecord_ArtistEdit->text())); // Get release year
+        if (ui->editRecord_ReleaseEdit->value() == 0) { // If year 0 is returned, error
+            ui->editRecord_ReleaseEdit->setValue(1900);
+            ui->editRecord_ReleaseInfoLabel->setText("Error fetching\nrelease year");
+            QTimer *timer = new QTimer(this);
+            connect(timer, &QTimer::timeout, this, [=]() {
+                ui->editRecord_ReleaseInfoLabel->setText("Tip: Enter '0' to get\nestimated release");
+                timer->deleteLater();
+            });
+            timer->start(3500);
+        }
+        ui->editRecord_ReleaseEdit->selectAll();
+    }
+}
+
+
+void MainWindow::on_myRecord_FilterReleaseMinSpinBox_valueChanged(int arg1)
+{
+    if (arg1 > ui->myRecord_FilterReleaseMaxSpinBox->value()) {
+        ui->myRecord_FilterReleaseMinSpinBox->setValue(ui->myRecord_FilterReleaseMaxSpinBox->value());
+    }
+    updateRecordsListOrder(); // Update tables
+    updateTagCount();
+    updateTagList();
+    updateMyRecordsTable();
+}
+
+
+void MainWindow::on_myRecord_FilterReleaseMaxSpinBox_valueChanged(int arg1)
+{
+    if (arg1 < ui->myRecord_FilterReleaseMinSpinBox->value()) {
+        ui->myRecord_FilterReleaseMaxSpinBox->setValue(ui->myRecord_FilterReleaseMinSpinBox->value());
+    }
+    updateRecordsListOrder(); // Update tables
+    updateTagCount();
+    updateTagList();
+    updateMyRecordsTable();
+}
+

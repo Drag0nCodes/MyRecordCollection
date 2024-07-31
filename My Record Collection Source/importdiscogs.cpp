@@ -15,98 +15,11 @@ ImportDiscogs::ImportDiscogs(bool addTags, QObject *parent) : QObject{parent}
     this->addTags = addTags;
 }
 
-void ImportDiscogs::importAll(QString file, std::vector<Record> *allRecords) { // Not used, possibly depreiciated
-    QFile myFile(file); // File of playlists JSON
-    Json json;
-    if (myFile.exists()){
-        if (myFile.open(QIODevice::ReadOnly)){ // Erase all text in playlists json
-            QString line = myFile.readLine();
-            if (!line.startsWith("Catalog#,Artist,Title")){ // Not a discogs collection, invalid file
-                myFile.close();
-                std::cerr << "Inavlid collection file" << std::endl;
-            }
-            line = myFile.readLine(); // Get first discogs record
-            while (!line.isEmpty()) { // Loop until all discogs record read in
-                QString newArtist = ""; // The artist of the discogs record
-                QString newName = ""; // The name of the discogs record
-                int newRating = 0; // The rating of the discogs record
-                int startSec = 0; // The index of the start of the csv cell/section (usually points to a ',' except when at the start of the line)
-                int endSec = line.indexOf(',', startSec+1); // The index of the end of the csv cell/section
-                bool literal = false; // Indicates if the current value being read in is string literal as it contains a ','
-
-
-                if (line.at(startSec) == '"'){ // If the catalog number is a string literal, get to the proper end of the cell
-                    literal = true;
-                    endSec = line.indexOf('"', startSec+1) +1;
-                }
-
-                for (int i = 0; i < 5; i++){ // Run through five times to get the artist, title, and rating
-                    startSec = endSec; // Last end cell index becomes new start cell index
-                    endSec = line.indexOf(',', startSec+1); // New end cell index is the next ','
-                    literal = false;
-                    if (line.at(startSec+1) == '"'){ // If the cell is a string literal, get to the proper end of the cell and indicate as such
-                        literal = true;
-                        endSec = line.indexOf('"', startSec+2) +1;
-                    }
-
-                    switch (i){
-                    case 0: // Getting the artist name
-                        newArtist = line.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1);
-                        if (newArtist.endsWith(")")){ // If the artist name ends with a ')', remove the (...)
-                            int endBracket = newArtist.lastIndexOf(')');
-                            int startBracket = newArtist.lastIndexOf('(');
-                            newArtist.chop(endBracket-startBracket+2);
-                        }
-                        break;
-                    case 1: // Getting the record name
-                        newName = line.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1);
-                        break;
-                    case 4: // Get the record rating
-                        newRating = line.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1).toInt();
-                        newRating *= 2;
-                    }
-                }
-                line = myFile.readLine(); // Get the next line for the next record
-
-                // Find the record on last.fm to get the album cover
-                QString coverUrl = json.searchRecords(newName + " " + newArtist, 1).at(0).getCover(); // Search the record name and artist on last fm, the first result will (hopefully) be the correct album cover
-                bool copy = false;
-                for (Record record : *allRecords){ // Check all my records to see if cover matches requested add
-                    QString searchPageRecordCover = coverUrl; // Copy the cover URL
-                    for (int i = searchPageRecordCover.size()-1; i >= 0; i--) { // remove the first part of the cover URL so only the file name remains
-                        if (searchPageRecordCover[i] == '/') {
-                            searchPageRecordCover.remove(0,i+1);
-                            break;
-                        }
-                    }
-                    if (record.getCover().compare(searchPageRecordCover) == 0 || (record.getName().compare(newName) == 0 && record.getArtist().compare(newArtist) == 0)){
-                        copy = true; // If the (new cover matches cover filenames) or (the album name and artist match) with a record already in the collection, do not add it again
-                        std::cerr << "Skipping from adding: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-                        break;
-                    }
-                }
-                if (!copy){ // Record is not in collection
-                    Record returningRec(newName, newArtist, json.downloadCover(coverUrl), newRating, allRecords->size());
-                    if (addTags){
-                        std::vector<ListTag> tags = json.wikiTags(newName, newArtist);
-                        for (ListTag tag : tags){
-                            returningRec.addTag(tag.getName());
-                        }
-                    }
-                    allRecords->push_back(returningRec); // Add to master record vector (allMyRecords)
-                }
-            }
-            myFile.close();
-            json.writeRecords(allRecords);
-        }
-    }
-}
-
-
 void ImportDiscogs::importSingle() {
     QString newArtist = ""; // The artist of the discogs record
     QString newName = ""; // The name of the discogs record
     int newRating = 0; // The rating of the discogs record
+    int newRelease = 1900;
     int startSec = 0; // The index of the start of the csv cell/section (usually points to a ',' except when at the start of the line)
     int endSec = recordLine.indexOf(',', startSec+1); // The index of the end of the csv cell/section
     bool literal = false; // Indicates if the current value being read in is string literal as it contains a ','
@@ -118,13 +31,14 @@ void ImportDiscogs::importSingle() {
         endSec = recordLine.indexOf('"', startSec+1) +1;
     }
 
-    for (int i = 0; i < 5; i++){ // Run through five times to get the artist, title, and rating
+    for (int i = 0; i < 6; i++){ // Run through five times to get the artist, title, and rating
         startSec = endSec; // Last end cell index becomes new start cell index
         endSec = recordLine.indexOf(',', startSec+1); // New end cell index is the next ','
         literal = false;
         if (recordLine.at(startSec+1) == '"'){ // If the cell is a string literal, get to the proper end of the cell and indicate as such
             literal = true;
             endSec = recordLine.indexOf('"', startSec+2) +1;
+            while (recordLine[endSec] == '"') endSec = recordLine.indexOf('"', endSec+1) +1; // if string literal has a "" in it due to size of record (12"), account for and go to end of string literal
         }
 
         switch (i){
@@ -142,6 +56,11 @@ void ImportDiscogs::importSingle() {
         case 4: // Get the record rating
             newRating = recordLine.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1).toInt();
             newRating *= 2;
+            break;
+        case 5: // Get record release
+            newRelease = recordLine.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1).toInt();
+            if (newRelease == 0) newRelease = 1900;
+            break;
         }
     }
 
@@ -159,16 +78,16 @@ void ImportDiscogs::importSingle() {
         if (record.getCover().compare(searchPageRecordCover) == 0 || (record.getName().toLower().compare(newName.toLower()) == 0 && record.getArtist().toLower().compare(newArtist.toLower()) == 0)){
             copy = true; // If the (new cover matches cover filenames) or (the album name and artist match) with a record already in the collection, do not add it again
             std::cerr << "Skipping from adding: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-            processedRec = new Record("", "", "", -1, 0);
+            processedRec = new Record("", "", "", -1, 0, 0);
             break;
         }
     }
     if (!copy){ // Record is not in collection
         //std::cerr << "Ready to return: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-        processedRec = new Record(newName, newArtist, json->downloadCover(coverUrl), newRating, 0); // Set return val to record pointer
+        processedRec = new Record(newName, newArtist, json->downloadCover(coverUrl), newRating, 0, newRelease); // Set return val to record pointer
         if (addTags){
-            std::vector<ListTag> tags = json->wikiTags(newName, newArtist);
-            for (ListTag tag : tags){
+            std::vector<ListTag> tags = json->wikiTags(newName, newArtist, false);
+            for (ListTag tag : tags) {
                 processedRec->addTag(tag.getName());
             }
         }
@@ -178,11 +97,7 @@ void ImportDiscogs::importSingle() {
 
 
 void ImportDiscogs::run() {
-    //std::cerr << "STARTING " << recordLine.toStdString() << std::endl;
-    //QScopedPointer<QEventLoop> loop(new QEventLoop);
-    //connect(this, &ImportDiscogs::finished, )
     importSingle();
-    //std::cerr << "FINISHED " << recordLine.toStdString() << std::endl;
 }
 
 Record* ImportDiscogs::getProcessedRec(){

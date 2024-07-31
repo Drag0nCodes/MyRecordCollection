@@ -10,7 +10,7 @@
 #include <QEventLoop>
 #include <iostream>
 
-const int CURRVERSION = 3; // The current version of all JSON versions
+const int CURRVERSION = 4; // The current version of all JSON versions
 
 std::vector<Record> Json::getRecords(int recordCount, QString path, bool import){
     std::vector<Record> allRecords;
@@ -28,7 +28,7 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
                 QJsonObject root = myDoc.object();
                 int jsonVersion = root.value("_json_version").toInt();
                 if (jsonVersion > CURRVERSION) { // .json file version newer than app supports
-                    allRecords.push_back(Record("\"resources/user data\" files not supported on this app version. User data is version " + QString::number(jsonVersion) + ". This app supports up to version " + QString::number(CURRVERSION) + ".", "Please update to a more recent version.", "", NULL, 0));
+                    allRecords.push_back(Record("\"resources/user data\" files not supported on this app version. User data is version " + QString::number(jsonVersion) + ". This app supports up to version " + QString::number(CURRVERSION) + ".", "Please update to a more recent version.", "", NULL, 0, 0));
                     return allRecords;
                 }
 
@@ -41,17 +41,24 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
                 qint64 rating;
                 std::vector<QString> tags;
                 qint64 id;
+                qint64 release;
 
                 if (recs.empty()){
                     std::cerr << "JSON error, myArr empty" << std::endl;
                 } else {
                     for (int i = 0; i < recs.size(); i++){
                         val = recs.at(i).toObject();
-                        if (jsonVersion <= 2 || import) { // If json is version 2 or later or an import, create an id for each record
+                        if (jsonVersion <= 2 || import) { // If json is version 2 or older or an import, create an id for each record
                             id = recordCount + i;
                         }
                         else {
                             id = val.value("id").toInt();
+                        }
+                        if (jsonVersion <= 3) { // If json is version 3 or older, set year to 1900
+                            release = 1900;
+                        }
+                        else {
+                            release = val.value("release").toInt();
                         }
                         name = val.value("name").toString();
                         artist = val.value("artist").toString();
@@ -63,7 +70,7 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
                         for (int j = 0; j < tagArr.size(); j++){
                             tags.push_back(tagArr.at(j).toString());
                         }
-                        allRecords.push_back(Record(name, artist, cover, tags, rating, id)); // Turn all JSON info into a Song object and add to vector
+                        allRecords.push_back(Record(name, artist, cover, tags, rating, id, release)); // Turn all JSON info into a Song object and add to vector
                     }
                 }
                 if (jsonVersion < CURRVERSION){ // If json is old version, rewrite it with new data
@@ -108,11 +115,11 @@ std::vector<Record> Json::searchRecords(QString search, int limit) {
             QString artist = val.value("artist").toString();
             QJsonArray coversArr = val.value("image").toArray();
             QString coverUrl = coversArr.at(2).toObject().value("#text").toString();
-            records.push_back(Record(name, artist, coverUrl, 0, 0));
+            records.push_back(Record(name, artist, coverUrl, 0, 0, 0));
         }
     }
     else {
-        records.push_back(Record("", "", "", -1, -1));
+        records.push_back(Record("", "", "", -1, -1, 0));
     }
 
     delete reply;
@@ -138,6 +145,7 @@ void Json::writeRecords(std::vector<Record>* myRecords){
                 recObj.insert("cover", rec.getCover());
                 recObj.insert("rating", rec.getRating());
                 recObj.insert("id", rec.getId());
+                recObj.insert("release", rec.getRelease());
                 QJsonArray tags;
                 for (QString tag : rec.getTags()){
                     tags.insert(tags.size(), tag);
@@ -217,7 +225,8 @@ void Json::writeTags(std::vector<ListTag>* tags){
     }
 }
 
-std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
+
+std::vector<ListTag> Json::wikiTags(QString name, QString artist, bool release) {
     QNetworkAccessManager manager;
     QEventLoop loop;
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
@@ -244,7 +253,20 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
             if (reply->error() == QNetworkReply::NoError) {
                 QByteArray data = reply->readAll();
                 QJsonObject jsonWikiPage = QJsonDocument::fromJson(data).object();
+
+                QString title = jsonWikiPage.value("query").toObject().value("pages").toObject().value(QString::number(pageid)).toObject().value("title").toString();
+                // Maybe try to get a new page if the title is wrong / just the artist? (charlixcx I think)
+                if (!title.toLower().contains(name.toLower())) {
+                    std::cerr << " COULD NOT FIND " + name.toStdString() + " got " + title.toStdString() + " wiki id: " + QString::number(pageid).toStdString();
+                    if (title.compare(artist) == 0){
+                        std::cerr << " GOT THE ARTIST PAGE";
+                    }
+                    std::cerr << std::endl;
+                }
+
                 QString content = jsonWikiPage.value("query").toObject().value("pages").toObject().value(QString::number(pageid)).toObject().value("revisions").toArray().at(0).toObject().value("*").toString();
+
+                if (release) tags.push_back(ListTag(QString::number(wikiRelease(content)))); // First tag will really be the release year
 
                 int position = content.indexOf("| genre", 0, Qt::CaseInsensitive); // The start of the genre section
                 if (position < 0) return tags;
@@ -287,7 +309,7 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
                         }
 
                         tags.push_back(ListTag(genre.replace("&nbsp;", " "))); // Add the genre tag to the vector that will be returned. If it has "&nbsp;" remove that,
-                    }
+                        }
                 }
             }
         }
@@ -295,6 +317,82 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist) {
 
     return tags;
 }
+
+int Json::wikiRelease(QString name, QString artist) { // Get the wikipedia page of a album and return the release year
+    QString content = "";
+    QNetworkAccessManager manager;
+    QEventLoop loop;
+    QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
+
+    QUrl searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=" + artist + "%20" + name + "%20album");
+
+    QNetworkRequest request(searchUrl);
+    QNetworkReply *reply = manager.get(request);
+    loop.exec(); // Wait for the download to finish
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray data = reply->readAll();
+        QJsonObject jsonSearch = QJsonDocument::fromJson(data).object();
+        QJsonObject query = jsonSearch.value("query").toObject();
+
+        if (query.value("searchinfo").toObject().value("totalhits").toInt() > 0){ // Got a result from wikipedia search
+            int pageid = query.value("search").toArray().at(0).toObject().value("pageid").toInt(); // Get the page id of the first search result
+            searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&rvsection=0&pageids=" + QString::number(pageid));
+            QNetworkRequest request(searchUrl);
+            QNetworkReply *reply = manager.get(request);
+            loop.exec(); // Wait for the download to finish
+
+            if (reply->error() == QNetworkReply::NoError) {
+                QByteArray data = reply->readAll();
+                QJsonObject jsonWikiPage = QJsonDocument::fromJson(data).object();
+
+                // check if artist page
+
+                content = jsonWikiPage.value("query").toObject().value("pages").toObject().value(QString::number(pageid)).toObject().value("revisions").toArray().at(0).toObject().value("*").toString();
+            }
+        }
+    }
+    return wikiRelease(content);
+}
+
+int Json::wikiRelease(QString content) { // Return the release year of an album given the wikipedia page already
+    int release = 0;
+
+    int position = content.indexOf("| released", 0, Qt::CaseInsensitive); // The start of the Released section
+    if (position < 0) return 0;
+    int yearEnd;
+
+    // Try to get year for "|" separated date
+    position = content.indexOf("|", position+1, Qt::CaseInsensitive);
+    if (content[position+1]  > 'a' && content[position+1] < 'z') position = content.indexOf("|", position+1, Qt::CaseInsensitive); // | released     = {{Start date|df=yes|2018|4|6}}\n (df=yes before the year)
+    yearEnd = content.indexOf("|", position+1, Qt::CaseInsensitive);
+    release = content.mid(position+1, yearEnd-position-1).toInt(); // | released     = {{Start date|2023|11|10|df=y}}\n|
+
+    // Did not have one of the above formats, try again for comma separated format
+    if (release == 0){
+        int position = content.indexOf("| released", 0, Qt::CaseInsensitive); // The start of the Released section
+        position = content.indexOf(", ", position+1, Qt::CaseInsensitive) + 1;
+        yearEnd = content.indexOf("\n", position+1, Qt::CaseInsensitive);
+        if (yearEnd > 0 && content[yearEnd-1] == '}') {
+            release = content.mid(position+1, yearEnd-position-3).toInt(); // | released     = {{start date|October 22, 2021}}
+        }
+        else {
+            release = content.mid(position+1, yearEnd-position-1).toInt(); // | released     = October 22, 2021
+        }
+    }
+
+    // Did not have one of the above formats, try again for space separated format
+    if (release == 0) {
+        int position = content.indexOf("| released", 0, Qt::CaseInsensitive); // The start of the Released section
+        position = content.indexOf("= ", position+1, Qt::CaseInsensitive) + 1;
+        position = content.indexOf(" ", position+1, Qt::CaseInsensitive);
+        position = content.indexOf(" ", position+1, Qt::CaseInsensitive);
+        yearEnd = content.indexOf("\n", position+1, Qt::CaseInsensitive);
+        release = content.mid(position+1, yearEnd-position-1).toInt(); // | released     = 1 October 2018\n
+    }
+    return release;
+}
+
 
 QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet to covers subfolder
     QString fileName = imageUrl.toString();

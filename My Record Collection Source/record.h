@@ -12,15 +12,16 @@ private:
     std::vector<QString> tags; // Lower case
     qint64 rating;
     qint64 id;
+    qint64 release;
 
 public:
-    Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id);
-    Record(QString name, QString artist, QString cover, qint64 rating, qint64 id);
+    Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id, qint64 release);
+    Record(QString name, QString artist, QString cover, qint64 rating, qint64 id, qint64 release);
     QString getName();
     QString getArtist();
     QString getCover();
     std::vector<QString> getTags();
-    qint64 getRating();
+    qint64 getRating() const;
     void setName(QString name);
     void setArtist(QString artist);
     void setCover(QString cover);
@@ -32,6 +33,8 @@ public:
     bool contains(QString search);
     void setId(qint64 id);
     qint64 getId();
+    void setRelease(qint64 release);
+    qint64 getRelease() const;
 };
 
 

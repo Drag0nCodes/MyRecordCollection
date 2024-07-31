@@ -22,7 +22,6 @@ signals:
     void finished(Record *record, bool skipped);
 
 public slots:
-    void importAll(QString file, std::vector<Record> *allRecordsPoint);
     Record* getProcessedRec();
 
 private:

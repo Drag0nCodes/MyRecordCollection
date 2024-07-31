@@ -33,8 +33,6 @@ private slots:
 
     void on_myRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
 
-    void on_searchRecord_Table_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
-
     void on_myRecord_SearchBar_textChanged();
 
     void on_myRecord_SortBox_activated(int index);
@@ -90,6 +88,12 @@ private slots:
     void on_actionExport_MRC_Collection_triggered();
 
     void on_actionImport_MRC_Collection_triggered();
+
+    void on_editRecord_ReleaseEdit_valueChanged(int arg1);
+
+    void on_myRecord_FilterReleaseMinSpinBox_valueChanged(int arg1);
+
+    void on_myRecord_FilterReleaseMaxSpinBox_valueChanged(int arg1);
 
 private:
     Ui::MainWindow *ui;

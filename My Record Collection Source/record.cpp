@@ -2,21 +2,23 @@
 #include <sstream>
 #include <iostream>
 
-Record::Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id) {
+Record::Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id, qint64 release) {
     this->name = name;
     this->artist = artist;
     this->cover = cover;
     this->tags = tags; // Lower case
     this->rating = rating;
     this->id = id;
+    this->release = release;
 }
 
-Record::Record(QString name, QString artist, QString cover, qint64 rating, qint64 id) {
+Record::Record(QString name, QString artist, QString cover, qint64 rating, qint64 id, qint64 release) {
     this->name = name;
     this->artist = artist;
     this->cover = cover;
     this->rating = rating;
     this->id = id;
+    this->release = release;
 }
 
 QString Record::getName(){
@@ -35,7 +37,7 @@ std::vector<QString> Record::getTags(){
     return tags;
 }
 
-qint64 Record::getRating(){
+qint64 Record::getRating() const{
     return rating;
 }
 
@@ -125,6 +127,16 @@ void Record::setId(qint64 id)
 qint64 Record::getId()
 {
     return id;
+}
+
+void Record::setRelease(qint64 release)
+{
+    this->release = release;
+}
+
+qint64 Record::getRelease() const
+{
+    return release;
 }
 
 bool Record::hasTag(QString tag){
