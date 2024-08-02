@@ -113,7 +113,6 @@ private:
     std::vector<Record*> recordsList; // Records shown on my collection table
     std::vector<ListTag> tags; // All tags
     std::vector<ListTag> suggestedTags; // The list of suggested tags on the search records page
-    bool selectedMyRecord = false; // If a record is selected on the my record page
     QMenu *myRecordContextMenu;
     QAction *contextActionRemove;
     QAction *contextActionEdit;
@@ -129,5 +128,6 @@ private:
     void deleteUserData(bool delRecords, bool delTags);
     bool copyDirectory(const QString &sourceDir, const QString &destinationDir);
     void hideInfoTimed(int ms);
+    Record* selectedRec; // Currently selected record
 };
 #endif // MAINWINDOW_H
