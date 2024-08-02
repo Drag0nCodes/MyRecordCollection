@@ -1321,13 +1321,16 @@ void MainWindow::on_editRecord_ReleaseEdit_valueChanged(int arg1) // Enter 0 in 
         if (ui->editRecord_ReleaseEdit->value() == 0) { // If year 0 is returned, error
             ui->editRecord_ReleaseEdit->setValue(1900);
             ui->editRecord_ReleaseInfoLabel->setText("Error fetching\nrelease year");
-            QTimer *timer = new QTimer(this);
-            connect(timer, &QTimer::timeout, this, [=]() {
-                ui->editRecord_ReleaseInfoLabel->setText("Tip: Enter '0' to get\nestimated release");
-                timer->deleteLater();
-            });
-            timer->start(3500);
         }
+        else { // Release found
+            ui->editRecord_ReleaseInfoLabel->setText("Found a release\nyear");
+        }
+        QTimer *timer = new QTimer(this);
+        connect(timer, &QTimer::timeout, this, [=]() {
+            ui->editRecord_ReleaseInfoLabel->setText("Tip: Enter '0' to get\nestimated release");
+            timer->deleteLater();
+        });
+        timer->start(3500);
         ui->editRecord_ReleaseEdit->selectAll();
     }
 }
