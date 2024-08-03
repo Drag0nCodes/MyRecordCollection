@@ -2,7 +2,7 @@
 #include <sstream>
 #include <iostream>
 
-Record::Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id, qint64 release) {
+Record::Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id, qint64 release, QDate added) {
     this->name = name;
     this->artist = artist;
     this->cover = cover;
@@ -10,15 +10,17 @@ Record::Record(QString name, QString artist, QString cover, std::vector<QString>
     this->rating = rating;
     this->id = id;
     this->release = release;
+    this->added = added;
 }
 
-Record::Record(QString name, QString artist, QString cover, qint64 rating, qint64 id, qint64 release) {
+Record::Record(QString name, QString artist, QString cover, qint64 rating, qint64 id, qint64 release, QDate added) {
     this->name = name;
     this->artist = artist;
     this->cover = cover;
     this->rating = rating;
     this->id = id;
     this->release = release;
+    this->added = added;
 }
 
 QString Record::getName(){
@@ -137,6 +139,16 @@ void Record::setRelease(qint64 release)
 qint64 Record::getRelease() const
 {
     return release;
+}
+
+QDate Record::getAdded() const
+{
+    return added;
+}
+
+void Record::setAdded(QDate added)
+{
+    this->added = added;
 }
 
 bool Record::hasTag(QString tag){

@@ -10,7 +10,7 @@
 #include <QEventLoop>
 #include <iostream>
 
-const int CURRVERSION = 4; // The current version of all JSON versions
+const int CURRVERSION = 5; // The current version of all JSON versions
 
 std::vector<Record> Json::getRecords(int recordCount, QString path, bool import){
     std::vector<Record> allRecords;
@@ -28,7 +28,7 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
                 QJsonObject root = myDoc.object();
                 int jsonVersion = root.value("_json_version").toInt();
                 if (jsonVersion > CURRVERSION) { // .json file version newer than app supports
-                    allRecords.push_back(Record("\"resources/user data\" files not supported on this app version. User data is version " + QString::number(jsonVersion) + ". This app supports up to version " + QString::number(CURRVERSION) + ".", "Please update to a more recent version.", "", NULL, 0, 0));
+                    allRecords.push_back(Record("\"resources/user data\" files not supported on this app version. User data is version " + QString::number(jsonVersion) + ". This app supports up to version " + QString::number(CURRVERSION) + ".", "Please update to a more recent version.", "", NULL, 0, 0, QDate(0, 0, 0)));
                     return allRecords;
                 }
 
@@ -42,6 +42,7 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
                 std::vector<QString> tags;
                 qint64 id;
                 qint64 release;
+                QDate added;
 
                 if (recs.empty()){
                     std::cerr << "JSON error, myArr empty" << std::endl;
@@ -60,6 +61,12 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
                         else {
                             release = val.value("release").toInt();
                         }
+                        if (jsonVersion <= 4){ // No date added if json is version 4 or older, create
+                            added = QDate::currentDate();
+                        }
+                        else{
+                            added = QDate::fromString(val.value("added").toString(), "yyyy-MM-dd");
+                        }
                         name = val.value("name").toString();
                         artist = val.value("artist").toString();
                         cover = val.value("cover").toString();
@@ -70,7 +77,7 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
                         for (int j = 0; j < tagArr.size(); j++){
                             tags.push_back(tagArr.at(j).toString());
                         }
-                        allRecords.push_back(Record(name, artist, cover, tags, rating, id, release)); // Turn all JSON info into a Song object and add to vector
+                        allRecords.push_back(Record(name, artist, cover, tags, rating, id, release, added)); // Turn all JSON info into a Song object and add to vector
                     }
                 }
                 if (jsonVersion < CURRVERSION){ // If json is old version, rewrite it with new data
@@ -115,11 +122,11 @@ std::vector<Record> Json::searchRecords(QString search, int limit) {
             QString artist = val.value("artist").toString();
             QJsonArray coversArr = val.value("image").toArray();
             QString coverUrl = coversArr.at(2).toObject().value("#text").toString();
-            records.push_back(Record(name, artist, coverUrl, 0, 0, 0));
+            records.push_back(Record(name, artist, coverUrl, 0, 0, 0, QDate::currentDate()));
         }
     }
     else {
-        records.push_back(Record("", "", "", -1, -1, 0));
+        records.push_back(Record("", "", "", -1, -1, 0, QDate(0, 0, 0)));
     }
 
     delete reply;
@@ -146,6 +153,7 @@ void Json::writeRecords(std::vector<Record>* myRecords){
                 recObj.insert("rating", rec.getRating());
                 recObj.insert("id", rec.getId());
                 recObj.insert("release", rec.getRelease());
+                recObj.insert("added", rec.getAdded().toString("yyyy-MM-dd"));
                 QJsonArray tags;
                 for (QString tag : rec.getTags()){
                     tags.insert(tags.size(), tag);

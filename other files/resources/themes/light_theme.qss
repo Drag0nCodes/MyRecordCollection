@@ -171,6 +171,16 @@ QSpinBox::hover {
 	background-color: rgb(210, 210, 210);
 }
 
+QDateEdit {
+	background-color: rgb(225, 225, 225);
+	color: black;
+	border-radius: 14px;
+}
+
+QDateEdit::hover { 
+	background-color: rgb(210, 210, 210);
+}
+
 QScrollArea QWidget {
     background-color: white;
 }

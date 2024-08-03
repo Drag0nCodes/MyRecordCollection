@@ -1211,7 +1211,7 @@ Collection</string>
        </font>
       </property>
       <property name="buttonSymbols">
-       <enum>QAbstractSpinBox::PlusMinus</enum>
+       <enum>QAbstractSpinBox::UpDownArrows</enum>
       </property>
       <property name="prefix">
        <string>⠀</string>
@@ -1263,6 +1263,70 @@ estimated release</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+     <widget class="QDateEdit" name="editRecord_AddedEdit">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>320</y>
+        <width>121</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="minimumDateTime">
+       <datetime>
+        <hour>0</hour>
+        <minute>0</minute>
+        <second>0</second>
+        <year>1752</year>
+        <month>9</month>
+        <day>14</day>
+       </datetime>
+      </property>
+      <property name="currentSection">
+       <enum>QDateTimeEdit::DaySection</enum>
+      </property>
+      <property name="displayFormat">
+       <string>⠀yyyy-MM-dd</string>
+      </property>
+      <property name="currentSectionIndex">
+       <number>2</number>
+      </property>
+      <property name="timeSpec">
+       <enum>Qt::UTC</enum>
+      </property>
+      <property name="date">
+       <date>
+        <year>2000</year>
+        <month>1</month>
+        <day>1</day>
+       </date>
+      </property>
+     </widget>
+     <widget class="QLabel" name="editRecord_AddedLabel">
+      <property name="geometry">
+       <rect>
+        <x>235</x>
+        <y>299</y>
+        <width>120</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Date Added:</string>
       </property>
      </widget>
     </widget>

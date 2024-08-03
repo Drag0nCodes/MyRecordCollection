@@ -129,5 +129,8 @@ private:
     bool copyDirectory(const QString &sourceDir, const QString &destinationDir);
     void hideInfoTimed(int ms);
     Record* selectedRec; // Currently selected record
+    void updateEditPopup();
+    int releaseMin; // The min release year/value of the collection
+    int releaseMax; // The max release year/value of the collection
 };
 #endif // MAINWINDOW_H

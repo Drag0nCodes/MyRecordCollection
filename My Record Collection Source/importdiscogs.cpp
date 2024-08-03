@@ -20,6 +20,7 @@ void ImportDiscogs::importSingle() {
     QString newName = ""; // The name of the discogs record
     int newRating = 0; // The rating of the discogs record
     int newRelease = 1900;
+    QDate newAdded;
     int startSec = 0; // The index of the start of the csv cell/section (usually points to a ',' except when at the start of the line)
     int endSec = recordLine.indexOf(',', startSec+1); // The index of the end of the csv cell/section
     bool literal = false; // Indicates if the current value being read in is string literal as it contains a ','
@@ -31,7 +32,7 @@ void ImportDiscogs::importSingle() {
         endSec = recordLine.indexOf('"', startSec+1) +1;
     }
 
-    for (int i = 0; i < 6; i++){ // Run through five times to get the artist, title, and rating
+    for (int i = 0; i < 9; i++){ // Run through five times to get the artist, title, and rating
         startSec = endSec; // Last end cell index becomes new start cell index
         endSec = recordLine.indexOf(',', startSec+1); // New end cell index is the next ','
         literal = false;
@@ -61,6 +62,10 @@ void ImportDiscogs::importSingle() {
             newRelease = recordLine.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1).toInt();
             if (newRelease == 0) newRelease = 1900;
             break;
+        case 8: // Get record release
+            QString addedString = recordLine.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1);
+            newAdded = QDateTime::fromString(addedString, "yyyy-MM-dd HH:mm:ss").date();
+            break;
         }
     }
 
@@ -78,13 +83,13 @@ void ImportDiscogs::importSingle() {
         if (record.getCover().compare(searchPageRecordCover) == 0 || (record.getName().toLower().compare(newName.toLower()) == 0 && record.getArtist().toLower().compare(newArtist.toLower()) == 0)){
             copy = true; // If the (new cover matches cover filenames) or (the album name and artist match) with a record already in the collection, do not add it again
             std::cerr << "Skipping from adding: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-            processedRec = new Record("", "", "", -1, 0, 0);
+            processedRec = new Record("", "", "", -1, 0, 0, QDate(0, 0, 0));
             break;
         }
     }
     if (!copy){ // Record is not in collection
         //std::cerr << "Ready to return: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
-        processedRec = new Record(newName, newArtist, json->downloadCover(coverUrl), newRating, 0, newRelease); // Set return val to record pointer
+        processedRec = new Record(newName, newArtist, json->downloadCover(coverUrl), newRating, 0, newRelease, newAdded); // Set return val to record pointer
         if (addTags){
             std::vector<ListTag> tags = json->wikiTags(newName, newArtist, false);
             for (ListTag tag : tags) {

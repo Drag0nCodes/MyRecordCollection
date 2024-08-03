@@ -2,6 +2,7 @@
 #define RECORD_H
 #include "QString"
 #include "vector"
+#include <QDate>
 
 class Record
 {
@@ -13,10 +14,11 @@ private:
     qint64 rating;
     qint64 id;
     qint64 release;
+    QDate added;
 
 public:
-    Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id, qint64 release);
-    Record(QString name, QString artist, QString cover, qint64 rating, qint64 id, qint64 release);
+    Record(QString name, QString artist, QString cover, std::vector<QString> tags, qint64 rating, qint64 id, qint64 release, QDate added);
+    Record(QString name, QString artist, QString cover, qint64 rating, qint64 id, qint64 release, QDate added);
     QString getName();
     QString getArtist();
     QString getCover();
@@ -35,6 +37,8 @@ public:
     qint64 getId();
     void setRelease(qint64 release);
     qint64 getRelease() const;
+    QDate getAdded() const;
+    void setAdded(QDate added);
 };
 
 

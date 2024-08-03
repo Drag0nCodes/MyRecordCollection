@@ -96,6 +96,10 @@ MainWindow::MainWindow(QWidget *parent)
     // Setup the progress bar to be hiden
     ui->myRecord_DiscogsProgressBar->setVisible(false);
     connect(ui->myRecord_DiscogsProgressBar, &QProgressBar::valueChanged, this, &MainWindow::onProgressBarValueChanged);
+
+    // Set release filter to min/max values
+    ui->myRecord_FilterReleaseMaxSpinBox->setValue(releaseMax);
+    ui->myRecord_FilterReleaseMinSpinBox->setValue(releaseMin);
 }
 
 MainWindow::~MainWindow()
@@ -201,6 +205,19 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
     ui->myRecord_Table->clear();
     ui->myRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist", "Rating", "Tags", "Release"});
     ui->myRecord_Table->setRowCount(recordsList.size());
+
+    releaseMin = 9999;
+    releaseMax = 1;
+
+    for (Record &rec : allMyRecords) {
+        if (rec.getRelease() > releaseMax) releaseMax = rec.getRelease();
+        if (rec.getRelease() < releaseMin) releaseMin = rec.getRelease();
+    }
+
+    if (releaseMax < releaseMin) { // If max is still less than min, no records exist
+        ui->myRecord_FilterReleaseMaxSpinBox->setValue(9999);
+        ui->myRecord_FilterReleaseMinSpinBox->setValue(1);
+    }
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert record's text info into table
         QTableWidgetItem *nameItem = new QTableWidgetItem(recordsList.at(recordNum)->getName());
@@ -378,32 +395,7 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
         ui->myRecord_Table->item(currentRow, 3)->setFont(font);
         ui->myRecord_Table->item(currentRow, 4)->setFont(font);
 
-        ui->editRecord_RatingSlider->setDisabled(false);
-        ui->editRecord_RatingSlider->setSliderPosition(selectedRec->getRating());
-        ui->editRecord_EditTagsList->setDisabled(false);
-
-        // Set edit tags list checks
-        ui->editRecord_EditTagsList->clear();
-        QIcon checked(QDir::currentPath() + "/resources/images/check.png");
-        QIcon unchecked(QDir::currentPath() + "/resources/images/uncheck.png");
-        for (ListTag tag : tags){
-            if (selectedRec->hasTag(tag.getName())){
-                ui->editRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
-            }
-            else {
-                ui->editRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
-            }
-        }
-
-        // Update editRecordsFrame
-        ui->editRecord_ArtistEdit->setText(selectedRec->getArtist());
-        ui->editRecord_TitleEdit->setText(selectedRec->getName());
-        ui->editRecord_ReleaseEdit->setValue(selectedRec->getRelease());
-
-        QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + selectedRec->getCover());
-        if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
-        image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
-        ui->editRecord_CoverLabel->setPixmap(image);
+        updateEditPopup();
     }
     else { // Invalid selection made of myRecords
         ui->editRecord_RatingSlider->setDisabled(true);
@@ -415,6 +407,36 @@ void MainWindow::on_myRecord_Table_currentCellChanged(int currentRow, int curren
         ui->editRecord_EditTagsList->setDisabled(true);
         selectedRec = NULL;
     }
+}
+
+void MainWindow::updateEditPopup(){
+    ui->editRecord_RatingSlider->setDisabled(false);
+    ui->editRecord_RatingSlider->setSliderPosition(selectedRec->getRating());
+    ui->editRecord_EditTagsList->setDisabled(false);
+
+    // Set edit tags list checks
+    ui->editRecord_EditTagsList->clear();
+    QIcon checked(QDir::currentPath() + "/resources/images/check.png");
+    QIcon unchecked(QDir::currentPath() + "/resources/images/uncheck.png");
+    for (ListTag tag : tags){
+        if (selectedRec->hasTag(tag.getName())){
+            ui->editRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
+        }
+        else {
+            ui->editRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
+        }
+    }
+
+    // Update editRecordsFrame
+    ui->editRecord_ArtistEdit->setText(selectedRec->getArtist());
+    ui->editRecord_TitleEdit->setText(selectedRec->getName());
+    ui->editRecord_ReleaseEdit->setValue(selectedRec->getRelease());
+    ui->editRecord_AddedEdit->setDate(selectedRec->getAdded());
+
+    QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + selectedRec->getCover());
+    if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
+    image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
+    ui->editRecord_CoverLabel->setPixmap(image);
 }
 
 
@@ -594,10 +616,15 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
     // Show records in order according to dropdown
     switch (ui->myRecord_SortBox->currentIndex()) {
     case 0: // Oldest to newest
+        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+            return a->getAdded() < b->getAdded();
+        });
         recordsList = newRecordsList;
         break;
     case 1: // Newest to oldest
-        std::reverse(newRecordsList.begin(),newRecordsList.end());
+        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+            return a->getAdded() > b->getAdded();
+        });
         recordsList = newRecordsList;
         break;
     case 2: // Title ascending
@@ -884,8 +911,8 @@ void MainWindow::on_myRecord_ResetFiltersButton_clicked() // "Reset" tags filter
     }
     ui->myRecord_FilterRatingMaxSpinBox->setValue(10);
     ui->myRecord_FilterRatingMinSpinBox->setValue(0);
-    ui->myRecord_FilterReleaseMaxSpinBox->setValue(9999);
-    ui->myRecord_FilterReleaseMinSpinBox->setValue(1);
+    ui->myRecord_FilterReleaseMaxSpinBox->setValue(releaseMax);
+    ui->myRecord_FilterReleaseMinSpinBox->setValue(releaseMin);
     updateRecordsListOrder();
     updateTagCount();
     updateTagList();
@@ -975,20 +1002,22 @@ void MainWindow::toggleEditRecordFrame() // Toggle view of edit record frame
 
 void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
 {
-    ui->editFrameBlockerFrame->setVisible(false);
-    ui->myRecord_Table->setFocus(); // Prevent done button still being focused
-    setFocus(ui->editRecordFrame, Qt::ClickFocus);
-
     // Update records info with new info
     selectedRec->setName(ui->editRecord_TitleEdit->text());
     selectedRec->setArtist(ui->editRecord_ArtistEdit->text());
     selectedRec->setRating(ui->editRecord_RatingSlider->value());
     selectedRec->setRelease(ui->editRecord_ReleaseEdit->value());
+    selectedRec->setAdded(ui->editRecord_AddedEdit->date());
 
     Record* savedSelected = selectedRec;
     updateRecordsListOrder(); // Update record table order
     updateMyRecordsTable(); // and info
     json.writeRecords(&allMyRecords); // Save changes to json
+
+    ui->editFrameBlockerFrame->setVisible(false);
+    ui->myRecord_Table->setFocus(); // Prevent done button still being focused
+    setFocus(ui->editRecordFrame, Qt::ClickFocus);
+
     selectedRec = savedSelected;
     for (int i = 0; i < recordsList.size(); i++){ // Set table record selected to same record as was selected before
         if (recordsList[i]->getId() == selectedRec->getId()){
@@ -1000,36 +1029,9 @@ void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
 
 void MainWindow::on_myRecord_customRecordButton_clicked() // Create a custom record
 {
-    allMyRecords.push_back(Record("Custom Record", "", "", 0, allMyRecords.size(), 1900)); // Add new record to allMyRecords vector
+    allMyRecords.push_back(Record("Custom Record", "", "", 0, allMyRecords.size(), 1900, QDate::currentDate())); // Add new record to allMyRecords vector
     selectedRec = &allMyRecords[allMyRecords.size()-1];
-
-    ui->editRecord_RatingSlider->setDisabled(false);
-    ui->editRecord_RatingSlider->setSliderPosition(selectedRec->getRating());
-    ui->editRecord_EditTagsList->setDisabled(false);
-
-    // Set edit tags list checks
-    ui->editRecord_EditTagsList->clear();
-    QIcon checked(QDir::currentPath() + "/resources/images/check.png");
-    QIcon unchecked(QDir::currentPath() + "/resources/images/uncheck.png");
-    for (ListTag tag : tags){
-        if (selectedRec->hasTag(tag.getName())){
-            ui->editRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
-        }
-        else {
-            ui->editRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
-        }
-    }
-
-    // Update editRecordsFrame
-    ui->editRecord_ArtistEdit->setText(selectedRec->getArtist());
-    ui->editRecord_TitleEdit->setText(selectedRec->getName());
-    ui->editRecord_ReleaseEdit->setValue(selectedRec->getRelease());
-
-    QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + selectedRec->getCover());
-    if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
-    image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
-    ui->editRecord_CoverLabel->setPixmap(image);
-
+    updateEditPopup();
     toggleEditRecordFrame();
 }
 
