@@ -273,9 +273,9 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
     ui->myRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist", "Rating", "Tags", "Release", "Date Added"});
     ui->myRecord_Table->setRowCount(recordsList.size());
 
+    // Figure out max and min release years
     releaseMin = 9999;
     releaseMax = 1;
-
     for (Record &rec : allMyRecords) {
         if (rec.getRelease() > releaseMax) releaseMax = rec.getRelease();
         if (rec.getRelease() < releaseMin) releaseMin = rec.getRelease();
@@ -1080,8 +1080,14 @@ void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
     selectedRec->setAdded(ui->editRecord_AddedEdit->date());
 
     Record* savedSelected = selectedRec;
-    updateRecordsListOrder(); // Update record table order
-    updateMyRecordsTable(); // and info
+
+    // If new release is less than min or greater than max and filter is filtering all, change filter in include
+    if (ui->editRecord_ReleaseEdit->value() > releaseMax && ui->myRecord_FilterReleaseMaxSpinBox->value() == releaseMax && ui->myRecord_FilterReleaseMinSpinBox->value() == releaseMin) ui->myRecord_FilterReleaseMaxSpinBox->setValue(ui->editRecord_ReleaseEdit->value());
+    else if (ui->editRecord_ReleaseEdit->value() < releaseMin && ui->myRecord_FilterReleaseMaxSpinBox->value() == releaseMax && ui->myRecord_FilterReleaseMinSpinBox->value() == releaseMin) ui->myRecord_FilterReleaseMinSpinBox->setValue(ui->editRecord_ReleaseEdit->value());
+    else { // As changing spin box would update the table, only need to do if not changing either spin box
+        updateRecordsListOrder(); // Update record table order
+        updateMyRecordsTable(); // and info
+    }
     json.writeRecords(&allMyRecords); // Save changes to json
 
     ui->editFrameBlockerFrame->setVisible(false);
