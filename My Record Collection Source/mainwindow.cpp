@@ -23,13 +23,13 @@
 #include <QtConcurrent>
 #include <QMessageBox>
 #include <QHBoxLayout>
+#include "sizechangefilter.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setFixedSize(QSize(1000, 810));
     setWindowTitle("My Record Collection");
     setFocus(this, Qt::ClickFocus); // Set all widgets to have click focus
     ui->myRecord_Table->setFocusPolicy(Qt::NoFocus); // Set tables to have NoFocus policy so there is no dotted line around the selected cell
@@ -48,26 +48,22 @@ MainWindow::MainWindow(QWidget *parent)
     sortTagsAlpha(&tags);
 
     // Set the style of the tables
-    ui->myRecord_Table->setColumnWidth(0, 135);
-    ui->myRecord_Table->setColumnWidth(1, 220);
-    ui->myRecord_Table->setColumnWidth(2, 110);
-    ui->myRecord_Table->setColumnWidth(3, 40);
-    ui->myRecord_Table->setColumnWidth(4, 199);
-    ui->myRecord_Table->setColumnWidth(5, 60);
     ui->myRecord_Table->verticalHeader()->hide();
     ui->myRecord_Table->setFont(font);
 
-    ui->searchRecord_Table->setColumnWidth(0, 140);
-    ui->searchRecord_Table->setColumnWidth(1, 385);
-    ui->searchRecord_Table->setColumnWidth(2, 239);
     ui->searchRecord_Table->verticalHeader()->hide();
     ui->searchRecord_Table->setFont(font);
 
     // Set preferences
     ui->myRecord_SortBox->setCurrentIndex(prefs.getSort()); // Sort by rating decending
     updateRecordsListOrder();
-    // Set the style sheet for the program
-    setStyleSheet(prefs.getStyle());
+    setStyleSheet(prefs.getStyle()); // Set the style sheet
+    // Set window preferences
+    ui->actionCover->setChecked(prefs.getCover());
+    ui->actionRating->setChecked(prefs.getRating());
+    ui->actionRelease->setChecked(prefs.getRelease());
+    ui->actionAdded_Date->setChecked(prefs.getAdded());
+    this->resize(prefs.getSize());
 
     // Fill tables
     updateTagCount();
@@ -100,6 +96,67 @@ MainWindow::MainWindow(QWidget *parent)
     // Set release filter to min/max values
     ui->myRecord_FilterReleaseMaxSpinBox->setValue(releaseMax);
     ui->myRecord_FilterReleaseMinSpinBox->setValue(releaseMin);
+
+    // Setup window resizing
+    this->setMinimumSize(1000, 600);
+    SizeChangeFilter* sizeFilter = new SizeChangeFilter;
+    this->installEventFilter(sizeFilter);
+    connect(sizeFilter, &SizeChangeFilter::newSize, this, [=](QSize size) { // When window resizes, move and resize widgets
+        // Set record page geometry X Y Width Height
+        ui->pages->setGeometry(0, -10, size.width(), size.height()-10);
+        ui->myRecord_DiscogsProgressBar->setGeometry(size.width()-200, ui->myRecord_DiscogsProgressBar->y(), ui->myRecord_DiscogsProgressBar->width(), ui->myRecord_DiscogsProgressBar->height());
+        ui->myRecord_FilterRatingLabel->setGeometry(size.width()-200, ui->myRecord_FilterRatingLabel->y(), ui->myRecord_FilterRatingLabel->width(), ui->myRecord_FilterRatingLabel->height());
+        ui->myRecord_FilterRatingMaxSpinBox->setGeometry(size.width()-200, ui->myRecord_FilterRatingMaxSpinBox->y(), ui->myRecord_FilterRatingMaxSpinBox->width(), ui->myRecord_FilterRatingMaxSpinBox->height());
+        ui->myRecord_FilterRatingMinSpinBox->setGeometry(size.width()-200, ui->myRecord_FilterRatingMinSpinBox->y(), ui->myRecord_FilterRatingMinSpinBox->width(), ui->myRecord_FilterRatingMinSpinBox->height());
+        ui->myRecord_FilterReleaseLabel->setGeometry(size.width()-100, ui->myRecord_FilterReleaseLabel->y(), ui->myRecord_FilterReleaseLabel->width(), ui->myRecord_FilterReleaseLabel->height());
+        ui->myRecord_FilterReleaseMaxSpinBox->setGeometry(size.width()-100, ui->myRecord_FilterReleaseMaxSpinBox->y(), ui->myRecord_FilterReleaseMaxSpinBox->width(), ui->myRecord_FilterReleaseMaxSpinBox->height());
+        ui->myRecord_FilterReleaseMinSpinBox->setGeometry(size.width()-100, ui->myRecord_FilterReleaseMinSpinBox->y(), ui->myRecord_FilterReleaseMinSpinBox->width(), ui->myRecord_FilterReleaseMinSpinBox->height());
+        ui->myRecord_FilterTagsLabel->setGeometry(size.width()-200, ui->myRecord_FilterTagsLabel->y(), ui->myRecord_FilterTagsLabel->width(), ui->myRecord_FilterTagsLabel->height());
+        ui->myRecord_FilterTagsList->setGeometry(size.width()-200, ui->myRecord_FilterTagsList->y(), ui->myRecord_FilterTagsList->width(), ui->myRecord_FilterTagsList->height());
+        ui->myRecord_InfoLabel->setGeometry(size.width()-200, ui->myRecord_InfoLabel->y(), ui->myRecord_InfoLabel->width(), ui->myRecord_InfoLabel->height());
+        ui->myRecord_PickForMe->setGeometry(size.width()-360, size.height()-52, ui->myRecord_PickForMe->width(), ui->myRecord_PickForMe->height());
+        ui->myRecord_RecordCountLabel->setGeometry(ui->myRecord_RecordCountLabel->x(), size.height()-52, ui->myRecord_RecordCountLabel->width(), ui->myRecord_RecordCountLabel->height());
+        ui->myRecord_ResetFiltersButton->setGeometry(size.width()-100, ui->myRecord_ResetFiltersButton->y(), ui->myRecord_ResetFiltersButton->width(), ui->myRecord_ResetFiltersButton->height());
+        ui->myRecord_SearchBar->setGeometry(size.width()-530, ui->myRecord_SearchBar->y(), ui->myRecord_SearchBar->width(), ui->myRecord_SearchBar->height());
+        ui->myRecord_SortBox->setGeometry(size.width()-690, ui->myRecord_SortBox->y(), ui->myRecord_SortBox->width(), ui->myRecord_SortBox->height());
+        ui->myRecord_SortLabel->setGeometry(size.width()-778, ui->myRecord_SortLabel->y(), ui->myRecord_SortLabel->width(), ui->myRecord_SortLabel->height());
+        ui->myRecord_Table->setGeometry(ui->myRecord_Table->x(), ui->myRecord_Table->y(), size.width()-219, size.height()-110);
+        ui->myRecord_ToSearchRecordsButton->setGeometry(size.width()-200, size.height()-52, ui->myRecord_ToSearchRecordsButton->width(), ui->myRecord_ToSearchRecordsButton->height());
+        ui->myRecord_customRecordButton->setGeometry(size.width()-200, size.height()-90, ui->myRecord_customRecordButton->width(), ui->myRecord_customRecordButton->height());
+
+        // Resize my record table columns, 17px for scrollbar
+        // 252 for other things
+        resizeRecordTable();
+
+        // Set search page geometry
+        ui->searchRecord_AddToMyRecordButton->setGeometry(size.width()-200, ui->searchRecord_AddToMyRecordButton->y(), ui->searchRecord_AddToMyRecordButton->width(), ui->searchRecord_AddToMyRecordButton->height());
+        ui->searchRecord_InfoLabel->setGeometry(size.width()-200, ui->searchRecord_InfoLabel->y(), ui->searchRecord_InfoLabel->width(), ui->searchRecord_InfoLabel->height());
+        ui->searchRecord_RatingLabel->setGeometry(size.width()-200, ui->searchRecord_RatingLabel->y(), ui->searchRecord_RatingLabel->width(), ui->searchRecord_RatingLabel->height());
+        ui->searchRecord_RatingNumLabel1->setGeometry(size.width()-108, ui->searchRecord_RatingNumLabel1->y(), ui->searchRecord_RatingNumLabel1->width(), ui->searchRecord_RatingNumLabel1->height());
+        ui->searchRecord_RatingNumLabel2->setGeometry(size.width()-198, ui->searchRecord_RatingNumLabel2->y(), ui->searchRecord_RatingNumLabel2->width(), ui->searchRecord_RatingNumLabel2->height());
+        ui->searchRecord_RatingSlider->setGeometry(size.width()-200, ui->searchRecord_RatingSlider->y(), ui->searchRecord_RatingSlider->width(), ui->searchRecord_RatingSlider->height());
+        ui->searchRecord_ReleaseEdit->setGeometry(size.width()-200, ui->searchRecord_ReleaseEdit->y(), ui->searchRecord_ReleaseEdit->width(), ui->searchRecord_ReleaseEdit->height());
+        ui->searchRecord_ReleaseLabel->setGeometry(size.width()-200, ui->searchRecord_ReleaseLabel->y(), ui->searchRecord_ReleaseLabel->width(), ui->searchRecord_ReleaseLabel->height());
+        ui->searchRecord_SearchBar->setGeometry(size.width()-530, ui->searchRecord_SearchBar->y(), ui->searchRecord_SearchBar->width(), ui->searchRecord_SearchBar->height());
+        ui->searchRecord_SuggestedTagsLabel->setGeometry(size.width()-200, ui->searchRecord_SuggestedTagsLabel->y(), ui->searchRecord_SuggestedTagsLabel->width(), ui->searchRecord_SuggestedTagsLabel->height());
+        ui->searchRecord_SuggestedTagsList->setGeometry(size.width()-200, ui->searchRecord_SuggestedTagsList->y(), ui->searchRecord_SuggestedTagsList->width(), ui->searchRecord_SuggestedTagsList->height());
+        ui->searchRecord_Table->setGeometry(ui->searchRecord_Table->x(), ui->searchRecord_Table->y(), size.width()-219, size.height()-110);
+        ui->searchRecord_ToMyRecordsButton->setGeometry(size.width()-200, size.height()-52, ui->searchRecord_ToMyRecordsButton->width(), ui->searchRecord_ToMyRecordsButton->height());
+
+        // Resize search record table columns, 17px for scrollbar
+        ui->searchRecord_Table->setColumnWidth(0, 135);
+        int leftOverSearch = ui->searchRecord_Table->width() - 17 - ui->searchRecord_Table->columnWidth(0);
+        ui->searchRecord_Table->setColumnWidth(1, leftOverSearch * 0.62);
+        leftOverSearch -= ui->searchRecord_Table->columnWidth(1);
+        ui->searchRecord_Table->setColumnWidth(2, leftOverSearch);
+
+        // Set edit popup geometry
+        ui->editFrameBlockerFrame->setGeometry(0, 0, size.width(), size.height());
+        ui->editRecordFrame->setGeometry(size.width()/2-ui->editRecordFrame->width()/2, size.height()/2-ui->editRecordFrame->height()/2, ui->editRecordFrame->width(), ui->editRecordFrame->height());
+
+        prefs.setSize(size);
+        json.writePrefs(&prefs);
+    });
 }
 
 MainWindow::~MainWindow()
@@ -175,7 +232,7 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
         QTableWidgetItem *nameItem = new QTableWidgetItem("Network Error");
 
         ui->searchRecord_Table->setItem(0, 1, nameItem);
-        ui->searchRecord_Table->setRowHeight(0, 130);
+        ui->searchRecord_Table->setRowHeight(0, 140);
     }
     else { // No network error, search record returned
         for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's text info into table
@@ -184,18 +241,28 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
 
             ui->searchRecord_Table->setItem(recordNum, 1, nameItem);
             ui->searchRecord_Table->setItem(recordNum, 2, artistItem);
-            ui->searchRecord_Table->setRowHeight(recordNum, 130);
+            ui->searchRecord_Table->setRowHeight(recordNum, 140);
         }
 
         for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's cover into table
-            QTableWidgetItem *coverItem = new QTableWidgetItem();
-
             QUrl imageUrl(results.at(recordNum).getCover());
             QPixmap image(getPixmapFromUrl(imageUrl));
+            if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
+            image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
 
-            QTableWidgetItem *item = new QTableWidgetItem();
-            item->setData(Qt::DecorationRole, image);
-            ui->searchRecord_Table->setItem(recordNum, 0, item);
+            QLabel *label = new QLabel();
+            label->setPixmap(image);
+            label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+            // Create a container widget with a layout
+            QWidget *containerWidget = new QWidget();
+            QHBoxLayout *layout = new QHBoxLayout(containerWidget);
+            layout->addWidget(label);
+            layout->setAlignment(label, Qt::AlignRight); // Align the QLabel right
+            layout->setContentsMargins(0, 0, 5, 0); // Remove margins with 5px on right still
+
+            // Set the container widget as the cell widget
+            ui->searchRecord_Table->setCellWidget(recordNum, 0, containerWidget);
         }
     }
 }
@@ -203,7 +270,7 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
 
 void MainWindow::updateMyRecordsTable(){ // Update my records list
     ui->myRecord_Table->clear();
-    ui->myRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist", "Rating", "Tags", "Release"});
+    ui->myRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist", "Rating", "Tags", "Release", "Date Added"});
     ui->myRecord_Table->setRowCount(recordsList.size());
 
     releaseMin = 9999;
@@ -226,6 +293,8 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
         ratingItem->setTextAlignment(Qt::AlignCenter);
         QTableWidgetItem *releaseItem = new QTableWidgetItem(QString::number(recordsList.at(recordNum)->getRelease()));
         releaseItem->setTextAlignment(Qt::AlignCenter);
+        QTableWidgetItem *addedItem = new QTableWidgetItem(recordsList.at(recordNum)->getAdded().toString("yyyy-MM-dd"));
+        addedItem->setTextAlignment(Qt::AlignCenter);
 
         QString tagString = "";
         for (QString tag : recordsList.at(recordNum)->getTags()) {
@@ -240,6 +309,7 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
         ui->myRecord_Table->setItem(recordNum, 3, ratingItem);
         ui->myRecord_Table->setItem(recordNum, 4, tagsItem);
         ui->myRecord_Table->setItem(recordNum, 5, releaseItem);
+        ui->myRecord_Table->setItem(recordNum, 6, addedItem);
         ui->myRecord_Table->setRowHeight(recordNum, 140);
     }
 
@@ -435,7 +505,7 @@ void MainWindow::updateEditPopup(){
 
     QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + selectedRec->getCover());
     if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
-    image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
+    image = image.scaled(115, 115, Qt::IgnoreAspectRatio);
     ui->editRecord_CoverLabel->setPixmap(image);
 }
 
@@ -1360,3 +1430,51 @@ void MainWindow::on_myRecord_FilterReleaseMaxSpinBox_valueChanged(int arg1) // F
     updateTagList();
     updateMyRecordsTable();
 }
+
+void MainWindow::resizeRecordTable()
+{
+    if (ui->actionCover->isChecked()) ui->myRecord_Table->setColumnWidth(0, 135); // Cover
+    else ui->myRecord_Table->setColumnWidth(0, 0);
+    if (ui->actionRating->isChecked()) ui->myRecord_Table->setColumnWidth(3, 40); // Rating
+    else ui->myRecord_Table->setColumnWidth(3, 0);
+    if (ui->actionRelease->isChecked()) ui->myRecord_Table->setColumnWidth(5, 60); // Release
+    else ui->myRecord_Table->setColumnWidth(5, 0);
+    if (ui->actionAdded_Date->isChecked()) ui->myRecord_Table->setColumnWidth(6, 100); // Added
+    else ui->myRecord_Table->setColumnWidth(6, 0);
+    int leftOverMy = ui->myRecord_Table->width() - 17 - ui->myRecord_Table->columnWidth(0) - ui->myRecord_Table->columnWidth(3) - ui->myRecord_Table->columnWidth(5) - ui->myRecord_Table->columnWidth(6);
+    ui->myRecord_Table->setColumnWidth(1, leftOverMy * 0.41); // Record/name, was 220
+    ui->myRecord_Table->setColumnWidth(2, ui->myRecord_Table->columnWidth(1)/2); // Artist, was 110
+    ui->myRecord_Table->setColumnWidth(4, leftOverMy - ui->myRecord_Table->columnWidth(1) - ui->myRecord_Table->columnWidth(2)); // Tags, was 199
+
+}
+void MainWindow::on_actionCover_triggered()
+{
+    resizeRecordTable();
+    prefs.setCover(ui->actionCover->isChecked());
+    json.writePrefs(&prefs);
+}
+
+
+void MainWindow::on_actionRating_triggered()
+{
+    resizeRecordTable();
+    prefs.setRating(ui->actionRating->isChecked());
+    json.writePrefs(&prefs);
+}
+
+
+void MainWindow::on_actionRelease_triggered()
+{
+    resizeRecordTable();
+    prefs.setRelease(ui->actionRelease->isChecked());
+    json.writePrefs(&prefs);
+}
+
+
+void MainWindow::on_actionAdded_Date_triggered()
+{
+    resizeRecordTable();
+    prefs.setAdded(ui->actionAdded_Date->isChecked());
+    json.writePrefs(&prefs);
+}
+

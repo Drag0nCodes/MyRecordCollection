@@ -6,6 +6,7 @@
 #include "listtag.h"
 #include "record.h"
 #include "json.h"
+#include <QResizeEvent>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -95,6 +96,14 @@ private slots:
 
     void on_myRecord_FilterReleaseMaxSpinBox_valueChanged(int arg1);
 
+    void on_actionCover_triggered();
+
+    void on_actionRating_triggered();
+
+    void on_actionRelease_triggered();
+
+    void on_actionAdded_Date_triggered();
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);
@@ -132,5 +141,6 @@ private:
     void updateEditPopup();
     int releaseMin; // The min release year/value of the collection
     int releaseMax; // The max release year/value of the collection
+    void resizeRecordTable();
 };
 #endif // MAINWINDOW_H

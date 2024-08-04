@@ -30,6 +30,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         importdiscogs.h importdiscogs.cpp
         prefs.h prefs.cpp
         aboutwindow.h aboutwindow.cpp aboutwindow.ui
+        sizechangefilter.h
 
 
     )

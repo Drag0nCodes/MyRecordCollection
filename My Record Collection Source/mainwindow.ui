@@ -10,6 +10,12 @@
     <height>810</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
@@ -111,11 +117,6 @@
       </column>
       <column>
        <property name="text">
-        <string>Year</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
         <string>Record</string>
        </property>
       </column>
@@ -132,6 +133,16 @@
       <column>
        <property name="text">
         <string>Tags</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Release</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Date Added</string>
        </property>
       </column>
      </widget>
@@ -566,7 +577,7 @@
        <number>9999</number>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecord_FilterRatingLabel_2">
+     <widget class="QLabel" name="myRecord_FilterReleaseLabel">
       <property name="geometry">
        <rect>
         <x>900</x>
@@ -1377,7 +1388,17 @@ estimated release</string>
     <addaction name="separator"/>
     <addaction name="settings_actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="actionCover"/>
+    <addaction name="actionRating"/>
+    <addaction name="actionRelease"/>
+    <addaction name="actionAdded_Date"/>
+   </widget>
    <addaction name="menuSettings"/>
+   <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
   <action name="settings_actionToggleTheme">
@@ -1439,6 +1460,50 @@ estimated release</string>
   <action name="actionExport_MRC_Collection">
    <property name="text">
     <string>Export MRC Collection</string>
+   </property>
+  </action>
+  <action name="actionCover">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Cover</string>
+   </property>
+  </action>
+  <action name="actionRating">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Rating</string>
+   </property>
+  </action>
+  <action name="actionRelease">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Release</string>
+   </property>
+  </action>
+  <action name="actionAdded_Date">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Added Date</string>
    </property>
   </action>
  </widget>

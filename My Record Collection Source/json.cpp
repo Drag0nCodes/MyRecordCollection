@@ -28,7 +28,7 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
                 QJsonObject root = myDoc.object();
                 int jsonVersion = root.value("_json_version").toInt();
                 if (jsonVersion > CURRVERSION) { // .json file version newer than app supports
-                    allRecords.push_back(Record("\"resources/user data\" files not supported on this app version. User data is version " + QString::number(jsonVersion) + ". This app supports up to version " + QString::number(CURRVERSION) + ".", "Please update to a more recent version.", "", NULL, 0, 0, QDate(0, 0, 0)));
+                    allRecords.push_back(Record("\"resources/user data\" files not supported on this app version. User data is version " + QString::number(jsonVersion) + ". This app supports up to version " + QString::number(CURRVERSION) + ".", "Please update to a more recent version.", "", NULL, 0, 0, QDate()));
                     return allRecords;
                 }
 
@@ -482,13 +482,31 @@ Prefs Json::getPrefs(){
                 QJsonObject root = doc.object();
                 int jsonVersion = root.value("_json_version").toInt();
                 if (jsonVersion > CURRVERSION) { // .json file version newer than app supports
-                    return Prefs(0, true);
+                    return Prefs(0, true, true, true, true, true, QSize(1000, 800));
                 }
-
+                bool showCover;
+                bool showRating;
+                bool showRelease;
+                bool showAdded;
+                QSize size;
+                if (jsonVersion <= 4){ // No date added if json is version 4 or older, create
+                    showCover = true;
+                    showRating = true;
+                    showRelease = true;
+                    showAdded = true;
+                    size = QSize(1000, 800);
+                }
+                else{ // Get window prefs
+                    showCover = root.value("showCover").toBool();
+                    showRating = root.value("showRating").toBool();
+                    showRelease = root.value("showRelease").toBool();
+                    showAdded = root.value("showAdded").toBool();
+                    size = QSize(root.value("width").toInt(), root.value("height").toInt());
+                }
                 int sortBy = root.value("sortBy").toInt();
                 bool theme = root.value("darkTheme").toBool();
 
-                Prefs prefs = Prefs(sortBy, theme);
+                Prefs prefs = Prefs(sortBy, theme, showCover, showRating, showRelease, showAdded, size);
 
                 if (jsonVersion < CURRVERSION){ // If json is old version, rewrite it with new data
                     writePrefs(&prefs);
@@ -498,7 +516,7 @@ Prefs Json::getPrefs(){
         }else{ // Create a prefs file with default vals
             if (myFile.open(QIODevice::WriteOnly | QIODevice::Text)){
                 myFile.close();
-                Prefs returnPref(0, true);
+                Prefs returnPref(0, true, true, true, true, true, QSize(1000, 800));
                 writePrefs(&returnPref);
                 return returnPref;
             }
@@ -506,7 +524,7 @@ Prefs Json::getPrefs(){
     }catch (const std::out_of_range& e) {
         std::cerr << "Exception caught - json get tags method: " << e.what() << std::endl;
     }
-    return Prefs(0, true);
+    return Prefs(0, true, true, true, true, true, QSize(1000, 800));
 }
 
 void Json::writePrefs(Prefs *prefs){
@@ -522,6 +540,12 @@ void Json::writePrefs(Prefs *prefs){
             root.insert("_json_version", CURRVERSION);
             root.insert("darkTheme", prefs->getDark()); // Add preferences to json object
             root.insert("sortBy", prefs->getSort());
+            root.insert("showCover", prefs->getCover());
+            root.insert("showRating", prefs->getRating());
+            root.insert("showRelease", prefs->getRelease());
+            root.insert("showAdded", prefs->getAdded());
+            root.insert("width", prefs->getSize().width());
+            root.insert("height", prefs->getSize().height());
             doc.setObject(root);
             myFile.write(doc.toJson()); // Write to json file
             myFile.close();
