@@ -44,7 +44,7 @@ private slots:
 
     void on_editRecord_ManageTagButton_clicked();
 
-    void on_searchRecord_Table_cellClicked(int row, int column);
+    void on_searchRecord_Table_cellPressed(int row, int column);
 
     void on_searchRecord_SuggestedTagsList_itemClicked(QListWidgetItem *item);
 
@@ -103,6 +103,8 @@ private slots:
     void on_actionRelease_triggered();
 
     void on_actionAdded_Date_triggered();
+
+    void on_importDiscogsAddAddedOpt_triggered();
 
 private:
     Ui::MainWindow *ui;

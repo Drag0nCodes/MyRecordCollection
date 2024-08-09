@@ -2,12 +2,13 @@
 #include "json.h"
 #include <iostream>
 
-ImportDiscogs::ImportDiscogs(QString line, std::vector<Record> *allRecordPointer, bool addTags, QObject *parent) : QObject{parent}
+ImportDiscogs::ImportDiscogs(QString line, std::vector<Record> *allRecordPointer, bool addTags, bool addAdded, QObject *parent) : QObject{parent}
 {
     recordLine = line;
     allRecords = allRecordPointer;
     processedRec = NULL;
     this->addTags = addTags;
+    this->addAdded = addAdded;
 }
 
 ImportDiscogs::ImportDiscogs(bool addTags, QObject *parent) : QObject{parent}
@@ -63,8 +64,11 @@ void ImportDiscogs::importSingle() {
             if (newRelease == 0) newRelease = 1900;
             break;
         case 8: // Get record release
-            QString addedString = recordLine.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1);
-            newAdded = QDateTime::fromString(addedString, "yyyy-MM-dd HH:mm:ss").date();
+            if (addAdded){
+                QString addedString = recordLine.mid(startSec + literal + 1, endSec - startSec - literal*2 - 1);
+                newAdded = QDateTime::fromString(addedString, "yyyy-MM-dd HH:mm:ss").date();
+            }
+            else newAdded = QDate::currentDate();
             break;
         }
     }

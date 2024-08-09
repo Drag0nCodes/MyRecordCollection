@@ -783,7 +783,7 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
 }
 
 
-void MainWindow::on_searchRecord_Table_cellClicked(int row, int column) // Click on search records table, show suggested tags
+void MainWindow::on_searchRecord_Table_cellPressed(int row, int column) // Click on search records table, show suggested tags
 {
     ui->searchRecord_SuggestedTagsList->clear();
     suggestedTags.clear();
@@ -910,12 +910,7 @@ void MainWindow::on_actionSelect_File_and_Import_triggered() // Import discogs f
                 line = myFile.readLine(); // Get first record
                 finishedImportsCount = 0;
                 while (!line.isEmpty()) {
-                    ImportDiscogs *importer = nullptr;
-                    if (ui->importDiscogsAddTagsOpt->isChecked()) { // Create an ImportDiscogs object with either adding tags or not
-                        importer = new ImportDiscogs(line, &allMyRecords, true);
-                    } else {
-                        importer = new ImportDiscogs(line, &allMyRecords, false);
-                    }
+                    ImportDiscogs *importer = new ImportDiscogs(line, &allMyRecords, ui->importDiscogsAddTagsOpt->isChecked(), ui->importDiscogsAddAddedOpt->isChecked()); // Create importer with proper options
 
                     QThread *thread = new QThread; // Create a thread and move object to thread
                     importer->moveToThread(thread);
@@ -1276,11 +1271,12 @@ void MainWindow::on_actionExport_MRC_Collection_triggered() // Export MRC record
         return; // User canceled the dialog
     }
 
-    if (copyDirectory(sourceDir, destinationDir)) {
-        qDebug() << "Folder copied successfully.";
-    } else {
-        qDebug() << "Failed to copy folder.";
+    if (copyDirectory(sourceDir, destinationDir)) { // Export successful
+        ui->myRecord_InfoLabel->setText("Collection exported successfully");
+    } else { // Export not successful
+        ui->myRecord_InfoLabel->setText("Error exporting collection");
     }
+    hideInfoTimed(5000);
 }
 
 // Function to recursively copy a directory
@@ -1395,14 +1391,19 @@ void MainWindow::on_editRecord_ReleaseEdit_valueChanged(int arg1) // Enter 0 in 
 {
     if (arg1 == 0) {
         ui->editRecord_ReleaseInfoLabel->setText("Searching for\nrelease year");
-        ui->editRecord_ReleaseEdit->setValue(json.wikiRelease(ui->editRecord_TitleEdit->text(), ui->editRecord_ArtistEdit->text())); // Get release year
-        if (ui->editRecord_ReleaseEdit->value() == 0) { // If year 0 is returned, error
-            ui->editRecord_ReleaseEdit->setValue(1900);
+        int release = json.wikiRelease(ui->editRecord_TitleEdit->text(), ui->editRecord_ArtistEdit->text()); // Get release year
+        if (release == 0) { // If year 0 is returned, error
+            release = 1900;
             ui->editRecord_ReleaseInfoLabel->setText("Error fetching\nrelease year");
         }
-        else { // Release found
-            ui->editRecord_ReleaseInfoLabel->setText("Found a release\nyear");
+        else if (release < 0) {
+            release *= -1;
+            ui->editRecord_ReleaseInfoLabel->setText("Found a release year\nwith low confidence");
         }
+        else { // Release found
+            ui->editRecord_ReleaseInfoLabel->setText("Found a release year");
+        }
+        ui->editRecord_ReleaseEdit->setValue(release); // Set release year in edit box
         QTimer *timer = new QTimer(this);
         connect(timer, &QTimer::timeout, this, [=]() {
             ui->editRecord_ReleaseInfoLabel->setText("Tip: Enter '0' to get\nestimated release");
@@ -1482,5 +1483,12 @@ void MainWindow::on_actionAdded_Date_triggered()
     resizeRecordTable();
     prefs.setAdded(ui->actionAdded_Date->isChecked());
     json.writePrefs(&prefs);
+}
+
+
+void MainWindow::on_importDiscogsAddAddedOpt_triggered()
+{
+    ui->menuSettings->show(); // Keep the menu showing
+    ui->menuImport_Discogs_Collection->show();
 }
 

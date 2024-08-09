@@ -281,7 +281,7 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist, bool release) 
                 int label = content.indexOf("| label", 0, Qt::CaseInsensitive); // The start of the label section
                 int arrowStart = content.indexOf("<!--", 0, Qt::CaseInsensitive); // Start of the <!-- ... --> that can sometimes appear after the "| genre" string (e.g. Folklore deluxe)
                 int arrowEnd = content.indexOf("-->", 0, Qt::CaseInsensitive); // End of the <!-- ... --> that can sometimes appear after the "| genre" string
-                if (arrowStart > 0 && arrowStart < position+20) while (position < arrowEnd) position = content.indexOf("[[", position) +2; // Move to position of first genre after --> if start arrow is close to "| genre"
+                if (arrowStart > 0 && arrowStart < position+20) position = arrowEnd; // Move to position of first genre after --> if start arrow is close to "| genre"
 
                 position = content.indexOf("[[", position) +2; // Move to position of first single genre
 
@@ -331,6 +331,7 @@ int Json::wikiRelease(QString name, QString artist) { // Get the wikipedia page 
     QNetworkAccessManager manager;
     QEventLoop loop;
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
+    bool lowConfidence = false;
 
     QUrl searchUrl = QUrl("https://en.wikipedia.org/w/api.php?action=query&list=search&utf8=&format=json&srsearch=" + artist + "%20" + name + "%20album");
 
@@ -354,13 +355,24 @@ int Json::wikiRelease(QString name, QString artist) { // Get the wikipedia page 
                 QByteArray data = reply->readAll();
                 QJsonObject jsonWikiPage = QJsonDocument::fromJson(data).object();
 
-                // check if artist page
+                QString title = jsonWikiPage.value("query").toObject().value("pages").toObject().value(QString::number(pageid)).toObject().value("title").toString();
+                // Maybe try to get a new page if the title is wrong / just the artist? (charlixcx I think)
+                if (!title.toLower().contains(name.toLower())) {
+                    std::cerr << " COULD NOT FIND " + name.toStdString() + " got " + title.toStdString() + " wiki id: " + QString::number(pageid).toStdString();
+                    if (title.compare(artist) == 0){
+                        std::cerr << " GOT THE ARTIST PAGE";
+                    }
+                    std::cerr << std::endl;
+                    lowConfidence = true;
+                }
 
                 content = jsonWikiPage.value("query").toObject().value("pages").toObject().value(QString::number(pageid)).toObject().value("revisions").toArray().at(0).toObject().value("*").toString();
             }
         }
     }
-    return wikiRelease(content);
+    int release = wikiRelease(content);
+    if (lowConfidence) release *= -1; // Return a neg number if low confidence
+    return release;
 }
 
 int Json::wikiRelease(QString content) { // Return the release year of an album given the wikipedia page already

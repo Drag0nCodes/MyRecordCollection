@@ -1256,9 +1256,9 @@ Collection</string>
      <widget class="QLabel" name="editRecord_ReleaseInfoLabel">
       <property name="geometry">
        <rect>
-        <x>230</x>
-        <y>250</y>
-        <width>120</width>
+        <x>220</x>
+        <y>253</y>
+        <width>140</width>
         <height>41</height>
        </rect>
       </property>
@@ -1273,14 +1273,14 @@ Collection</string>
 estimated release</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignCenter</set>
+       <set>Qt::AlignHCenter|Qt::AlignTop</set>
       </property>
      </widget>
      <widget class="QDateEdit" name="editRecord_AddedEdit">
       <property name="geometry">
        <rect>
         <x>230</x>
-        <y>320</y>
+        <y>322</y>
         <width>121</width>
         <height>29</height>
        </rect>
@@ -1325,7 +1325,7 @@ estimated release</string>
       <property name="geometry">
        <rect>
         <x>235</x>
-        <y>299</y>
+        <y>301</y>
         <width>120</width>
         <height>20</height>
        </rect>
@@ -1368,6 +1368,7 @@ estimated release</string>
       <string>Import Discogs Collection</string>
      </property>
      <addaction name="importDiscogsAddTagsOpt"/>
+     <addaction name="importDiscogsAddAddedOpt"/>
      <addaction name="separator"/>
      <addaction name="actionSelect_File_and_Import"/>
     </widget>
@@ -1437,11 +1438,6 @@ estimated release</string>
     <string>All User Data</string>
    </property>
   </action>
-  <action name="actionSelect_File_and_Import">
-   <property name="text">
-    <string>Select File and Import</string>
-   </property>
-  </action>
   <action name="actionDelete_All_Tags">
    <property name="text">
     <string>Only Tags</string>
@@ -1504,6 +1500,22 @@ estimated release</string>
    </property>
    <property name="text">
     <string>Added Date</string>
+   </property>
+  </action>
+  <action name="importDiscogsAddAddedOpt">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Import Added Date</string>
+   </property>
+  </action>
+  <action name="actionSelect_File_and_Import">
+   <property name="text">
+    <string>Select File and Import</string>
    </property>
   </action>
  </widget>
