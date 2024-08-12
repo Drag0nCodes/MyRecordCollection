@@ -2,8 +2,8 @@ To export your Discogs collection and import it to My Record Collection, go to y
 
 https://www.discogs.com/users/export
 
-Then, in My Record Collection, choose "Settings" in the menu bar, and then "Import Discogs Collection". Toggle whether you would like to have suggested tags added to your imports and then choose to Select File and Import. Select the .csv file from Discogs and wait for your Discogs records to be imported to My Record Collection. This can take some time as the process must search for and download the album cover from Last.fm and get tags from Wikipedia (if that option is selected). 
+Then, in My Record Collection, choose "Settings" in the menu bar, and then "Import Discogs Collection". You can toggle whether you would like to have suggested tags added to your imports or if you would like to have the import process import your Discogs added date or use todays date. Then choose to Select File and Import. Select the .csv file from Discogs and wait for your Discogs records to be imported to My Record Collection. This can take some time as the process must search for and download the album cover from Last.fm and get tags from Wikipedia (if that option is selected). You can follow the progress of the import process on the My Collection page just under the Filter section.
 
-The import process will try to skip any duplicates of records you already have in your MRC collection, but it is imperfect.
+The import process will try to skip any duplicates of records you already have in your MRC collection, but it is imperfect. 
 
-Once your Discogs collection is processed, you can see how many records were imported and how many were skipped. The imported records will be added to your collection and visible on the My Collection page. 
+Once your Discogs collection is processed, you can see how many records were processed and how many were skipped. The imported records will be added to your collection and visible on the My Collection page. 
