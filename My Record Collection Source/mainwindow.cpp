@@ -1454,7 +1454,7 @@ void MainWindow::resizeRecordTable()
     ui->myRecord_Table->setColumnWidth(4, leftOverMy - ui->myRecord_Table->columnWidth(1) - ui->myRecord_Table->columnWidth(2)); // Tags, was 199
 
 }
-void MainWindow::on_actionCover_triggered()
+void MainWindow::on_actionCover_triggered() // Toggle view of "cover" column in my collection table
 {
     resizeRecordTable();
     prefs.setCover(ui->actionCover->isChecked());
@@ -1462,7 +1462,7 @@ void MainWindow::on_actionCover_triggered()
 }
 
 
-void MainWindow::on_actionRating_triggered()
+void MainWindow::on_actionRating_triggered() // Toggle view of "rating" column in my collection table
 {
     resizeRecordTable();
     prefs.setRating(ui->actionRating->isChecked());
@@ -1470,7 +1470,7 @@ void MainWindow::on_actionRating_triggered()
 }
 
 
-void MainWindow::on_actionRelease_triggered()
+void MainWindow::on_actionRelease_triggered() // Toggle view of "release" column in my collection table
 {
     resizeRecordTable();
     prefs.setRelease(ui->actionRelease->isChecked());
@@ -1478,7 +1478,7 @@ void MainWindow::on_actionRelease_triggered()
 }
 
 
-void MainWindow::on_actionAdded_Date_triggered()
+void MainWindow::on_actionAdded_Date_triggered() // Toggle view of "added date" column in my collection table
 {
     resizeRecordTable();
     prefs.setAdded(ui->actionAdded_Date->isChecked());
