@@ -7,6 +7,7 @@
 #include "record.h"
 #include "json.h"
 #include <QResizeEvent>
+#include "threadedcover.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -144,5 +145,7 @@ private:
     int releaseMin; // The min release year/value of the collection
     int releaseMax; // The max release year/value of the collection
     void resizeRecordTable();
+    std::vector<ThreadedCover*> searchThreadedCovers;
+    void handleCoverThreadFinished(QPixmap pixmap, int pos);
 };
 #endif // MAINWINDOW_H

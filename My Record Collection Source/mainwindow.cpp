@@ -24,6 +24,7 @@
 #include <QMessageBox>
 #include <QHBoxLayout>
 #include "sizechangefilter.h"
+#include "threadedcover.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -165,40 +166,6 @@ MainWindow::~MainWindow()
 }
 
 
-QPixmap MainWindow::getPixmapFromUrl(const QUrl& imageUrl) { // Get Qt pixmap from image URL
-    QNetworkAccessManager manager;
-    QEventLoop loop;
-    QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
-
-    QNetworkRequest request(imageUrl);
-    QNetworkReply *reply = manager.get(request);
-
-    loop.exec(); // Wait for the download to finish
-
-    QPixmap pixmap;
-    if (reply->error() == QNetworkReply::NoError) {
-        QByteArray data = reply->readAll();
-        pixmap.loadFromData(data);
-    }
-    else {
-        std::cerr << "No network connection\n";
-    }
-    if (pixmap.isNull()) { // No album cover
-        QNetworkRequest requestNoImg(QUrl("https://static.vecteezy.com/system/resources/thumbnails/022/059/000/small/no-image-available-icon-vector.jpg"));
-        QNetworkReply *replyNoImg = manager.get(requestNoImg);
-        loop.exec();
-
-        if (replyNoImg->error() == QNetworkReply::NoError) {
-            QByteArray dataNoImg = replyNoImg->readAll();
-            pixmap.loadFromData(dataNoImg);
-        }
-    }
-
-    delete reply;
-    return pixmap.scaled(130, 130, Qt::IgnoreAspectRatio);
-}
-
-
 void MainWindow::on_searchRecord_ToMyRecordsButton_clicked() // change screen to my records
 {
     ui->pages->setCurrentIndex(0);
@@ -221,6 +188,10 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
     suggestedTags.clear();
     ui->searchRecord_ReleaseEdit->setValue(1900);
     ui->searchRecord_AddToMyRecordButton->setEnabled(false);
+    for (ThreadedCover *coverThread : searchThreadedCovers) { // Set ThreadedCover objects to not emit finished flag
+        if (coverThread) coverThread->setStopFlag(true);
+    }
+    searchThreadedCovers.clear(); // Erase all threadedcover objects from previous search
 
     ui->searchRecord_Table->setEnabled(true);
     ui->searchRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
@@ -245,26 +216,40 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
         }
 
         for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's cover into table
-            QUrl imageUrl(results.at(recordNum).getCover());
-            QPixmap image(getPixmapFromUrl(imageUrl));
-            if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
-            image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
+            searchThreadedCovers.push_back(new ThreadedCover(results.at(recordNum).getCover(), recordNum)); // Create ThreadedCover objects
+            QThread *thread = new QThread; // Create a thread
+            searchThreadedCovers[recordNum]->moveToThread(thread); // Move object to thread
 
-            QLabel *label = new QLabel();
-            label->setPixmap(image);
-            label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+            // Setup thread actions
+            connect(thread, &QThread::started, searchThreadedCovers[recordNum], &ThreadedCover::run);
+            connect(searchThreadedCovers[recordNum], &ThreadedCover::finished, this, &MainWindow::handleCoverThreadFinished);
+            connect(searchThreadedCovers[recordNum], &ThreadedCover::finished, thread, &QThread::quit);
+            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+            connect(thread, &QThread::finished, searchThreadedCovers[recordNum], &ThreadedCover::deleteLater);
 
-            // Create a container widget with a layout
-            QWidget *containerWidget = new QWidget();
-            QHBoxLayout *layout = new QHBoxLayout(containerWidget);
-            layout->addWidget(label);
-            layout->setAlignment(label, Qt::AlignRight); // Align the QLabel right
-            layout->setContentsMargins(0, 0, 5, 0); // Remove margins with 5px on right still
-
-            // Set the container widget as the cell widget
-            ui->searchRecord_Table->setCellWidget(recordNum, 0, containerWidget);
+            thread->start(); // Start thread
         }
     }
+}
+
+
+void MainWindow::handleCoverThreadFinished(QPixmap pixmap, int pos) {
+    pixmap = pixmap.scaled(120, 120, Qt::IgnoreAspectRatio); // Scale pixmap
+
+    // Create label for pixmap and add cover
+    QLabel *label = new QLabel();
+    label->setPixmap(pixmap);
+    label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+    // Create a container widget with a layout
+    QWidget *containerWidget = new QWidget();
+    QHBoxLayout *layout = new QHBoxLayout(containerWidget);
+    layout->addWidget(label);
+    layout->setAlignment(label, Qt::AlignRight); // Align the QLabel right
+    layout->setContentsMargins(0, 0, 5, 0); // Remove margins with 5px on right still
+
+    // Set the container widget as the cell widget
+    ui->searchRecord_Table->setCellWidget(pos, 0, containerWidget);
 }
 
 

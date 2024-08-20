@@ -31,6 +31,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         prefs.h prefs.cpp
         aboutwindow.h aboutwindow.cpp aboutwindow.ui
         sizechangefilter.h
+        threadedcover.h threadedcover.cpp
 
 
     )
