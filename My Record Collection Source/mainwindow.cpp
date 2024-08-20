@@ -188,10 +188,10 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
     suggestedTags.clear();
     ui->searchRecord_ReleaseEdit->setValue(1900);
     ui->searchRecord_AddToMyRecordButton->setEnabled(false);
-    for (ThreadedCover *coverThread : searchThreadedCovers) { // Set ThreadedCover objects to not emit finished flag
+    for (ThreadedCover *coverThread : searchThreadedCovers) { // Set previous ThreadedCover objects to not emit finished flag
         if (coverThread) coverThread->setStopFlag(true);
     }
-    searchThreadedCovers.clear(); // Erase all threadedcover objects from previous search
+    searchThreadedCovers.clear(); // clear all threadedcover objects from previous search
 
     ui->searchRecord_Table->setEnabled(true);
     ui->searchRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
@@ -225,7 +225,6 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
             connect(searchThreadedCovers[recordNum], &ThreadedCover::finished, this, &MainWindow::handleCoverThreadFinished);
             connect(searchThreadedCovers[recordNum], &ThreadedCover::finished, thread, &QThread::quit);
             connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-            connect(thread, &QThread::finished, searchThreadedCovers[recordNum], &ThreadedCover::deleteLater);
 
             thread->start(); // Start thread
         }
