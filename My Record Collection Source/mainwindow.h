@@ -147,5 +147,6 @@ private:
     void resizeRecordTable();
     std::vector<ThreadedCover*> searchThreadedCovers;
     void handleCoverThreadFinished(QPixmap pixmap, int pos);
+    QMovie *loadingSymbol;
 };
 #endif // MAINWINDOW_H

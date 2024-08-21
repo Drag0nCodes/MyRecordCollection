@@ -25,6 +25,7 @@
 #include <QHBoxLayout>
 #include "sizechangefilter.h"
 #include "threadedcover.h"
+#include <QMovie>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -158,6 +159,11 @@ MainWindow::MainWindow(QWidget *parent)
         prefs.setSize(size);
         json.writePrefs(&prefs);
     });
+
+    // Starting loading symbol movie
+    loadingSymbol = new QMovie(QDir::currentPath() + "/resources/images/loading.gif");
+    loadingSymbol->setScaledSize(QSize(40, 40));
+    loadingSymbol->start();
 }
 
 MainWindow::~MainWindow()
@@ -219,6 +225,23 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
             searchThreadedCovers.push_back(new ThreadedCover(results.at(recordNum).getCover(), recordNum)); // Create ThreadedCover objects
             QThread *thread = new QThread; // Create a thread
             searchThreadedCovers[recordNum]->moveToThread(thread); // Move object to thread
+
+            // Add loading gif to table
+
+            // Create label for pixmap and add cover
+            QLabel *label = new QLabel();
+            label->setMovie(loadingSymbol);
+            label->setAlignment(Qt::AlignCenter);
+
+            // Create a container widget with a layout
+            QWidget *containerWidget = new QWidget();
+            QHBoxLayout *layout = new QHBoxLayout(containerWidget);
+            layout->addWidget(label);
+            layout->setAlignment(label, Qt::AlignCenter); // Align the QLabel right
+            layout->setContentsMargins(0, 0, 5, 0); // Remove margins with 5px on right still
+
+            // Set the container widget as the cell widget
+            ui->searchRecord_Table->setCellWidget(recordNum, 0, containerWidget);
 
             // Setup thread actions
             connect(thread, &QThread::started, searchThreadedCovers[recordNum], &ThreadedCover::run);
