@@ -8,6 +8,7 @@
 #include "json.h"
 #include <QResizeEvent>
 #include "threadedcover.h"
+#include <QLabel>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -139,7 +140,7 @@ private:
     void onProgressBarValueChanged(int value);
     void deleteUserData(bool delRecords, bool delTags);
     bool copyDirectory(const QString &sourceDir, const QString &destinationDir);
-    void hideInfoTimed(int ms);
+    void setInfoTimed(QLabel *label, int ms, QString text);
     Record* selectedRec; // Currently selected record
     void updateEditPopup();
     int releaseMin; // The min release year/value of the collection

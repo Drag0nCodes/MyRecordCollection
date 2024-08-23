@@ -162,7 +162,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Starting loading symbol movie
     loadingSymbol = new QMovie(QDir::currentPath() + "/resources/images/loading.gif");
-    loadingSymbol->setScaledSize(QSize(40, 40));
+    loadingSymbol->setScaledSize(QSize(90, 90));
     loadingSymbol->start();
 }
 
@@ -194,24 +194,29 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
     suggestedTags.clear();
     ui->searchRecord_ReleaseEdit->setValue(1900);
     ui->searchRecord_AddToMyRecordButton->setEnabled(false);
+    ui->searchRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
+
     for (ThreadedCover *coverThread : searchThreadedCovers) { // Set previous ThreadedCover objects to not emit finished flag
         if (coverThread) coverThread->setStopFlag(true);
     }
     searchThreadedCovers.clear(); // clear all threadedcover objects from previous search
 
-    ui->searchRecord_Table->setEnabled(true);
-    ui->searchRecord_Table->setHorizontalHeaderLabels({"Cover", "Record", "Artist"});
+    if (ui->searchRecord_SearchBar->text().isEmpty()) { // No search text, do nothing
+        ui->searchRecord_Table->setRowCount(0);
+        return;
+    }
+
+    // Get search results and setup table
     results = json.searchRecords(ui->searchRecord_SearchBar->text(), 10);
     ui->searchRecord_Table->setRowCount(results.size());
 
     if (!results.empty() && results[0].getRating() == -1) { // Network error with search records
-        ui->searchRecord_Table->setEnabled(false);
         QTableWidgetItem *nameItem = new QTableWidgetItem("Network Error");
-
         ui->searchRecord_Table->setItem(0, 1, nameItem);
         ui->searchRecord_Table->setRowHeight(0, 140);
     }
     else { // No network error, search record returned
+        ui->searchRecord_Table->setEnabled(true);
         for (int recordNum = 0; recordNum < results.size(); recordNum++){ // Insert record's text info into table
             QTableWidgetItem *nameItem = new QTableWidgetItem(results.at(recordNum).getName());
             QTableWidgetItem *artistItem = new QTableWidgetItem(results.at(recordNum).getArtist());
@@ -227,8 +232,7 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
             searchThreadedCovers[recordNum]->moveToThread(thread); // Move object to thread
 
             // Add loading gif to table
-
-            // Create label for pixmap and add cover
+            // Create label for loading gif and add gif
             QLabel *label = new QLabel();
             label->setMovie(loadingSymbol);
             label->setAlignment(Qt::AlignCenter);
@@ -243,7 +247,7 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
             // Set the container widget as the cell widget
             ui->searchRecord_Table->setCellWidget(recordNum, 0, containerWidget);
 
-            // Setup thread actions
+            // Setup thread connections for starting and ending
             connect(thread, &QThread::started, searchThreadedCovers[recordNum], &ThreadedCover::run);
             connect(searchThreadedCovers[recordNum], &ThreadedCover::finished, this, &MainWindow::handleCoverThreadFinished);
             connect(searchThreadedCovers[recordNum], &ThreadedCover::finished, thread, &QThread::quit);
@@ -798,6 +802,7 @@ void MainWindow::on_searchRecord_Table_cellPressed(int row, int column) // Click
     ui->searchRecord_ReleaseEdit->setEnabled(false);
     ui->searchRecord_AddToMyRecordButton->setEnabled(false);
     ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem("Loading tags"));
+    ui->searchRecord_InfoLabel->setText("");
     suggestedTags = json.wikiTags(results.at(ui->searchRecord_Table->currentRow()).getName(), results.at(ui->searchRecord_Table->currentRow()).getArtist(), true);
 
     ui->searchRecord_SuggestedTagsList->clear();
@@ -825,7 +830,6 @@ void MainWindow::on_searchRecord_Table_cellPressed(int row, int column) // Click
 
 void MainWindow::on_searchRecord_SuggestedTagsList_itemClicked(QListWidgetItem *item) // Click on suggested tags list
 {
-
     if (suggestedTags.at(ui->searchRecord_SuggestedTagsList->currentRow()).getChecked()){ // Tag is checked, set to unchecked
         QString tag = ui->searchRecord_SuggestedTagsList->currentItem()->text();
         suggestedTags.at(ui->searchRecord_SuggestedTagsList->currentRow()).setChecked(false);
@@ -912,7 +916,7 @@ void MainWindow::on_actionSelect_File_and_Import_triggered() // Import discogs f
                 myFile.close();
                 std::cerr << "Invalid collection file" << std::endl;
                 ui->myRecord_InfoLabel->setText("Invalid Discogs Collection");
-                hideInfoTimed(5000);
+                setInfoTimed(ui->myRecord_InfoLabel, 5000, "");
             } else { // File is a discogs csv
                 line = myFile.readLine(); // Get first record
                 finishedImportsCount = 0;
@@ -971,7 +975,7 @@ void MainWindow::handleImportFinished(Record *importedRec, bool skipped)
         updateTagList();
         updateMyRecordsTable();
 
-        hideInfoTimed(5000);
+        setInfoTimed(ui->myRecord_InfoLabel, 5000, "");
     }
 }
 
@@ -1283,7 +1287,7 @@ void MainWindow::on_actionExport_MRC_Collection_triggered() // Export MRC record
     } else { // Export not successful
         ui->myRecord_InfoLabel->setText("Error exporting collection");
     }
-    hideInfoTimed(5000);
+    setInfoTimed(ui->myRecord_InfoLabel, 5000, "");
 }
 
 // Function to recursively copy a directory
@@ -1336,7 +1340,7 @@ void MainWindow::on_actionImport_MRC_Collection_triggered() // Import a MRC reco
     if (!dir.exists("records.json") && !dir.exists("tags.json") && !dir.exists("covers")) {
         std::cerr << "Could not find required files for import" << std::endl;
         ui->myRecord_InfoLabel->setText("Could not find import files.\nPlease select folder that\ncontains \'records.json\',\n\'tags.json\', and \'covers\' folder.");
-        hideInfoTimed(7000);
+        setInfoTimed(ui->myRecord_InfoLabel, 7000, "");
         return;
     }
 
@@ -1375,7 +1379,7 @@ void MainWindow::on_actionImport_MRC_Collection_triggered() // Import a MRC reco
     json.writeTags(&tags); // Save tags to json
 
     ui->myRecord_InfoLabel->setText("Imported " + QString::number(newRecs.size()) + " records from\nMRC collection.");
-    hideInfoTimed(5000);
+    setInfoTimed(ui->myRecord_InfoLabel, 5000, "");
 
     updateRecordsListOrder(); // Update tables
     updateTagCount();
@@ -1383,12 +1387,12 @@ void MainWindow::on_actionImport_MRC_Collection_triggered() // Import a MRC reco
     updateMyRecordsTable();
 }
 
-void MainWindow::hideInfoTimed(int ms) { // Hide info based on ms
+void MainWindow::setInfoTimed(QLabel *label, int ms, QString text) { // Hide info based on ms
     // Hide the progress ui after specified ms
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, [=]() {
-        ui->myRecord_InfoLabel->setText("");
-        ui->myRecord_DiscogsProgressBar->setVisible(false);
+        label->setText(text);
+        if (label == ui->myRecord_InfoLabel) ui->myRecord_DiscogsProgressBar->setVisible(false); // Hide progress bar if myRecord page progress label
         timer->deleteLater();
     });
     timer->start(ms);
@@ -1411,12 +1415,7 @@ void MainWindow::on_editRecord_ReleaseEdit_valueChanged(int arg1) // Enter 0 in 
             ui->editRecord_ReleaseInfoLabel->setText("Found a release year");
         }
         ui->editRecord_ReleaseEdit->setValue(release); // Set release year in edit box
-        QTimer *timer = new QTimer(this);
-        connect(timer, &QTimer::timeout, this, [=]() {
-            ui->editRecord_ReleaseInfoLabel->setText("Tip: Enter '0' to get\nestimated release");
-            timer->deleteLater();
-        });
-        timer->start(3500);
+        setInfoTimed(ui->editRecord_ReleaseInfoLabel, 3500, "Tip: Enter '0' to get\nestimated release");
         ui->editRecord_ReleaseEdit->selectAll();
     }
 }
