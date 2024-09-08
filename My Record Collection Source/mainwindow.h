@@ -129,6 +129,7 @@ private:
     QMenu *myRecordContextMenu;
     QAction *contextActionRemove;
     QAction *contextActionEdit;
+    QAction *contextActionSearchSpotify;
     void removeTableRecord();
     void toggleEditRecordFrame();
     void checkClickEditRecordFrame();
@@ -149,5 +150,7 @@ private:
     std::vector<ThreadedCover*> searchThreadedCovers;
     void handleCoverThreadFinished(QPixmap pixmap, int pos);
     QMovie *loadingSymbol;
+    void searchInSpotify();
+    void setupContextMenuActions();
 };
 #endif // MAINWINDOW_H

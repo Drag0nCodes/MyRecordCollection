@@ -26,6 +26,7 @@
 #include "sizechangefilter.h"
 #include "threadedcover.h"
 #include <QMovie>
+#include <QDesktopServices>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -80,12 +81,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Setup context menu for my records table
     myRecordContextMenu = new QMenu(this);
-    QAction *contextActionEdit= new QAction("Edit", this);
-    myRecordContextMenu->addAction(contextActionEdit);
-    connect(contextActionEdit, &QAction::triggered, this, &MainWindow::toggleEditRecordFrame);
-    QAction *contextActionRemove = new QAction("Remove", this);
-    myRecordContextMenu->addAction(contextActionRemove);
-    connect(contextActionRemove, &QAction::triggered, this, &MainWindow::removeTableRecord);
+    setupContextMenuActions(); // Setup context menu
     connect(ui->myRecord_Table, &QTableWidget::customContextMenuRequested, this, &MainWindow::showContextMenu);
 
     // Set editRecordsFrame options
@@ -890,6 +886,7 @@ void MainWindow::on_settings_actionToggleTheme_triggered() // Toggle theme menu 
 {
     prefs.toggleTheme(); // Update the theme in the preferences object
     setStyleSheet(prefs.getStyle()); // Set the style
+    setupContextMenuActions(); // Update colours of context menu icons
     json.writePrefs(&prefs); // Update the prefs json
 }
 
@@ -1492,9 +1489,39 @@ void MainWindow::on_actionAdded_Date_triggered() // Toggle view of "added date" 
 }
 
 
-void MainWindow::on_importDiscogsAddAddedOpt_triggered()
+void MainWindow::on_importDiscogsAddAddedOpt_triggered() // Keep discogs menu showing when option clicked
 {
     ui->menuSettings->show(); // Keep the menu showing
     ui->menuImport_Discogs_Collection->show();
+}
+
+
+void MainWindow::setupContextMenuActions() // Setup context menu on My Collection page
+{
+    myRecordContextMenu->clear();
+
+    // Create actions with iconc
+    if (prefs.getDark()){
+        contextActionEdit = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/pencil_white.png")),"Edit", this);
+        contextActionRemove = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/trash_white.png")),"Remove", this);
+        contextActionSearchSpotify = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/spotify_white.png")), "Search in Spotify", this);
+    }
+    else {
+        contextActionEdit = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/pencil_black.png")),"Edit", this);
+        contextActionRemove = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/trash_black.png")),"Remove", this);
+        contextActionSearchSpotify = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/spotify_black.png")), "Search in Spotify", this);
+    }
+
+    // Add actions to menu
+    myRecordContextMenu->addAction(contextActionEdit);
+    myRecordContextMenu->addAction(contextActionRemove);
+    myRecordContextMenu->addAction(contextActionSearchSpotify);
+
+    // Setup click action
+    connect(contextActionEdit, &QAction::triggered, this, &MainWindow::toggleEditRecordFrame);
+    connect(contextActionRemove, &QAction::triggered, this, &MainWindow::removeTableRecord);
+    connect(contextActionSearchSpotify, &QAction::triggered, this, [=]() {
+        QDesktopServices::openUrl(QUrl("https://open.spotify.com/search/" + selectedRec->getArtist() + " " + selectedRec->getName() + "/albums"));
+    });
 }
 
