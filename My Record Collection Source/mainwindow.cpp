@@ -419,7 +419,13 @@ void MainWindow::on_searchRecord_AddToMyRecordButton_clicked() // Add searched r
     json.writeRecords(&allMyRecords);
     json.writeTags(&tags);
 
-    updateRecordsListOrder(); // update tables
+    // If adding a record and not sorting my records by release, change release filter to include new record
+    if (addRecord.getRelease() > releaseMax && !isSortingByRelease()) ui->myRecord_FilterReleaseMaxSpinBox->setValue(addRecord.getRelease()); // Change max spin box
+    else if (addRecord.getRelease() < releaseMin && !isSortingByRelease()) ui->myRecord_FilterReleaseMinSpinBox->setValue(addRecord.getRelease()); // Change min spin box
+    else { // As changing spin box would update the table already, only need to do if not changing either spin box
+        updateRecordsListOrder(); // Update record table order
+    }
+
     updateTagCount();
     updateTagList();
     updateMyRecordsTable();
@@ -918,7 +924,7 @@ void MainWindow::on_actionSelect_File_and_Import_triggered() // Import discogs f
                 line = myFile.readLine(); // Get first record
                 finishedImportsCount = 0;
                 while (!line.isEmpty()) {
-                    ImportDiscogs *importer = new ImportDiscogs(line, &allMyRecords, ui->importDiscogsAddTagsOpt->isChecked(), ui->importDiscogsAddAddedOpt->isChecked()); // Create importer with proper options
+                    ImportDiscogs *importer = new ImportDiscogs(line, &allMyRecords, ui->importDiscogsAddTagsOpt->isChecked(), ui->importDiscogsAddAddedOpt->isChecked(), ui->actionDiscogsSkipDuplicates->isChecked()); // Create importer with proper options
 
                     QThread *thread = new QThread; // Create a thread and move object to thread
                     importer->moveToThread(thread);
@@ -1085,9 +1091,9 @@ void MainWindow::on_editRecord_DoneButton_clicked() // Close edit record frame
     Record* savedSelected = selectedRec;
 
     // If new release is less than min or greater than max and filter is filtering all, change filter in include
-    if (ui->editRecord_ReleaseEdit->value() > releaseMax && ui->myRecord_FilterReleaseMaxSpinBox->value() == releaseMax && ui->myRecord_FilterReleaseMinSpinBox->value() == releaseMin) ui->myRecord_FilterReleaseMaxSpinBox->setValue(ui->editRecord_ReleaseEdit->value());
-    else if (ui->editRecord_ReleaseEdit->value() < releaseMin && ui->myRecord_FilterReleaseMaxSpinBox->value() == releaseMax && ui->myRecord_FilterReleaseMinSpinBox->value() == releaseMin) ui->myRecord_FilterReleaseMinSpinBox->setValue(ui->editRecord_ReleaseEdit->value());
-    else { // As changing spin box would update the table, only need to do if not changing either spin box
+    if (ui->editRecord_ReleaseEdit->value() > releaseMax && !isSortingByRelease()) ui->myRecord_FilterReleaseMaxSpinBox->setValue(ui->editRecord_ReleaseEdit->value()); // Change max spin box
+    else if (ui->editRecord_ReleaseEdit->value() < releaseMin && !isSortingByRelease()) ui->myRecord_FilterReleaseMinSpinBox->setValue(ui->editRecord_ReleaseEdit->value()); // Change min spin box
+    else { // As changing spin box would update the table already, only need to do if not changing either spin box
         updateRecordsListOrder(); // Update record table order
         updateMyRecordsTable(); // and info
     }
@@ -1525,3 +1531,7 @@ void MainWindow::setupContextMenuActions() // Setup context menu on My Collectio
     });
 }
 
+
+bool MainWindow::isSortingByRelease(){  // Return whether the user is sorting by release (if release spin boxes are not the min and max)
+    return !(ui->myRecord_FilterReleaseMaxSpinBox->value() == releaseMax && ui->myRecord_FilterReleaseMinSpinBox->value() == releaseMin);
+}

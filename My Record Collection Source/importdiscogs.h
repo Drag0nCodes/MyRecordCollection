@@ -14,7 +14,7 @@ class ImportDiscogs : public QObject, public QRunnable
 {
     Q_OBJECT
 public:
-    ImportDiscogs(QString line, std::vector<Record> *recordPointer, bool addTags, bool addAdded, QObject *parent = nullptr);
+    ImportDiscogs(QString line, std::vector<Record> *recordPointer, bool addTags, bool addAdded, bool skipDups, QObject *parent = nullptr);
     ImportDiscogs(bool addTags, QObject *parent = nullptr);
     void run() Q_DECL_OVERRIDE;
 
@@ -30,6 +30,7 @@ private:
     Record *processedRec;
     bool addTags;
     bool addAdded;
+    bool skipDups;
     void importSingle();
 };
 

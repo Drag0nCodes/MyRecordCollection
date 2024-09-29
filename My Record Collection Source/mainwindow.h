@@ -152,5 +152,6 @@ private:
     QMovie *loadingSymbol;
     void searchInSpotify();
     void setupContextMenuActions();
+    bool isSortingByRelease();
 };
 #endif // MAINWINDOW_H

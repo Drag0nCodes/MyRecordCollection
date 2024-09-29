@@ -2,13 +2,14 @@
 #include "json.h"
 #include <iostream>
 
-ImportDiscogs::ImportDiscogs(QString line, std::vector<Record> *allRecordPointer, bool addTags, bool addAdded, QObject *parent) : QObject{parent}
+ImportDiscogs::ImportDiscogs(QString line, std::vector<Record> *allRecordPointer, bool addTags, bool addAdded, bool skipDups, QObject *parent) : QObject{parent}
 {
     recordLine = line;
     allRecords = allRecordPointer;
     processedRec = NULL;
     this->addTags = addTags;
     this->addAdded = addAdded;
+    this->skipDups = skipDups;
 }
 
 ImportDiscogs::ImportDiscogs(bool addTags, QObject *parent) : QObject{parent}
@@ -84,7 +85,7 @@ void ImportDiscogs::importSingle() {
                 break;
             }
         }
-        if (record.getCover().compare(searchPageRecordCover) == 0 || (record.getName().toLower().compare(newName.toLower()) == 0 && record.getArtist().toLower().compare(newArtist.toLower()) == 0)){
+        if (skipDups && (record.getCover().compare(searchPageRecordCover) == 0 || (record.getName().toLower().compare(newName.toLower()) == 0 && record.getArtist().toLower().compare(newArtist.toLower()) == 0))){
             copy = true; // If the (new cover matches cover filenames) or (the album name and artist match) with a record already in the collection, do not add it again
             std::cerr << "Skipping from adding: " + newArtist.toStdString() + " - " + newName.toStdString() << std::endl;
             processedRec = new Record("", "", "", -1, 0, 0, QDate(0, 0, 0));
