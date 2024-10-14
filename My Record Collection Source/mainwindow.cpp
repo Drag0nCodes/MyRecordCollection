@@ -1580,8 +1580,8 @@ void MainWindow::on_editRecord_SuggestedTagButton_clicked()
             }
             selectedRec->addTag(newTag.getName());
         }
-        json.writeTags(&tags);
         sortTagsAlpha(&tags);
+        json.writeTags(&tags);
         updateTagList();
     }
 }
