@@ -447,6 +447,7 @@ void MainWindow::removeTableRecord() // Remove record from my collection
         allMyRecords.erase(allMyRecords.begin() + selectedRec->getId());
         recordsList.erase(recordsList.begin() + ui->myRecord_Table->currentRow());
 
+        selectedRec = nullptr;
         updateRecordsListOrder(); // Update the vector with the record collection table elements
         updateTagCount();
         updateTagList();
