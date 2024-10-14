@@ -946,7 +946,7 @@ Collection</string>
        <x>330</x>
        <y>150</y>
        <width>371</width>
-       <height>461</height>
+       <height>470</height>
       </rect>
      </property>
      <property name="frameShape">
@@ -959,7 +959,7 @@ Collection</string>
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>400</y>
+        <y>410</y>
         <width>190</width>
         <height>20</height>
        </rect>
@@ -995,9 +995,9 @@ Collection</string>
      <widget class="QListWidget" name="editRecord_EditTagsList">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>15</x>
         <y>160</y>
-        <width>190</width>
+        <width>200</width>
         <height>191</height>
        </rect>
       </property>
@@ -1011,7 +1011,7 @@ Collection</string>
      <widget class="QLabel" name="editRecord_TagsLabel">
       <property name="geometry">
        <rect>
-        <x>25</x>
+        <x>20</x>
         <y>139</y>
         <width>110</width>
         <height>20</height>
@@ -1030,8 +1030,8 @@ Collection</string>
      <widget class="QLabel" name="editRecord_RatingLabel">
       <property name="geometry">
        <rect>
-        <x>25</x>
-        <y>380</y>
+        <x>20</x>
+        <y>390</y>
         <width>120</width>
         <height>20</height>
        </rect>
@@ -1050,7 +1050,7 @@ Collection</string>
       <property name="geometry">
        <rect>
         <x>112</x>
-        <y>420</y>
+        <y>430</y>
         <width>119</width>
         <height>19</height>
        </rect>
@@ -1069,7 +1069,7 @@ Collection</string>
       <property name="geometry">
        <rect>
         <x>22</x>
-        <y>420</y>
+        <y>430</y>
         <width>119</width>
         <height>19</height>
        </rect>
@@ -1087,9 +1087,9 @@ Collection</string>
      <widget class="QPushButton" name="editRecord_ManageTagButton">
       <property name="geometry">
        <rect>
-        <x>110</x>
+        <x>120</x>
         <y>355</y>
-        <width>100</width>
+        <width>95</width>
         <height>29</height>
        </rect>
       </property>
@@ -1106,9 +1106,9 @@ Collection</string>
      <widget class="QLineEdit" name="editRecord_TitleEdit">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>15</x>
         <y>40</y>
-        <width>191</width>
+        <width>200</width>
         <height>28</height>
        </rect>
       </property>
@@ -1116,9 +1116,9 @@ Collection</string>
      <widget class="QLineEdit" name="editRecord_ArtistEdit">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>15</x>
         <y>100</y>
-        <width>191</width>
+        <width>200</width>
         <height>28</height>
        </rect>
       </property>
@@ -1126,7 +1126,7 @@ Collection</string>
      <widget class="QLabel" name="editRecord_TitleLabel">
       <property name="geometry">
        <rect>
-        <x>25</x>
+        <x>20</x>
         <y>20</y>
         <width>120</width>
         <height>20</height>
@@ -1146,7 +1146,7 @@ Collection</string>
       <property name="geometry">
        <rect>
         <x>270</x>
-        <y>420</y>
+        <y>425</y>
         <width>83</width>
         <height>29</height>
        </rect>
@@ -1158,7 +1158,7 @@ Collection</string>
      <widget class="QLabel" name="editRecord_CoverLabel">
       <property name="geometry">
        <rect>
-        <x>230</x>
+        <x>235</x>
         <y>30</y>
         <width>120</width>
         <height>120</height>
@@ -1177,7 +1177,7 @@ Collection</string>
      <widget class="QLabel" name="editRecord_ArtistLabel">
       <property name="geometry">
        <rect>
-        <x>25</x>
+        <x>20</x>
         <y>80</y>
         <width>120</width>
         <height>20</height>
@@ -1340,6 +1340,25 @@ estimated release</string>
        <string>Date Added:</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="editRecord_SuggestedTagButton">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>355</y>
+        <width>95</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Suggested Tags</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -1349,7 +1368,7 @@ estimated release</string>
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">

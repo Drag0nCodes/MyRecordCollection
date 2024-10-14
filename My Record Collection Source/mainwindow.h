@@ -108,6 +108,8 @@ private slots:
 
     void on_importDiscogsAddAddedOpt_triggered();
 
+    void on_editRecord_SuggestedTagButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     QPixmap getPixmapFromUrl(const QUrl& imageUrl);
@@ -142,7 +144,7 @@ private:
     void deleteUserData(bool delRecords, bool delTags);
     bool copyDirectory(const QString &sourceDir, const QString &destinationDir);
     void setInfoTimed(QLabel *label, int ms, QString text);
-    Record* selectedRec; // Currently selected record
+    Record* selectedRec = nullptr; // Currently selected record
     void updateEditPopup();
     int releaseMin; // The min release year/value of the collection
     int releaseMax; // The max release year/value of the collection

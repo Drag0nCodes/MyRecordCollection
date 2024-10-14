@@ -279,8 +279,8 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist, bool release) 
                 int position = content.indexOf("| genre", 0, Qt::CaseInsensitive); // The start of the genre section
                 if (position < 0) return tags;
                 int label = content.indexOf("| label", 0, Qt::CaseInsensitive); // The start of the label section
-                int arrowStart = content.indexOf("<!--", 0, Qt::CaseInsensitive); // Start of the <!-- ... --> that can sometimes appear after the "| genre" string (e.g. Folklore deluxe)
-                int arrowEnd = content.indexOf("-->", 0, Qt::CaseInsensitive); // End of the <!-- ... --> that can sometimes appear after the "| genre" string
+                int arrowStart = content.indexOf("<!--", position, Qt::CaseInsensitive); // Start of the <!-- ... --> that can sometimes appear after the "| genre" string (e.g. Folklore deluxe)
+                int arrowEnd = content.indexOf("-->", position, Qt::CaseInsensitive); // End of the <!-- ... --> that can sometimes appear after the "| genre" string
                 if (arrowStart > 0 && arrowStart < position+20) position = arrowEnd; // Move to position of first genre after --> if start arrow is close to "| genre"
 
                 position = content.indexOf("[[", position) +2; // Move to position of first single genre

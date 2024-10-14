@@ -557,7 +557,12 @@ void MainWindow::updateTagList(){ // Update the edit and sort tag lists
     QIcon checked(QDir::currentPath() + "/resources/images/check.png");
     QIcon unchecked(QDir::currentPath() + "/resources/images/uncheck.png");
     for (ListTag tag : tags){
-        ui->editRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
+        if (selectedRec && selectedRec->hasTag(tag.getName())) {
+            ui->editRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
+        }
+        else {
+            ui->editRecord_EditTagsList->addItem(new QListWidgetItem(unchecked, tag.getName()));
+        }
         if (tag.getChecked()){
             ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(checked, tag.getName() + " (" + QString::number(tag.getCount()) + ")"));
         }
@@ -565,7 +570,7 @@ void MainWindow::updateTagList(){ // Update the edit and sort tag lists
             ui->myRecord_FilterTagsList->addItem(new QListWidgetItem(unchecked, tag.getName() + " (" + QString::number(tag.getCount()) + ")"));
         }
     }
-    ui->myRecord_Table->setCurrentCell(-1, 0);
+    //ui->myRecord_Table->setCurrentCell(-1, 0); Not entirely sure if this is important but it was breaking the add suggested tags feature 0on the edit popup
 }
 
 
@@ -1535,3 +1540,49 @@ void MainWindow::setupContextMenuActions() // Setup context menu on My Collectio
 bool MainWindow::isSortingByRelease(){  // Return whether the user is sorting by release (if release spin boxes are not the min and max)
     return !(ui->myRecord_FilterReleaseMaxSpinBox->value() == releaseMax && ui->myRecord_FilterReleaseMinSpinBox->value() == releaseMin);
 }
+
+void MainWindow::on_editRecord_SuggestedTagButton_clicked()
+{
+    QMessageBox msgBox;
+    msgBox.setStyleSheet(prefs.getMessageStyle());
+    std::vector<ListTag> recTags = json.wikiTags(selectedRec->getName(), selectedRec->getArtist(), false);
+    QString tagString = "";
+    for (int i = 0; i < recTags.size(); i++) {
+        if (i < recTags.size()-1) {
+            tagString += " - " + recTags[i].getName() + "\n";
+        }
+        else {
+            tagString += " - " + recTags[i].getName();
+        }
+    }
+    msgBox.setText("The suggested tags for " + selectedRec->getName() + " by " + selectedRec->getArtist() + " are:\n" + tagString);
+    QPushButton *addTagsButton = msgBox.addButton(tr("Add All Tags"), QMessageBox::ActionRole);
+    QPushButton *closeButton = msgBox.addButton(QMessageBox::Close);
+    msgBox.setDefaultButton(closeButton);
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setWindowIcon(QIcon(QDir::currentPath() + "/resources/images/appico.ico"));
+    msgBox.setWindowTitle("Suggested Tags - My Record Collection");
+    msgBox.exec();
+
+    if (msgBox.clickedButton() == addTagsButton){ // Add all tags to record
+        for (ListTag newTag : recTags) { // Iterate through each new tag
+            bool dup = false;
+            for (ListTag &existingTag : tags){ // check if tag already exists in tags
+                if (existingTag.getName().compare(newTag.getName()) == 0){ // Tag already in tags vector
+                    dup = true;
+                    if (!selectedRec->hasTag(existingTag.getName())) existingTag.incCount(); // If record does not already have tag, increase count
+                    break;
+                }
+            }
+            if (!dup) { // Only add new tag to tags
+                newTag.incCount();
+                tags.push_back(newTag);
+            }
+            selectedRec->addTag(newTag.getName());
+        }
+        json.writeTags(&tags);
+        sortTagsAlpha(&tags);
+        updateTagList();
+    }
+}
+
