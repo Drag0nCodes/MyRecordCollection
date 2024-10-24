@@ -1546,7 +1546,7 @@ void MainWindow::on_editRecord_SuggestedTagButton_clicked()
 {
     QMessageBox msgBox;
     msgBox.setStyleSheet(prefs.getMessageStyle());
-    std::vector<ListTag> recTags = json.wikiTags(selectedRec->getName(), selectedRec->getArtist(), false);
+    std::vector<ListTag> recTags = json.wikiTags(ui->editRecord_TitleEdit->displayText(), ui->editRecord_ArtistEdit->displayText(), false);
     QString tagString = "";
     for (int i = 0; i < recTags.size(); i++) {
         if (i < recTags.size()-1) {
@@ -1556,7 +1556,7 @@ void MainWindow::on_editRecord_SuggestedTagButton_clicked()
             tagString += " - " + recTags[i].getName();
         }
     }
-    msgBox.setText("The suggested tags for " + selectedRec->getName() + " by " + selectedRec->getArtist() + " are:\n" + tagString);
+    msgBox.setText("The suggested tags for " + ui->editRecord_TitleEdit->displayText() + " by " + ui->editRecord_ArtistEdit->displayText() + " are:\n" + tagString);
     QPushButton *addTagsButton = msgBox.addButton(tr("Add All Tags"), QMessageBox::ActionRole);
     QPushButton *closeButton = msgBox.addButton(QMessageBox::Close);
     msgBox.setDefaultButton(closeButton);
