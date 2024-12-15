@@ -7,12 +7,14 @@ class Prefs
 {
 public:
     Prefs(QObject *parent = nullptr) {}
-    Prefs(int sortBy, bool darkTheme, bool showCover, bool showRating, bool showRelease, bool showAdded, QSize size);
+    Prefs(int sortBy,  bool asc, bool darkTheme, bool showCover, bool showRating, bool showRelease, bool showAdded, QSize size);
     void setDark(bool dark);
     void setSort(int sort);
+    void setAsc(bool asc);
     void toggleTheme();
     bool getDark();
     int getSort();
+    bool getAsc();
     QString getStyle();
     QString getMessageStyle();
     bool getCover();
@@ -28,6 +30,7 @@ public:
 
 private:
     int sortBy;
+    bool ascending;
     bool darkTheme;
     QString styleText;
     QString styleMessageText;

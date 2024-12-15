@@ -166,163 +166,6 @@
        <string>My Collection</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="myRecord_ToSearchRecordsButton">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>758</y>
-        <width>191</width>
-        <height>29</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Find New Records</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="myRecord_SortLabel">
-      <property name="geometry">
-       <rect>
-        <x>222</x>
-        <y>13</y>
-        <width>81</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Sort by:</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="myRecord_SearchBar">
-      <property name="geometry">
-       <rect>
-        <x>470</x>
-        <y>15</y>
-        <width>321</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="placeholderText">
-       <string>Search My Collection</string>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="myRecord_SortBox">
-      <property name="geometry">
-       <rect>
-        <x>310</x>
-        <y>15</y>
-        <width>151</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-       </font>
-      </property>
-      <item>
-       <property name="text">
-        <string>Oldest to Newest</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Newest to Oldest</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Title Ascending</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Title Descending </string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Artist Ascending</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Artist Descending</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Rating Ascending</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Rating Descending</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Release Ascending</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Release Descending</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QListWidget" name="myRecord_FilterTagsList">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>70</y>
-        <width>191</width>
-        <height>200</height>
-       </rect>
-      </property>
-      <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
-      </property>
-     </widget>
-     <widget class="QLabel" name="myRecord_FilterTagsLabel">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>47</y>
-        <width>131</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Filter by Tags:</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="myRecord_RecordCountLabel">
       <property name="geometry">
        <rect>
@@ -342,6 +185,349 @@
       <property name="text">
        <string>Showing 0/0 Records</string>
       </property>
+     </widget>
+     <widget class="QFrame" name="myRecord_RightAlignedFrame">
+      <property name="geometry">
+       <rect>
+        <x>280</x>
+        <y>10</y>
+        <width>720</width>
+        <height>591</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <widget class="QLabel" name="myRecord_SortLabel">
+       <property name="geometry">
+        <rect>
+         <x>-20</x>
+         <y>5</y>
+         <width>81</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Sort by:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="myRecord_SortBox">
+       <property name="geometry">
+        <rect>
+         <x>70</x>
+         <y>5</y>
+         <width>111</width>
+         <height>28</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+        </font>
+       </property>
+       <item>
+        <property name="text">
+         <string>Date Added</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Title</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Artist</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Rating</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Release</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QLineEdit" name="myRecord_SearchBar">
+       <property name="geometry">
+        <rect>
+         <x>190</x>
+         <y>5</y>
+         <width>321</width>
+         <height>28</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
+       <property name="placeholderText">
+        <string>Search My Collection</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="myRecord_FilterTagsLabel">
+       <property name="geometry">
+        <rect>
+         <x>522</x>
+         <y>37</y>
+         <width>131</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Filter by Tags:</string>
+       </property>
+      </widget>
+      <widget class="QListWidget" name="myRecord_FilterTagsList">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>60</y>
+         <width>191</width>
+         <height>200</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="myRecord_FilterRatingLabel">
+       <property name="geometry">
+        <rect>
+         <x>522</x>
+         <y>265</y>
+         <width>131</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Filter by Rating:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="myRecord_FilterReleaseLabel">
+       <property name="geometry">
+        <rect>
+         <x>522</x>
+         <y>321</y>
+         <width>131</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Filter by Release:</string>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="myRecord_FilterReleaseMinSpinBox">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>343</y>
+         <width>91</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="buttonSymbols">
+        <enum>QAbstractSpinBox::PlusMinus</enum>
+       </property>
+       <property name="prefix">
+        <string>  Min: </string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>9999</number>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="myRecord_FilterRatingMinSpinBox">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>287</y>
+         <width>91</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="buttonSymbols">
+        <enum>QAbstractSpinBox::PlusMinus</enum>
+       </property>
+       <property name="prefix">
+        <string>  Min: </string>
+       </property>
+       <property name="maximum">
+        <number>10</number>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="myRecord_FilterRatingMaxSpinBox">
+       <property name="geometry">
+        <rect>
+         <x>620</x>
+         <y>287</y>
+         <width>90</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="buttonSymbols">
+        <enum>QAbstractSpinBox::PlusMinus</enum>
+       </property>
+       <property name="prefix">
+        <string>  Max: </string>
+       </property>
+       <property name="maximum">
+        <number>10</number>
+       </property>
+       <property name="value">
+        <number>10</number>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="myRecord_FilterReleaseMaxSpinBox">
+       <property name="geometry">
+        <rect>
+         <x>620</x>
+         <y>343</y>
+         <width>91</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="buttonSymbols">
+        <enum>QAbstractSpinBox::PlusMinus</enum>
+       </property>
+       <property name="prefix">
+        <string>  Max: </string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>9999</number>
+       </property>
+       <property name="value">
+        <number>9999</number>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="myRecord_ResetFiltersButton">
+       <property name="geometry">
+        <rect>
+         <x>620</x>
+         <y>383</y>
+         <width>91</width>
+         <height>28</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Reset Filters</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="myRecord_InfoLabel">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>424</y>
+         <width>191</width>
+         <height>81</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+      </widget>
+      <widget class="QProgressBar" name="myRecord_DiscogsProgressBar">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>440</y>
+         <width>191</width>
+         <height>28</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
+      </widget>
      </widget>
      <widget class="QPushButton" name="myRecord_PickForMe">
       <property name="geometry">
@@ -365,45 +551,23 @@
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QLabel" name="myRecord_InfoLabel">
+     <widget class="QPushButton" name="myRecord_ToSearchRecordsButton">
       <property name="geometry">
        <rect>
         <x>800</x>
-        <y>414</y>
+        <y>758</y>
         <width>191</width>
-        <height>81</height>
+        <height>29</height>
        </rect>
       </property>
       <property name="font">
        <font>
         <family>Arial</family>
-        <pointsize>10</pointsize>
+        <pointsize>12</pointsize>
        </font>
       </property>
       <property name="text">
-       <string/>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignHCenter|Qt::AlignTop</set>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="myRecord_ResetFiltersButton">
-      <property name="geometry">
-       <rect>
-        <x>900</x>
-        <y>380</y>
-        <width>91</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Reset Filters</string>
+       <string>Find New Records</string>
       </property>
      </widget>
      <widget class="QPushButton" name="myRecord_customRecordButton">
@@ -428,174 +592,13 @@
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QProgressBar" name="myRecord_DiscogsProgressBar">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>430</y>
-        <width>191</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="value">
-       <number>0</number>
-      </property>
-     </widget>
-     <widget class="QSpinBox" name="myRecord_FilterRatingMinSpinBox">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>300</y>
-        <width>91</width>
-        <height>29</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="buttonSymbols">
-       <enum>QAbstractSpinBox::PlusMinus</enum>
-      </property>
-      <property name="prefix">
-       <string>  Min: </string>
-      </property>
-      <property name="maximum">
-       <number>10</number>
-      </property>
-     </widget>
-     <widget class="QLabel" name="myRecord_FilterRatingLabel">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>275</y>
-        <width>131</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Filter by Rating:</string>
-      </property>
-     </widget>
-     <widget class="QSpinBox" name="myRecord_FilterRatingMaxSpinBox">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>338</y>
-        <width>91</width>
-        <height>29</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="buttonSymbols">
-       <enum>QAbstractSpinBox::PlusMinus</enum>
-      </property>
-      <property name="prefix">
-       <string>  Max: </string>
-      </property>
-      <property name="maximum">
-       <number>10</number>
-      </property>
-      <property name="value">
-       <number>10</number>
-      </property>
-     </widget>
-     <widget class="QSpinBox" name="myRecord_FilterReleaseMaxSpinBox">
-      <property name="geometry">
-       <rect>
-        <x>900</x>
-        <y>338</y>
-        <width>91</width>
-        <height>29</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="buttonSymbols">
-       <enum>QAbstractSpinBox::PlusMinus</enum>
-      </property>
-      <property name="prefix">
-       <string>  Max: </string>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="maximum">
-       <number>9999</number>
-      </property>
-      <property name="value">
-       <number>9999</number>
-      </property>
-     </widget>
-     <widget class="QSpinBox" name="myRecord_FilterReleaseMinSpinBox">
-      <property name="geometry">
-       <rect>
-        <x>900</x>
-        <y>300</y>
-        <width>91</width>
-        <height>29</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="buttonSymbols">
-       <enum>QAbstractSpinBox::PlusMinus</enum>
-      </property>
-      <property name="prefix">
-       <string>  Min: </string>
-      </property>
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="maximum">
-       <number>9999</number>
-      </property>
-     </widget>
-     <widget class="QLabel" name="myRecord_FilterReleaseLabel">
-      <property name="geometry">
-       <rect>
-        <x>900</x>
-        <y>275</y>
-        <width>131</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Filter by Release:</string>
-      </property>
-     </widget>
+     <zorder>myRecord_RightAlignedFrame</zorder>
+     <zorder>myRecord_Table</zorder>
+     <zorder>myRecord_PageLabel</zorder>
+     <zorder>myRecord_RecordCountLabel</zorder>
+     <zorder>myRecord_PickForMe</zorder>
+     <zorder>myRecord_ToSearchRecordsButton</zorder>
+     <zorder>myRecord_customRecordButton</zorder>
     </widget>
     <widget class="QWidget" name="searchRecordsPage">
      <widget class="QTableWidget" name="searchRecord_Table">
@@ -695,45 +698,6 @@
        <string>Back to My Collection</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="searchRecord_SearchBar">
-      <property name="geometry">
-       <rect>
-        <x>470</x>
-        <y>15</y>
-        <width>321</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="placeholderText">
-       <string>Search For New Records</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="searchRecord_AddToMyRecordButton">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>410</y>
-        <width>191</width>
-        <height>80</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Add to My
-Collection</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="searchRecord_InfoLabel">
       <property name="geometry">
        <rect>
@@ -756,176 +720,241 @@ Collection</string>
        <set>Qt::AlignHCenter|Qt::AlignTop</set>
       </property>
      </widget>
-     <widget class="QLabel" name="searchRecord_RatingLabel">
+     <widget class="QFrame" name="searchRecord_RightAlignedFrame">
       <property name="geometry">
        <rect>
-        <x>800</x>
-        <y>340</y>
-        <width>121</width>
-        <height>20</height>
+        <x>280</x>
+        <y>10</y>
+        <width>720</width>
+        <height>591</height>
        </rect>
       </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
       </property>
-      <property name="text">
-       <string>Record Rating:</string>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
       </property>
+      <widget class="QLineEdit" name="searchRecord_SearchBar">
+       <property name="geometry">
+        <rect>
+         <x>190</x>
+         <y>5</y>
+         <width>321</width>
+         <height>28</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
+       <property name="placeholderText">
+        <string>Search For New Records</string>
+       </property>
+      </widget>
+      <widget class="QListWidget" name="searchRecord_SuggestedTagsList">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>60</y>
+         <width>191</width>
+         <height>200</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+      </widget>
+      <widget class="QLabel" name="searchRecord_SuggestedTagsLabel">
+       <property name="geometry">
+        <rect>
+         <x>522</x>
+         <y>37</y>
+         <width>131</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Suggested Tags:</string>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="searchRecord_ReleaseEdit">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>287</y>
+         <width>121</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="buttonSymbols">
+        <enum>QAbstractSpinBox::PlusMinus</enum>
+       </property>
+       <property name="prefix">
+        <string>⠀</string>
+       </property>
+       <property name="maximum">
+        <number>9999</number>
+       </property>
+       <property name="value">
+        <number>1900</number>
+       </property>
+      </widget>
+      <widget class="QLabel" name="searchRecord_ReleaseLabel">
+       <property name="geometry">
+        <rect>
+         <x>522</x>
+         <y>265</y>
+         <width>131</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Release:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="searchRecord_RatingLabel">
+       <property name="geometry">
+        <rect>
+         <x>522</x>
+         <y>321</y>
+         <width>131</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Record Rating:</string>
+       </property>
+      </widget>
+      <widget class="QSlider" name="searchRecord_RatingSlider">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>345</y>
+         <width>191</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="mouseTracking">
+        <bool>false</bool>
+       </property>
+       <property name="acceptDrops">
+        <bool>false</bool>
+       </property>
+       <property name="maximum">
+        <number>10</number>
+       </property>
+       <property name="singleStep">
+        <number>1</number>
+       </property>
+       <property name="pageStep">
+        <number>1</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="invertedAppearance">
+        <bool>false</bool>
+       </property>
+       <property name="invertedControls">
+        <bool>false</bool>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksBelow</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="searchRecord_RatingNumLabel2">
+       <property name="geometry">
+        <rect>
+         <x>522</x>
+         <y>365</y>
+         <width>120</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>0   1   2   3   4</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="searchRecord_RatingNumLabel1">
+       <property name="geometry">
+        <rect>
+         <x>612</x>
+         <y>365</y>
+         <width>120</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>5   6   7   8   9  10</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="searchRecord_AddToMyRecordButton">
+       <property name="geometry">
+        <rect>
+         <x>520</x>
+         <y>390</y>
+         <width>191</width>
+         <height>80</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Add to My
+Collection</string>
+       </property>
+      </widget>
      </widget>
-     <widget class="QSlider" name="searchRecord_RatingSlider">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>360</y>
-        <width>191</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="mouseTracking">
-       <bool>false</bool>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
-      </property>
-      <property name="maximum">
-       <number>10</number>
-      </property>
-      <property name="singleStep">
-       <number>1</number>
-      </property>
-      <property name="pageStep">
-       <number>1</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="invertedAppearance">
-       <bool>false</bool>
-      </property>
-      <property name="invertedControls">
-       <bool>false</bool>
-      </property>
-      <property name="tickPosition">
-       <enum>QSlider::TicksBelow</enum>
-      </property>
-     </widget>
-     <widget class="QLabel" name="searchRecord_RatingNumLabel1">
-      <property name="geometry">
-       <rect>
-        <x>892</x>
-        <y>380</y>
-        <width>120</width>
-        <height>19</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>5   6   7   8   9  10</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="searchRecord_RatingNumLabel2">
-      <property name="geometry">
-       <rect>
-        <x>802</x>
-        <y>380</y>
-        <width>120</width>
-        <height>19</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>0   1   2   3   4</string>
-      </property>
-     </widget>
-     <widget class="QListWidget" name="searchRecord_SuggestedTagsList">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>70</y>
-        <width>191</width>
-        <height>200</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="searchRecord_SuggestedTagsLabel">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>47</y>
-        <width>131</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Suggested Tags:</string>
-      </property>
-     </widget>
-     <widget class="QSpinBox" name="searchRecord_ReleaseEdit">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>300</y>
-        <width>121</width>
-        <height>29</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="buttonSymbols">
-       <enum>QAbstractSpinBox::PlusMinus</enum>
-      </property>
-      <property name="prefix">
-       <string>⠀</string>
-      </property>
-      <property name="maximum">
-       <number>9999</number>
-      </property>
-      <property name="value">
-       <number>1900</number>
-      </property>
-     </widget>
-     <widget class="QLabel" name="searchRecord_ReleaseLabel">
-      <property name="geometry">
-       <rect>
-        <x>800</x>
-        <y>275</y>
-        <width>120</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Arial</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Release:</string>
-      </property>
-     </widget>
+     <zorder>searchRecord_RightAlignedFrame</zorder>
+     <zorder>searchRecord_Table</zorder>
+     <zorder>searchRecord_PageLabel</zorder>
+     <zorder>searchRecord_ToMyRecordsButton</zorder>
+     <zorder>searchRecord_InfoLabel</zorder>
     </widget>
    </widget>
    <widget class="QFrame" name="editFrameBlockerFrame">

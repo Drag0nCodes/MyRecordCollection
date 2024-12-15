@@ -10,7 +10,7 @@
 #include <QEventLoop>
 #include <iostream>
 
-const int CURRVERSION = 5; // The current version of all JSON versions
+const int CURRVERSION = 6; // The current version of all JSON versions
 
 std::vector<Record> Json::getRecords(int recordCount, QString path, bool import){
     std::vector<Record> allRecords;
@@ -492,10 +492,22 @@ Prefs Json::getPrefs(){
                 myFile.close();
                 QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toUtf8());
                 QJsonObject root = doc.object();
+
                 int jsonVersion = root.value("_json_version").toInt();
                 if (jsonVersion > CURRVERSION) { // .json file version newer than app supports
-                    return Prefs(0, true, true, true, true, true, QSize(1000, 800));
+                    return Prefs(0, true, true, true, true, true, true, QSize(1000, 800));
                 }
+
+                // For version 6
+                bool ascending;
+                if (jsonVersion <= 5) { // No ascending val in json, set to default true
+                    ascending = true;
+                }
+                else {
+                    ascending = root.value("ascending").toBool();
+                }
+
+                // For version 5
                 bool showCover;
                 bool showRating;
                 bool showRelease;
@@ -515,10 +527,12 @@ Prefs Json::getPrefs(){
                     showAdded = root.value("showAdded").toBool();
                     size = QSize(root.value("width").toInt(), root.value("height").toInt());
                 }
+
+                // For version 4 and below?
                 int sortBy = root.value("sortBy").toInt();
                 bool theme = root.value("darkTheme").toBool();
 
-                Prefs prefs = Prefs(sortBy, theme, showCover, showRating, showRelease, showAdded, size);
+                Prefs prefs = Prefs(sortBy, ascending, theme, showCover, showRating, showRelease, showAdded, size);
 
                 if (jsonVersion < CURRVERSION){ // If json is old version, rewrite it with new data
                     writePrefs(&prefs);
@@ -528,7 +542,7 @@ Prefs Json::getPrefs(){
         }else{ // Create a prefs file with default vals
             if (myFile.open(QIODevice::WriteOnly | QIODevice::Text)){
                 myFile.close();
-                Prefs returnPref(0, true, true, true, true, true, QSize(1000, 800));
+                Prefs returnPref(0, true, true, true, true, true, true, QSize(1000, 800));
                 writePrefs(&returnPref);
                 return returnPref;
             }
@@ -536,7 +550,7 @@ Prefs Json::getPrefs(){
     }catch (const std::out_of_range& e) {
         std::cerr << "Exception caught - json get tags method: " << e.what() << std::endl;
     }
-    return Prefs(0, true, true, true, true, true, QSize(1000, 800));
+    return Prefs(0, true, true, true, true, true, true, QSize(1000, 800));
 }
 
 void Json::writePrefs(Prefs *prefs){
@@ -550,7 +564,10 @@ void Json::writePrefs(Prefs *prefs){
             QJsonDocument doc;
             QJsonObject root;
             root.insert("_json_version", CURRVERSION);
-            root.insert("darkTheme", prefs->getDark()); // Add preferences to json object
+
+            // Add preferences to json object
+            root.insert("darkTheme", prefs->getDark());
+            root.insert("ascending", prefs->getAsc());
             root.insert("sortBy", prefs->getSort());
             root.insert("showCover", prefs->getCover());
             root.insert("showRating", prefs->getRating());
@@ -558,6 +575,7 @@ void Json::writePrefs(Prefs *prefs){
             root.insert("showAdded", prefs->getAdded());
             root.insert("width", prefs->getSize().width());
             root.insert("height", prefs->getSize().height());
+
             doc.setObject(root);
             myFile.write(doc.toJson()); // Write to json file
             myFile.close();

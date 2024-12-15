@@ -1,9 +1,10 @@
 #include "prefs.h"
 #include <QDir>
 
-Prefs::Prefs(int sortBy, bool darkTheme, bool showCover, bool showRating, bool showRelease, bool showAdded, QSize size) {
+Prefs::Prefs(int sortBy, bool asc, bool darkTheme, bool showCover, bool showRating, bool showRelease, bool showAdded, QSize size) {
     this->darkTheme = darkTheme;
     this->sortBy = sortBy;
+    this->ascending = asc;
     this->showCover = showCover;
     this->showRating = showRating;
     this->showRelease = showRelease;
@@ -23,6 +24,11 @@ void Prefs::setSort(int sort)
     sortBy = sort;
 }
 
+void Prefs::setAsc(bool asc)
+{
+    ascending = asc;
+}
+
 void Prefs::toggleTheme()
 {
     darkTheme = !darkTheme;
@@ -37,6 +43,11 @@ bool Prefs::getDark()
 int Prefs::getSort()
 {
     return sortBy;
+}
+
+bool Prefs::getAsc()
+{
+    return ascending;
 }
 
 QString Prefs::getStyle()

@@ -57,6 +57,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui->searchRecord_Table->verticalHeader()->hide();
     ui->searchRecord_Table->setFont(font);
 
+    // Setup sorting combobox with icons for ascending and descending
+    if (prefs.getAsc()){
+        ui->myRecord_SortBox->addItem(QIcon(QDir::currentPath() + "/resources/images/check.png"), "Ascending");
+        ui->myRecord_SortBox->addItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), "Descending");
+    }
+    else {
+        ui->myRecord_SortBox->addItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), "Ascending");
+        ui->myRecord_SortBox->addItem(QIcon(QDir::currentPath() + "/resources/images/check.png"), "Descending");
+    }
+
     // Set preferences
     ui->myRecord_SortBox->setCurrentIndex(prefs.getSort()); // Sort by rating decending
     updateRecordsListOrder();
@@ -102,44 +112,22 @@ MainWindow::MainWindow(QWidget *parent)
     connect(sizeFilter, &SizeChangeFilter::newSize, this, [=](QSize size) { // When window resizes, move and resize widgets
         // Set record page geometry X Y Width Height
         ui->pages->setGeometry(0, -10, size.width(), size.height()-10);
-        ui->myRecord_DiscogsProgressBar->setGeometry(size.width()-200, ui->myRecord_DiscogsProgressBar->y(), ui->myRecord_DiscogsProgressBar->width(), ui->myRecord_DiscogsProgressBar->height());
-        ui->myRecord_FilterRatingLabel->setGeometry(size.width()-200, ui->myRecord_FilterRatingLabel->y(), ui->myRecord_FilterRatingLabel->width(), ui->myRecord_FilterRatingLabel->height());
-        ui->myRecord_FilterRatingMaxSpinBox->setGeometry(size.width()-200, ui->myRecord_FilterRatingMaxSpinBox->y(), ui->myRecord_FilterRatingMaxSpinBox->width(), ui->myRecord_FilterRatingMaxSpinBox->height());
-        ui->myRecord_FilterRatingMinSpinBox->setGeometry(size.width()-200, ui->myRecord_FilterRatingMinSpinBox->y(), ui->myRecord_FilterRatingMinSpinBox->width(), ui->myRecord_FilterRatingMinSpinBox->height());
-        ui->myRecord_FilterReleaseLabel->setGeometry(size.width()-100, ui->myRecord_FilterReleaseLabel->y(), ui->myRecord_FilterReleaseLabel->width(), ui->myRecord_FilterReleaseLabel->height());
-        ui->myRecord_FilterReleaseMaxSpinBox->setGeometry(size.width()-100, ui->myRecord_FilterReleaseMaxSpinBox->y(), ui->myRecord_FilterReleaseMaxSpinBox->width(), ui->myRecord_FilterReleaseMaxSpinBox->height());
-        ui->myRecord_FilterReleaseMinSpinBox->setGeometry(size.width()-100, ui->myRecord_FilterReleaseMinSpinBox->y(), ui->myRecord_FilterReleaseMinSpinBox->width(), ui->myRecord_FilterReleaseMinSpinBox->height());
-        ui->myRecord_FilterTagsLabel->setGeometry(size.width()-200, ui->myRecord_FilterTagsLabel->y(), ui->myRecord_FilterTagsLabel->width(), ui->myRecord_FilterTagsLabel->height());
-        ui->myRecord_FilterTagsList->setGeometry(size.width()-200, ui->myRecord_FilterTagsList->y(), ui->myRecord_FilterTagsList->width(), ui->myRecord_FilterTagsList->height());
-        ui->myRecord_InfoLabel->setGeometry(size.width()-200, ui->myRecord_InfoLabel->y(), ui->myRecord_InfoLabel->width(), ui->myRecord_InfoLabel->height());
         ui->myRecord_PickForMe->setGeometry(size.width()-360, size.height()-52, ui->myRecord_PickForMe->width(), ui->myRecord_PickForMe->height());
         ui->myRecord_RecordCountLabel->setGeometry(ui->myRecord_RecordCountLabel->x(), size.height()-52, ui->myRecord_RecordCountLabel->width(), ui->myRecord_RecordCountLabel->height());
-        ui->myRecord_ResetFiltersButton->setGeometry(size.width()-100, ui->myRecord_ResetFiltersButton->y(), ui->myRecord_ResetFiltersButton->width(), ui->myRecord_ResetFiltersButton->height());
-        ui->myRecord_SearchBar->setGeometry(size.width()-530, ui->myRecord_SearchBar->y(), ui->myRecord_SearchBar->width(), ui->myRecord_SearchBar->height());
-        ui->myRecord_SortBox->setGeometry(size.width()-690, ui->myRecord_SortBox->y(), ui->myRecord_SortBox->width(), ui->myRecord_SortBox->height());
-        ui->myRecord_SortLabel->setGeometry(size.width()-778, ui->myRecord_SortLabel->y(), ui->myRecord_SortLabel->width(), ui->myRecord_SortLabel->height());
         ui->myRecord_Table->setGeometry(ui->myRecord_Table->x(), ui->myRecord_Table->y(), size.width()-219, size.height()-110);
         ui->myRecord_ToSearchRecordsButton->setGeometry(size.width()-200, size.height()-52, ui->myRecord_ToSearchRecordsButton->width(), ui->myRecord_ToSearchRecordsButton->height());
         ui->myRecord_customRecordButton->setGeometry(size.width()-200, size.height()-90, ui->myRecord_customRecordButton->width(), ui->myRecord_customRecordButton->height());
+        ui->myRecord_RightAlignedFrame->setGeometry(size.width()-ui->myRecord_RightAlignedFrame->width(), ui->myRecord_RightAlignedFrame->y(), ui->myRecord_RightAlignedFrame->width(), ui->myRecord_RightAlignedFrame->height());
 
         // Resize my record table columns, 17px for scrollbar
         // 252 for other things
         resizeRecordTable();
 
         // Set search page geometry
-        ui->searchRecord_AddToMyRecordButton->setGeometry(size.width()-200, ui->searchRecord_AddToMyRecordButton->y(), ui->searchRecord_AddToMyRecordButton->width(), ui->searchRecord_AddToMyRecordButton->height());
         ui->searchRecord_InfoLabel->setGeometry(size.width()-200, ui->searchRecord_InfoLabel->y(), ui->searchRecord_InfoLabel->width(), ui->searchRecord_InfoLabel->height());
-        ui->searchRecord_RatingLabel->setGeometry(size.width()-200, ui->searchRecord_RatingLabel->y(), ui->searchRecord_RatingLabel->width(), ui->searchRecord_RatingLabel->height());
-        ui->searchRecord_RatingNumLabel1->setGeometry(size.width()-108, ui->searchRecord_RatingNumLabel1->y(), ui->searchRecord_RatingNumLabel1->width(), ui->searchRecord_RatingNumLabel1->height());
-        ui->searchRecord_RatingNumLabel2->setGeometry(size.width()-198, ui->searchRecord_RatingNumLabel2->y(), ui->searchRecord_RatingNumLabel2->width(), ui->searchRecord_RatingNumLabel2->height());
-        ui->searchRecord_RatingSlider->setGeometry(size.width()-200, ui->searchRecord_RatingSlider->y(), ui->searchRecord_RatingSlider->width(), ui->searchRecord_RatingSlider->height());
-        ui->searchRecord_ReleaseEdit->setGeometry(size.width()-200, ui->searchRecord_ReleaseEdit->y(), ui->searchRecord_ReleaseEdit->width(), ui->searchRecord_ReleaseEdit->height());
-        ui->searchRecord_ReleaseLabel->setGeometry(size.width()-200, ui->searchRecord_ReleaseLabel->y(), ui->searchRecord_ReleaseLabel->width(), ui->searchRecord_ReleaseLabel->height());
-        ui->searchRecord_SearchBar->setGeometry(size.width()-530, ui->searchRecord_SearchBar->y(), ui->searchRecord_SearchBar->width(), ui->searchRecord_SearchBar->height());
-        ui->searchRecord_SuggestedTagsLabel->setGeometry(size.width()-200, ui->searchRecord_SuggestedTagsLabel->y(), ui->searchRecord_SuggestedTagsLabel->width(), ui->searchRecord_SuggestedTagsLabel->height());
-        ui->searchRecord_SuggestedTagsList->setGeometry(size.width()-200, ui->searchRecord_SuggestedTagsList->y(), ui->searchRecord_SuggestedTagsList->width(), ui->searchRecord_SuggestedTagsList->height());
         ui->searchRecord_Table->setGeometry(ui->searchRecord_Table->x(), ui->searchRecord_Table->y(), size.width()-219, size.height()-110);
         ui->searchRecord_ToMyRecordsButton->setGeometry(size.width()-200, size.height()-52, ui->searchRecord_ToMyRecordsButton->width(), ui->searchRecord_ToMyRecordsButton->height());
+        ui->searchRecord_RightAlignedFrame->setGeometry(size.width()-ui->searchRecord_RightAlignedFrame->width(), ui->searchRecord_RightAlignedFrame->y(), ui->searchRecord_RightAlignedFrame->width(), ui->searchRecord_RightAlignedFrame->height());
 
         // Resize search record table columns, 17px for scrollbar
         ui->searchRecord_Table->setColumnWidth(0, 135);
@@ -539,16 +527,31 @@ void MainWindow::on_myRecord_SearchBar_textChanged() // Search my records
             }
         }
     }
-    on_myRecord_SortBox_activated(prefs.getSort());
+    updateRecordsListOrder();
+    updateMyRecordsTable();
 }
 
 
 void MainWindow::on_myRecord_SortBox_activated(int index) // Sort my records based on combo box
 {
-    prefs.setSort(index);
-    json.writePrefs(&prefs);
+    if (ui->myRecord_SortBox->currentText().compare("Ascending") == 0) {
+        ui->myRecord_SortBox->setCurrentIndex(prefs.getSort());
+        prefs.setAsc(true);
+        ui->myRecord_SortBox->setItemIcon(index, QIcon(QDir::currentPath() + "/resources/images/check.png"));
+        ui->myRecord_SortBox->setItemIcon(index+1, QIcon(QDir::currentPath() + "/resources/images/uncheck.png"));
+    }
+    else if (ui->myRecord_SortBox->currentText().compare("Descending") == 0){
+        ui->myRecord_SortBox->setCurrentIndex(prefs.getSort());
+        prefs.setAsc(false);
+        ui->myRecord_SortBox->setItemIcon(index-1, QIcon(QDir::currentPath() + "/resources/images/uncheck.png"));
+        ui->myRecord_SortBox->setItemIcon(index, QIcon(QDir::currentPath() + "/resources/images/check.png"));
+    }
+    else {
+        prefs.setSort(index);
+    }
     updateRecordsListOrder();
     updateMyRecordsTable();
+    json.writePrefs(&prefs);
 }
 
 
@@ -704,25 +707,33 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
 
     // Show records in order according to dropdown
     switch (ui->myRecord_SortBox->currentIndex()) {
-    case 0: // Oldest to newest
-        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
-            return a->getAdded() < b->getAdded();
-        });
+    case 0: // Date added
+        if (prefs.getAsc()) {
+            std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+                return a->getAdded() < b->getAdded();
+            });
+        }
+        else {
+            std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+                return a->getAdded() > b->getAdded();
+            });
+        }
         recordsList = newRecordsList;
         break;
-    case 1: // Newest to oldest
-        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
-            return a->getAdded() > b->getAdded();
-        });
-        recordsList = newRecordsList;
-        break;
-    case 2: // Title ascending
+    case 1: // Title
         while (!newRecordsList.empty()){
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest)->getName().toLower().compare(newRecordsList.at(i)->getName().toLower()) > 0){
-                    littlest = i;
+                if (prefs.getAsc()) {
+                    if (newRecordsList.at(littlest)->getName().toLower().compare(newRecordsList.at(i)->getName().toLower()) > 0){
+                        littlest = i;
+                    }
+                }
+                else {
+                    if (newRecordsList.at(littlest)->getName().toLower().compare(newRecordsList.at(i)->getName().toLower()) < 0){
+                        littlest = i;
+                    }
                 }
             }
             sortedRecords.push_back(newRecordsList.at(littlest));
@@ -730,13 +741,20 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
         }
         recordsList = sortedRecords;
         break;
-    case 3: // Title descending
+    case 2: // Artist
         while (!newRecordsList.empty()){
             int littlest = 0;
 
             for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest)->getName().toLower().compare(newRecordsList.at(i)->getName().toLower()) < 0){
-                    littlest = i;
+                if (prefs.getAsc()) {
+                    if (newRecordsList.at(littlest)->getArtist().toLower().compare(newRecordsList.at(i)->getArtist().toLower()) > 0){
+                        littlest = i;
+                    }
+                }
+                else {
+                    if (newRecordsList.at(littlest)->getArtist().toLower().compare(newRecordsList.at(i)->getArtist().toLower()) < 0){
+                        littlest = i;
+                    }
                 }
             }
             sortedRecords.push_back(newRecordsList.at(littlest));
@@ -744,58 +762,30 @@ void MainWindow::updateRecordsListOrder(){ // Set recordsList to have the correc
         }
         recordsList = sortedRecords;
         break;
-    case 4: // Artist ascending
-        while (!newRecordsList.empty()){
-            int littlest = 0;
-
-            for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest)->getArtist().toLower().compare(newRecordsList.at(i)->getArtist().toLower()) > 0){
-                    littlest = i;
-                }
-            }
-            sortedRecords.push_back(newRecordsList.at(littlest));
-            newRecordsList.erase(newRecordsList.begin()+littlest);
+    case 3: // Rating
+        if (prefs.getAsc()) {
+            std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+                return a->getRating() < b->getRating();
+            });
         }
-
-        recordsList = sortedRecords;
-        break;
-    case 5: // Artist descending
-        while (!newRecordsList.empty()){
-            int littlest = 0;
-
-            for (int i = 0; i < newRecordsList.size(); i++){
-                if (newRecordsList.at(littlest)->getArtist().toLower().compare(newRecordsList.at(i)->getArtist().toLower()) < 0){
-                    littlest = i;
-                }
-            }
-            sortedRecords.push_back(newRecordsList.at(littlest));
-            newRecordsList.erase(newRecordsList.begin()+littlest);
+        else {
+            std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+                return a->getRating() > b->getRating();
+            });
         }
-
-        recordsList = sortedRecords;
-        break;
-    case 6: // Rating ascending
-        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
-            return a->getRating() < b->getRating();
-        });
         recordsList = newRecordsList;
         break;
-    case 7: // Rating ascending
-        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
-            return a->getRating() > b->getRating();
-        });
-        recordsList = newRecordsList;
-        break;
-    case 8:
-        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
-            return a->getRelease() < b->getRelease();
-        });
-        recordsList = newRecordsList;
-        break;
-    case 9:
-        std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
-            return a->getRelease() > b->getRelease();
-        });
+    case 4: // Release
+        if (prefs.getAsc()) {
+            std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+                return a->getRelease() < b->getRelease();
+            });
+        }
+        else {
+            std::sort(newRecordsList.begin(), newRecordsList.end(), [](const Record* a, const Record* b) {
+                return a->getRelease() > b->getRelease();
+            });
+        }
         recordsList = newRecordsList;
         break;
     }
