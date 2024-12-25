@@ -1,0 +1,19 @@
+Records in your collection can be given tags, a rating, a release year, and an added date to help you sort and filter through your collection and decide what you want to listen to next. To edit a record, right-click it and select Edit. To change a records cover, you must have the new cover downloaded on your computer. After you add the cover to the record, you can safely delete the cover image file.
+
+You can also use the Pick a Record For Me button to randomly select a record to listen to based on the records currently displayed in the My Collection list.
+
+---
+
+Records can be added to your collection by: 
+ 1. Searching for them on the Find New Records page
+ 2. Creating a custom record
+ 3. Importing a Discogs collection
+ 4. Importing a MRC collection
+
+1. The Find New Records page uses the Last.fm API to get record information and a cover photo and then uses the MediaWiki API to get suggested tags from Wikipedia and its release date. The suggested tags are the record's genres. 
+
+2. To create a custom record, select "Create Custom Record" on the My Collection page. The edit popup will appear allowing you to edit the record and make it your own.
+
+3. See Discogs tab for information.
+
+4. Importing a MRC collection is simple. To export a collection, simply select Settings > Export MRC Collection, and then choose a folder that your collection will be exported to. Then, to import a collection, select Settings > Import MRC Collection, and choose the folder that your collection was exported to. This will add all records in the export to your collection including their covers and tags.

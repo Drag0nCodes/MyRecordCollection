@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QNetworkReply>
 #include <iostream>
+#include <QCoreApplication>
 
 ThreadedCover::ThreadedCover(QUrl imageUrl, int pos, QObject *parent) : QObject{parent}
 {
@@ -42,7 +43,7 @@ void ThreadedCover::importSingle()
         std::cerr << "No network connection\n";
     }
     if (pixmap.isNull()) { // No album cover
-        pixmap = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
+        pixmap = QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/missingImg.jpg");
     }
 
     delete reply;

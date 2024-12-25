@@ -1,5 +1,6 @@
 #include "prefs.h"
 #include <QDir>
+#include <QCoreApplication>
 
 Prefs::Prefs(int sortBy, bool asc, bool darkTheme, bool showCover, bool showRating, bool showRelease, bool showAdded, QSize size) {
     this->darkTheme = darkTheme;
@@ -115,12 +116,12 @@ void Prefs::updateThemeString()
     QFile *styleFile;
     QFile *styleMessageFile;
     if (darkTheme) {
-        styleFile = new QFile(QDir::currentPath() + "/resources/themes/dark_theme.qss");
-        styleMessageFile = new QFile(QDir::currentPath() + "/resources/themes/dark_theme_message.qss");
+        styleFile = new QFile(QCoreApplication::applicationDirPath() + "/resources/themes/dark_theme.qss");
+        styleMessageFile = new QFile(QCoreApplication::applicationDirPath() + "/resources/themes/dark_theme_message.qss");
     }
     else {
-        styleFile = new QFile(QDir::currentPath() + "/resources/themes/light_theme.qss");
-        styleMessageFile = new QFile(QDir::currentPath() + "/resources/themes/light_theme_message.qss");
+        styleFile = new QFile(QCoreApplication::applicationDirPath() + "/resources/themes/light_theme.qss");
+        styleMessageFile = new QFile(QCoreApplication::applicationDirPath() + "/resources/themes/light_theme_message.qss");
     }
     styleFile->open(QFile::ReadOnly);
     styleMessageFile->open(QFile::ReadOnly);

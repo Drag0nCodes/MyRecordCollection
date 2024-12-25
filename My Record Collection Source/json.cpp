@@ -9,6 +9,7 @@
 #include <QNetworkReply>
 #include <QEventLoop>
 #include <iostream>
+#include <QCoreApplication>
 
 const int CURRVERSION = 6; // The current version of all JSON versions
 
@@ -16,7 +17,7 @@ std::vector<Record> Json::getRecords(int recordCount, QString path, bool import)
     std::vector<Record> allRecords;
     try{
         QString jsonStr;
-        dir.mkpath(QDir::currentPath() + "/resources/user data");
+        dir.mkpath(QCoreApplication::applicationDirPath() + "/resources/user data");
         QFile myFile(path); // File of records JSON
 
         if (myFile.exists()){
@@ -134,7 +135,7 @@ std::vector<Record> Json::searchRecords(QString search, int limit) {
 }
 
 void Json::writeRecords(std::vector<Record>* myRecords){
-    QFile myFile(QDir::currentPath() + "/resources/user data/records.json"); // File of records JSON
+    QFile myFile(QCoreApplication::applicationDirPath() + "/resources/user data/records.json"); // File of records JSON
 
     if (myFile.exists()){
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in records json
@@ -173,7 +174,7 @@ std::vector<ListTag> Json::getTags(QString path){
     std::vector<ListTag> allTags;
     try{
         QString jsonStr;
-        dir.mkpath(QDir::currentPath() + "/resources/user data");
+        dir.mkpath(QCoreApplication::applicationDirPath() + "/resources/user data");
         QFile myFile(path); // File of tags JSON
 
         if (myFile.exists()){
@@ -212,7 +213,7 @@ std::vector<ListTag> Json::getTags(QString path){
 }
 
 void Json::writeTags(std::vector<ListTag>* tags){
-    QFile myFile(QDir::currentPath() + "/resources/user data/tags.json"); // File of tags JSON
+    QFile myFile(QCoreApplication::applicationDirPath() + "/resources/user data/tags.json"); // File of tags JSON
 
     if (myFile.exists()){
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in tags json
@@ -422,7 +423,7 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
             break;
         }
     }
-    QString savePath = QDir::currentPath() + "/resources/user data/covers/" + fileName;
+    QString savePath = QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + fileName;
     QFileInfo fileInfo(savePath);
 
     QNetworkAccessManager manager;
@@ -464,7 +465,7 @@ QString Json::downloadCover(QUrl imageUrl) { // Download image from the internet
 }
 
 bool Json::deleteCover(const QString& coverName) { // Delete album cover from covers subfolder
-    QFile file(QDir::currentPath() + "/resources/user data/covers/" + coverName);
+    QFile file(QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + coverName);
 
     if (file.exists()) {
         if (file.remove()) {
@@ -483,8 +484,8 @@ bool Json::deleteCover(const QString& coverName) { // Delete album cover from co
 Prefs Json::getPrefs(){
     try{
         QString jsonStr;
-        dir.mkpath(QDir::currentPath() + "/resources/user data");
-        QFile myFile(QDir::currentPath() + "/resources/user data/prefs.json"); // File of tags JSON
+        dir.mkpath(QCoreApplication::applicationDirPath() + "/resources/user data");
+        QFile myFile(QCoreApplication::applicationDirPath() + "/resources/user data/prefs.json"); // File of tags JSON
 
         if (myFile.exists()){
             if (myFile.open(QIODevice::ReadOnly | QIODevice::Text)){
@@ -554,7 +555,7 @@ Prefs Json::getPrefs(){
 }
 
 void Json::writePrefs(Prefs *prefs){
-    QFile myFile(QDir::currentPath() + "/resources/user data/prefs.json"); // File of preferences JSON
+    QFile myFile(QCoreApplication::applicationDirPath() + "/resources/user data/prefs.json"); // File of preferences JSON
 
     if (myFile.exists()){
         if (myFile.open(QIODevice::ReadWrite | QIODevice::Truncate)){ // Erase all text in prefs json
@@ -585,8 +586,8 @@ void Json::writePrefs(Prefs *prefs){
 
 void Json::deleteUserData(bool delRecords, bool delTags)
 {
-    QFile tagsFile(QDir::currentPath() + "/resources/user data/tags.json");
-    QFile recordsFile(QDir::currentPath() + "/resources/user data/records.json");
+    QFile tagsFile(QCoreApplication::applicationDirPath() + "/resources/user data/tags.json");
+    QFile recordsFile(QCoreApplication::applicationDirPath() + "/resources/user data/records.json");
 
     if (delTags){
         if (tagsFile.exists()){

@@ -1,33 +1,33 @@
 QTableWidget {
-	background-color: rgb(240, 240, 240);
-	color: black;
-	selection-color: black;
-	selection-background-color: rgb(225, 225, 225);
-	alternate-background-color: white;
+	background-color: rgb(70, 70, 70);
+	color: white;
+	selection-color: white;
+	selection-background-color: rgb(95, 95, 95);
+	alternate-background-color: rgb(45, 45, 45);
 	border: 0px;
 }
 
 QScrollBar {
-	background: rgb(210, 210, 210);
-	color: black;
+	background: rgb(95, 95, 95);
+	color: white;
 }
 
 QTableWidget QHeaderView::section {
-	background-color: rgb(210, 210, 210);
-	color: black;
+	background-color: rgb(95, 95, 95);
+	color: white;
 	border: 0px;
 }
 
 QListWidget {
-	background-color: white;
-	color: black;
-	border-color: black;
+	background-color: rgb(45, 45, 45);
+	color: white;
+	border-color: grey;
 	border-width: 1px;
 	border-style: inset;
 }
 
 QListWidget:disabled, QPushButton:disabled {
-	color: rgb(180, 180, 180);
+	color: rgb(160, 160, 160);
 }
 
 QListWidget:item {
@@ -35,30 +35,30 @@ QListWidget:item {
 }
 
 QPushButton {
-	background-color: rgb(235, 235, 235);
-	color: black;
+	background-color: rgb(95, 95, 95);
+	color: white;
 	border-radius: 14px;
 }
 
 QPushButton:hover, QComboBox:hover, QLineEdit:hover {
-	background-color: rgb(210, 210, 210);
+	background-color: rgb(70, 70, 70);
 }
 
 QPushButton:pressed {
-	background-color: rgb(235, 235, 235);
+	background-color: rgb(95, 95, 95);
 }
 
 QMainWindow, QDialog {
-	background-color: white;
+	background-color: rgb(45, 45, 45);
 }
 
 QLabel {
-	color: black;
+	color: white;
 }
 
 QLineEdit, QComboBox {
-	background-color: rgb(235, 235, 235);
-	color: black;
+	background-color: rgb(95, 95, 95);
+	color: white;
 	border-style: outset;
 	border-radius: 14px;
 	padding-left: 10px;
@@ -69,8 +69,8 @@ QComboBox::drop-down {
 }
 
 QComboBox QListView {
-	background-color: rgb(210, 210, 210);
-	color: black;
+	background-color: rgb(70, 70, 70);
+	color: white;
 	border: 0px;
 	padding: 5px;
 }
@@ -81,7 +81,7 @@ QComboBox QListView:item {
 }
 
 QTabWidget::pane { /* The tab widget frame line */
-    border-top: 2px solid rgb(235, 235, 235);
+    border-top: 2px solid rgb(70, 70, 70);
 }
 
 QTabWidget::tab-bar {
@@ -89,33 +89,37 @@ QTabWidget::tab-bar {
 }
 
 QTabBar::tab { /* The tab button unselected */
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
-                                stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
-    border: 2px solid rgb(235, 235, 235);
-    border-bottom-color: #C2C7CB; /* same as the pane color */
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    min-width: 8ex;
-    padding: 5px;
+	background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+		stop: 0 #2D2D2D, stop: 0.4 #464646,
+		stop: 0.5 #404040, stop: 1.0 #383838);
+	border: 2px solid #464646;
+	border-bottom-color: #C2C7CB; /* same as the pane color */
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	min-width: 8ex;
+	padding: 5px;
+	color: white;
 }
 
 QTabBar::tab:selected, QTabBar::tab:hover {
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                stop: 0 #fafafa, stop: 0.4 #f4f4f4,
-                                stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);
+	background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+		stop: 0 #4D4D4D, stop: 0.4 #666666,
+		stop: 0.5 #606060, stop: 1.0 #585858);
 }
 
 QTabBar::tab:selected {
-    border-color: rgb(235, 235, 235);
+	border-color: #464646;
 }
 
 QTabBar::tab:!selected {
     margin-top: 2px; /* make non-selected tabs look smaller */
+	border-color: #464646;
 }
 
 QMenuBar {
-	border-bottom: 1px solid  rgb(235, 235, 235);
+	background-color: rgb(45, 45, 45);
+	border-bottom: 1px solid rgb(95, 95, 95);
+	color: white;
 }
 
 QMenuBar::item {
@@ -123,37 +127,37 @@ QMenuBar::item {
 }
 
 QMenuBar::item:selected { 
-	background-color: rgb(235, 235, 235);
+	background-color: rgb(70, 70, 70);
 }
 
 QMenu {
-	background-color: rgb(245, 245, 245);
-	border: 2px solid rgb(235, 235, 235);
+	background-color: rgb(70, 70, 70);
+	color: white;
+	border: 2px solid rgb(95, 95, 95);
 }
 
 QMenu::item:selected { 
-	background-color: rgb(235, 235, 235);
-	color: black;
+	background-color: rgb(95, 95, 95);
+	color: white;
 }
 
-
 QFrame#editRecordFrame {
-	background-color: white;
-	border: 3px solid rgb(225, 225, 225);
+	background-color: rgb(45, 45, 45);
+	border: 3px solid rgb(95, 95, 95);
 	border-radius: 14px;
 }
 
 QLabel#editRecord_CoverLabel {
-	border: 4px solid rgb(225, 225, 225);
+	border: 4px solid rgb(95, 95, 95);
 	border-radius: 6px;
-	background-color: rgb(225, 225, 225);
+	background-color: rgb(95, 95, 95);
 }
 
 QProgressBar {
 	text-align: center;
-	background-color: rgb(235, 235, 235);
+	background-color: rgb(95, 95, 95);
 	border-radius: 14px;
-	color: black;
+	color: white;
 }
 
 QProgressBar::chunk {
@@ -162,27 +166,27 @@ QProgressBar::chunk {
 }
 
 QSpinBox {
-	background-color: rgb(235, 235, 235);
-	color: black;
+	background-color: rgb(95, 95, 95);
+	color: white;
 	border-radius: 14px;
 }
 
 QSpinBox::hover { 
-	background-color: rgb(210, 210, 210);
+	background-color: rgb(70, 70, 70);
 }
 
 QDateEdit {
-	background-color: rgb(225, 225, 225);
-	color: black;
+	background-color: rgb(95, 95, 95);
+	color: white;
 	border-radius: 14px;
 }
 
 QDateEdit::hover { 
-	background-color: rgb(210, 210, 210);
+	background-color: rgb(70, 70, 70);
 }
 
 QScrollArea QWidget {
-    background-color: white;
+    background-color: rgb(45, 45, 45);
 }
 
 QScrollArea { 
@@ -192,7 +196,6 @@ QScrollArea {
 QPushButton#myRecord_ToSearchRecordsButton, QPushButton#searchRecord_ToMyRecordsButton, 
 QPushButton#editRecord_DoneButton {
 	background-color: #1E73FF;
-	color: white;
 }
 
 QPushButton#myRecord_ToSearchRecordsButton::hover, QPushButton#searchRecord_ToMyRecordsButton::hover, 
@@ -203,4 +206,8 @@ QPushButton#editRecord_DoneButton::hover {
 QPushButton#myRecord_ToSearchRecordsButton::pressed, QPushButton#searchRecord_ToMyRecordsButton::pressed, 
 QPushButton#editRecord_DoneButton::pressed {
 	background-color: #1E73FF;
+}
+
+QFrame#myRecord_RightAlignedFrame, QFrame#searchRecord_RightAlignedFrame {
+	border: 0;
 }

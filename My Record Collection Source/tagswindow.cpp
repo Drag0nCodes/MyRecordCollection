@@ -15,7 +15,7 @@ TagsWindow::TagsWindow(std::vector<ListTag>* tags, Prefs *prefs, QWidget *parent
     }
 
     QDir dir;
-    this->setWindowIcon(QIcon(dir.absolutePath() + "/resources/images/appico.ico"));
+    this->setWindowIcon(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/appico.ico"));
 
     // Set the style sheet for the program
     setStyleSheet(prefs->getStyle());

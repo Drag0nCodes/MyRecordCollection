@@ -10,7 +10,7 @@ With vinyl records making such a comeback, this is a software to help you manage
 
 **Getting the App Running**
 
-To just use the app, you can keep only the "My Record Collection" folder. Run the MyRecordCollection-vx.x.x.exe file. Optionally, create a shortcut to this file and place it where you want.
+To just use the app, you can keep only the relevant "My Record Collection-xxx" folder for your operating system. Then, just run the MyRecordCollection-vx.x.x file. Optionally, create a shortcut to this file and place it where you want.
 
 **Modifying the App**
 

@@ -42,11 +42,11 @@ MainWindow::MainWindow(QWidget *parent)
     font.setPixelSize(14);
 
     // Fill the records vectors and tag vector
-    allMyRecords = json.getRecords(0, QDir::currentPath() + "/resources/user data/records.json", false);
+    allMyRecords = json.getRecords(0, QCoreApplication::applicationDirPath() + "/resources/user data/records.json", false);
     for (Record& rec : allMyRecords){
         recordsList.push_back(&rec);
     }
-    tags = json.getTags(QDir::currentPath() + "/resources/user data/tags.json");
+    tags = json.getTags(QCoreApplication::applicationDirPath() + "/resources/user data/tags.json");
     prefs = json.getPrefs();
     sortTagsAlpha(&tags);
 
@@ -59,12 +59,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Setup sorting combobox with icons for ascending and descending
     if (prefs.getAsc()){
-        ui->myRecord_SortBox->addItem(QIcon(QDir::currentPath() + "/resources/images/check.png"), "Ascending");
-        ui->myRecord_SortBox->addItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), "Descending");
+        ui->myRecord_SortBox->addItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/check.png"), "Ascending");
+        ui->myRecord_SortBox->addItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"), "Descending");
     }
     else {
-        ui->myRecord_SortBox->addItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), "Ascending");
-        ui->myRecord_SortBox->addItem(QIcon(QDir::currentPath() + "/resources/images/check.png"), "Descending");
+        ui->myRecord_SortBox->addItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"), "Ascending");
+        ui->myRecord_SortBox->addItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/check.png"), "Descending");
     }
 
     // Set preferences
@@ -145,7 +145,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     // Starting loading symbol movie
-    loadingSymbol = new QMovie(QDir::currentPath() + "/resources/images/loading.gif");
+    loadingSymbol = new QMovie(QCoreApplication::applicationDirPath() + "/resources/images/loading.gif");
     loadingSymbol->setScaledSize(QSize(90, 90));
     loadingSymbol->start();
 }
@@ -309,8 +309,8 @@ void MainWindow::updateMyRecordsTable(){ // Update my records list
     }
 
     for (int recordNum = 0; recordNum < recordsList.size(); recordNum++){ // Insert records covers into table
-        QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + recordsList.at(recordNum)->getCover());
-        if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
+        QPixmap image(QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + recordsList.at(recordNum)->getCover());
+        if (image.isNull()) image = QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/missingImg.jpg");
         image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
 
         QLabel *label = new QLabel();
@@ -488,8 +488,8 @@ void MainWindow::updateEditPopup(){
 
     // Set edit tags list checks
     ui->editRecord_EditTagsList->clear();
-    QIcon checked(QDir::currentPath() + "/resources/images/check.png");
-    QIcon unchecked(QDir::currentPath() + "/resources/images/uncheck.png");
+    QIcon checked(QCoreApplication::applicationDirPath() + "/resources/images/check.png");
+    QIcon unchecked(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png");
     for (ListTag tag : tags){
         if (selectedRec->hasTag(tag.getName())){
             ui->editRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
@@ -505,8 +505,8 @@ void MainWindow::updateEditPopup(){
     ui->editRecord_ReleaseEdit->setValue(selectedRec->getRelease());
     ui->editRecord_AddedEdit->setDate(selectedRec->getAdded());
 
-    QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + selectedRec->getCover());
-    if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
+    QPixmap image(QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + selectedRec->getCover());
+    if (image.isNull()) image = QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/missingImg.jpg");
     image = image.scaled(115, 115, Qt::IgnoreAspectRatio);
     ui->editRecord_CoverLabel->setPixmap(image);
 }
@@ -537,14 +537,14 @@ void MainWindow::on_myRecord_SortBox_activated(int index) // Sort my records bas
     if (ui->myRecord_SortBox->currentText().compare("Ascending") == 0) {
         ui->myRecord_SortBox->setCurrentIndex(prefs.getSort());
         prefs.setAsc(true);
-        ui->myRecord_SortBox->setItemIcon(index, QIcon(QDir::currentPath() + "/resources/images/check.png"));
-        ui->myRecord_SortBox->setItemIcon(index+1, QIcon(QDir::currentPath() + "/resources/images/uncheck.png"));
+        ui->myRecord_SortBox->setItemIcon(index, QIcon(QCoreApplication::applicationDirPath() + "/resources/images/check.png"));
+        ui->myRecord_SortBox->setItemIcon(index+1, QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"));
     }
     else if (ui->myRecord_SortBox->currentText().compare("Descending") == 0){
         ui->myRecord_SortBox->setCurrentIndex(prefs.getSort());
         prefs.setAsc(false);
-        ui->myRecord_SortBox->setItemIcon(index-1, QIcon(QDir::currentPath() + "/resources/images/uncheck.png"));
-        ui->myRecord_SortBox->setItemIcon(index, QIcon(QDir::currentPath() + "/resources/images/check.png"));
+        ui->myRecord_SortBox->setItemIcon(index-1, QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"));
+        ui->myRecord_SortBox->setItemIcon(index, QIcon(QCoreApplication::applicationDirPath() + "/resources/images/check.png"));
     }
     else {
         prefs.setSort(index);
@@ -558,8 +558,8 @@ void MainWindow::on_myRecord_SortBox_activated(int index) // Sort my records bas
 void MainWindow::updateTagList(){ // Update the edit and sort tag lists
     ui->editRecord_EditTagsList->clear();
     ui->myRecord_FilterTagsList->clear();
-    QIcon checked(QDir::currentPath() + "/resources/images/check.png");
-    QIcon unchecked(QDir::currentPath() + "/resources/images/uncheck.png");
+    QIcon checked(QCoreApplication::applicationDirPath() + "/resources/images/check.png");
+    QIcon unchecked(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png");
     for (ListTag tag : tags){
         if (selectedRec && selectedRec->hasTag(tag.getName())) {
             ui->editRecord_EditTagsList->addItem(new QListWidgetItem(checked, tag.getName()));
@@ -587,14 +587,14 @@ void MainWindow::on_editRecord_EditTagsList_itemClicked(QListWidgetItem *item) /
         if (selectedRec->addTag(item->text()) == 1){ // Try to add tag to record
             selectedRec->removeTag(item->text()); // if record already has tag, REMOVE TAG
             ui->editRecord_EditTagsList->takeItem(tagRowSave);
-            ui->editRecord_EditTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), item->text()));
+            ui->editRecord_EditTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"), item->text()));
             ui->editRecord_EditTagsList->sortItems();
             tags.at(tagRowSave).decCount();
             selectedRec->removeTag(item->text()); // Remove tag from record object
         }
         else { // Adding tag, set the check box to checked
             ui->editRecord_EditTagsList->takeItem(tagRowSave);
-            ui->editRecord_EditTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/check.png"), item->text()));
+            ui->editRecord_EditTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/check.png"), item->text()));
             ui->editRecord_EditTagsList->sortItems();
             tags.at(tagRowSave).incCount();
             selectedRec->addTag(item->text()); // Add tag to record object
@@ -604,10 +604,10 @@ void MainWindow::on_editRecord_EditTagsList_itemClicked(QListWidgetItem *item) /
         // Update the filter tags list number
         ui->myRecord_FilterTagsList->takeItem(tagRowSave); // Remove the filter item to be readded
         if (tags.at(tagRowSave).getChecked()) { // Add tag that is being filtered
-            ui->myRecord_FilterTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/check.png"), tags.at(tagRowSave).getName() + " (" + QString::number(tags.at(tagRowSave).getCount()) + ")"));
+            ui->myRecord_FilterTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/check.png"), tags.at(tagRowSave).getName() + " (" + QString::number(tags.at(tagRowSave).getCount()) + ")"));
         }
         else { // Add a tag that is not being filtered
-            ui->myRecord_FilterTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), tags.at(tagRowSave).getName() + " (" + QString::number(tags.at(tagRowSave).getCount()) + ")"));
+            ui->myRecord_FilterTagsList->insertItem(tagRowSave, new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"), tags.at(tagRowSave).getName() + " (" + QString::number(tags.at(tagRowSave).getCount()) + ")"));
         }
         ui->myRecord_FilterTagsList->setCurrentRow(-1); // Set filter record to not have anything selected
         ui->myRecord_Table->setCurrentCell(tableRow, 0); // Set the record table back to the current record
@@ -620,12 +620,12 @@ void MainWindow::on_myRecord_FilterTagsList_itemClicked(QListWidgetItem *item) /
     QString tag = ui->myRecord_FilterTagsList->currentItem()->text();
     if (tags.at(ui->myRecord_FilterTagsList->currentRow()).toggleCheck()){ // Tag was unchecked, set to checked
         ui->myRecord_FilterTagsList->takeItem(ui->myRecord_FilterTagsList->currentRow()); // Remove tag list item
-        ui->myRecord_FilterTagsList->insertItem(ui->myRecord_FilterTagsList->currentRow(), new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/check.png"), tag)); // Add tag back as checked
+        ui->myRecord_FilterTagsList->insertItem(ui->myRecord_FilterTagsList->currentRow(), new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/check.png"), tag)); // Add tag back as checked
         ui->myRecord_FilterTagsList->sortItems();
     }
     else { // Tag is unchecked, set to checked
         ui->myRecord_FilterTagsList->takeItem(ui->myRecord_FilterTagsList->currentRow());
-        ui->myRecord_FilterTagsList->insertItem(ui->myRecord_FilterTagsList->currentRow(), new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), tag));
+        ui->myRecord_FilterTagsList->insertItem(ui->myRecord_FilterTagsList->currentRow(), new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"), tag));
         ui->myRecord_FilterTagsList->sortItems();
     }
 
@@ -817,7 +817,7 @@ void MainWindow::on_searchRecord_Table_cellPressed(int row, int column) // Click
         }
         sortTagsAlpha(&suggestedTags);
         for (int i = 1; i < suggestedTags.size(); i++) {
-            ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), suggestedTags[i].getName()));
+            ui->searchRecord_SuggestedTagsList->addItem(new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"), suggestedTags[i].getName()));
         }
         ui->searchRecord_SuggestedTagsList->setEnabled(true);
         ui->searchRecord_ReleaseEdit->setEnabled(true);
@@ -832,13 +832,13 @@ void MainWindow::on_searchRecord_SuggestedTagsList_itemClicked(QListWidgetItem *
         QString tag = ui->searchRecord_SuggestedTagsList->currentItem()->text();
         suggestedTags.at(ui->searchRecord_SuggestedTagsList->currentRow()).setChecked(false);
         ui->searchRecord_SuggestedTagsList->takeItem(ui->searchRecord_SuggestedTagsList->currentRow());
-        ui->searchRecord_SuggestedTagsList->insertItem(ui->searchRecord_SuggestedTagsList->currentRow(), new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/uncheck.png"), tag));
+        ui->searchRecord_SuggestedTagsList->insertItem(ui->searchRecord_SuggestedTagsList->currentRow(), new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/uncheck.png"), tag));
     }
     else { // Tag is unchecked, set to checked
         QString tag = ui->searchRecord_SuggestedTagsList->currentItem()->text();
         suggestedTags.at(ui->searchRecord_SuggestedTagsList->currentRow()).setChecked(true);
         ui->searchRecord_SuggestedTagsList->takeItem(ui->searchRecord_SuggestedTagsList->currentRow());
-        ui->searchRecord_SuggestedTagsList->insertItem(ui->searchRecord_SuggestedTagsList->currentRow(), new QListWidgetItem(QIcon(QDir::currentPath() + "/resources/images/check.png"), tag));
+        ui->searchRecord_SuggestedTagsList->insertItem(ui->searchRecord_SuggestedTagsList->currentRow(), new QListWidgetItem(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/check.png"), tag));
     }
 
     ui->searchRecord_SuggestedTagsList->sortItems();
@@ -998,7 +998,7 @@ void MainWindow::on_myRecord_ResetFiltersButton_clicked() // "Reset" tags filter
 void MainWindow::on_help_actionAbout_triggered() // About menu button clicked
 {
     AboutWindow* popup = new AboutWindow(&prefs);
-    popup->setWindowIcon(QIcon(QDir::currentPath() + "/resources/images/appico.ico"));
+    popup->setWindowIcon(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/appico.ico"));
     popup->setModal(true);
     popup->exec();
 }
@@ -1012,7 +1012,7 @@ void MainWindow::on_help_actionContact_triggered() // Contact menu button clicke
     msgBox.setStandardButtons(QMessageBox::Close);
     msgBox.setDefaultButton(QMessageBox::Close);
     msgBox.setIcon(QMessageBox::Information);
-    msgBox.setWindowIcon(QIcon(QDir::currentPath() + "/resources/images/appico.ico"));
+    msgBox.setWindowIcon(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/appico.ico"));
     msgBox.setWindowTitle("Contact - My Record Collection");
     msgBox.exec();
 }
@@ -1135,9 +1135,9 @@ void MainWindow::on_editRecord_CoverEdit_clicked() // Change record cover on edi
 
     if (fileInfo.isFile()) { // If file is chosen...
         int fileNum = 0; // Keep track of number of duplicate names
-        if (QFile::copy(fileInfo.absoluteFilePath(), QDir::currentPath() + "/resources/user data/covers/" + fileInfo.fileName())); // If file is copied, all good
+        if (QFile::copy(fileInfo.absoluteFilePath(), QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + fileInfo.fileName())); // If file is copied, all good
         else { // If file cannot be copied, add (1), (2)... until it can be
-            while (!QFile::copy(fileInfo.absoluteFilePath(), QDir::currentPath() + "/resources/user data/covers/" + fileInfo.baseName() + " (" + QString::number(++fileNum) + ")." + fileInfo.suffix()));
+            while (!QFile::copy(fileInfo.absoluteFilePath(), QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + fileInfo.baseName() + " (" + QString::number(++fileNum) + ")." + fileInfo.suffix()));
         }
 
         json.deleteCover(selectedRec->getCover()); // Delete old cover
@@ -1149,8 +1149,8 @@ void MainWindow::on_editRecord_CoverEdit_clicked() // Change record cover on edi
         }
 
         // Update the preview cover image
-        QPixmap image(QDir::currentPath() + "/resources/user data/covers/" + selectedRec->getCover());
-        if (image.isNull()) image = QPixmap(QDir::currentPath() + "/resources/images/missingImg.jpg");
+        QPixmap image(QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + selectedRec->getCover());
+        if (image.isNull()) image = QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/missingImg.jpg");
         image = image.scaled(120, 120, Qt::IgnoreAspectRatio);
         ui->editRecord_CoverLabel->setPixmap(image);
     }
@@ -1208,13 +1208,13 @@ void MainWindow::deleteUserData(bool delRecords, bool delTags){ // Delete record
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setWindowIcon(QIcon(QDir::currentPath() + "/resources/images/appico.ico"));
+    msgBox.setWindowIcon(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/appico.ico"));
     msgBox.setWindowTitle("Erase User Data?");
     int ret = msgBox.exec();
 
     if (ret == QMessageBox::Yes){
         if (delRecords) {
-            QDir dir(QDir::currentPath() + "/resources/user data/covers/");
+            QDir dir(QCoreApplication::applicationDirPath() + "/resources/user data/covers/");
 
             if (!dir.exists()) {
                 qWarning() << "Record cover directory does not exist";
@@ -1274,7 +1274,7 @@ void MainWindow::on_myRecord_FilterRatingMinSpinBox_valueChanged(int arg1) // Fi
 
 void MainWindow::on_actionExport_MRC_Collection_triggered() // Export MRC record collection to folder
 {
-    QString sourceDir = QDir::currentPath() + "/resources/user data";
+    QString sourceDir = QCoreApplication::applicationDirPath() + "/resources/user data";
     QString destinationDir = QFileDialog::getExistingDirectory(this, tr("Select Destination Folder"), QDir::homePath());
 
     if (destinationDir.isEmpty()) {
@@ -1344,21 +1344,21 @@ void MainWindow::on_actionImport_MRC_Collection_triggered() // Import a MRC reco
     }
 
     std::vector<Record> newRecs = json.getRecords(allMyRecords.size(), dirPath + "/records.json", true); // Get vector of imported records
-    QDir coverDir(dir.absolutePath() + "/covers"); // Get directory of record covers
+    QDir coverDir(QCoreApplication::applicationDirPath() + "/covers"); // Get directory of record covers
 
-    QDir destCoversDir(QDir::currentPath() + "/resources/user data/covers");
+    QDir destCoversDir(QCoreApplication::applicationDirPath() + "/resources/user data/covers");
     if (!destCoversDir.exists()) { // Create covers directory if it doesn't exist
-        destCoversDir.mkpath(QDir::currentPath() + "/resources/user data/covers");
+        destCoversDir.mkpath(QCoreApplication::applicationDirPath() + "/resources/user data/covers");
     }
 
     for (int i = 0; i < coverDir.entryList(QDir::Files).size(); i++) { // Copy each cover file to resoruces
         QString file = coverDir.entryList(QDir::Files)[i];
         QString srcName = coverDir.absolutePath() + "/" + file;
-        QFileInfo destFile(QDir::currentPath() + "/resources/user data/covers/" + file);
+        QFileInfo destFile(QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + file);
         int fileNum = 0; // Keep track of number of duplicate names
         if (QFile::copy(srcName, destFile.filePath())); // If file is copied, all good
         else { // If file cannot be copied, add (1), (2)... until it can be
-            while (!QFile::copy(srcName, QDir::currentPath() + "/resources/user data/covers/" + destFile.baseName() + " (" + QString::number(++fileNum) + ")." + destFile.suffix()));
+            while (!QFile::copy(srcName, QCoreApplication::applicationDirPath() + "/resources/user data/covers/" + destFile.baseName() + " (" + QString::number(++fileNum) + ")." + destFile.suffix()));
             for (Record &rec : newRecs) {
                 if (rec.getCover().compare(destFile.fileName()) == 0) { // Rename cover in record object if it already exists in resources
                     rec.setCover(destFile.baseName() + " (" + QString::number(fileNum) + ")." + destFile.suffix());
@@ -1504,14 +1504,14 @@ void MainWindow::setupContextMenuActions() // Setup context menu on My Collectio
 
     // Create actions with iconc
     if (prefs.getDark()){
-        contextActionEdit = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/pencil_white.png")),"Edit", this);
-        contextActionRemove = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/trash_white.png")),"Remove", this);
-        contextActionSearchSpotify = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/spotify_white.png")), "Search in Spotify", this);
+        contextActionEdit = new QAction(QIcon(QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/pencil_white.png")),"Edit", this);
+        contextActionRemove = new QAction(QIcon(QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/trash_white.png")),"Remove", this);
+        contextActionSearchSpotify = new QAction(QIcon(QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/spotify_white.png")), "Search in Spotify", this);
     }
     else {
-        contextActionEdit = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/pencil_black.png")),"Edit", this);
-        contextActionRemove = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/trash_black.png")),"Remove", this);
-        contextActionSearchSpotify = new QAction(QIcon(QPixmap(QDir::currentPath() + "/resources/images/spotify_black.png")), "Search in Spotify", this);
+        contextActionEdit = new QAction(QIcon(QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/pencil_black.png")),"Edit", this);
+        contextActionRemove = new QAction(QIcon(QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/trash_black.png")),"Remove", this);
+        contextActionSearchSpotify = new QAction(QIcon(QPixmap(QCoreApplication::applicationDirPath() + "/resources/images/spotify_black.png")), "Search in Spotify", this);
     }
 
     // Add actions to menu
@@ -1551,7 +1551,7 @@ void MainWindow::on_editRecord_SuggestedTagButton_clicked()
     QPushButton *closeButton = msgBox.addButton(QMessageBox::Close);
     msgBox.setDefaultButton(closeButton);
     msgBox.setIcon(QMessageBox::Information);
-    msgBox.setWindowIcon(QIcon(QDir::currentPath() + "/resources/images/appico.ico"));
+    msgBox.setWindowIcon(QIcon(QCoreApplication::applicationDirPath() + "/resources/images/appico.ico"));
     msgBox.setWindowTitle("Suggested Tags - My Record Collection");
     msgBox.exec();
 

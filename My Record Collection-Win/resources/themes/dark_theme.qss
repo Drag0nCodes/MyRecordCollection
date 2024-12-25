@@ -21,7 +21,7 @@ QTableWidget QHeaderView::section {
 QListWidget {
 	background-color: rgb(45, 45, 45);
 	color: white;
-	border-color: white;
+	border-color: grey;
 	border-width: 1px;
 	border-style: inset;
 }
@@ -206,4 +206,8 @@ QPushButton#editRecord_DoneButton::hover {
 QPushButton#myRecord_ToSearchRecordsButton::pressed, QPushButton#searchRecord_ToMyRecordsButton::pressed, 
 QPushButton#editRecord_DoneButton::pressed {
 	background-color: #1E73FF;
+}
+
+QFrame#myRecord_RightAlignedFrame, QFrame#searchRecord_RightAlignedFrame {
+	border: 0;
 }
