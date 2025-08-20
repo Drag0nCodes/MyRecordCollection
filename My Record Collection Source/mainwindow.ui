@@ -52,7 +52,7 @@
        </font>
       </property>
       <property name="contextMenuPolicy">
-       <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+       <enum>Qt::CustomContextMenu</enum>
       </property>
       <property name="autoFillBackground">
        <bool>true</bool>
@@ -61,16 +61,16 @@
        <string notr="true"/>
       </property>
       <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
+       <enum>Qt::ScrollBarAlwaysOn</enum>
       </property>
       <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+       <enum>Qt::ScrollBarAlwaysOff</enum>
       </property>
       <property name="sizeAdjustPolicy">
-       <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
+       <enum>QAbstractScrollArea::AdjustIgnored</enum>
       </property>
       <property name="editTriggers">
-       <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+       <set>QAbstractItemView::NoEditTriggers</set>
       </property>
       <property name="tabKeyNavigation">
        <bool>false</bool>
@@ -79,25 +79,25 @@
        <bool>true</bool>
       </property>
       <property name="selectionMode">
-       <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+       <enum>QAbstractItemView::SingleSelection</enum>
       </property>
       <property name="selectionBehavior">
-       <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+       <enum>QAbstractItemView::SelectRows</enum>
       </property>
       <property name="textElideMode">
-       <enum>Qt::TextElideMode::ElideLeft</enum>
+       <enum>Qt::ElideLeft</enum>
       </property>
       <property name="verticalScrollMode">
-       <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
       </property>
       <property name="horizontalScrollMode">
-       <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
+       <enum>QAbstractItemView::ScrollPerItem</enum>
       </property>
       <property name="showGrid">
        <bool>false</bool>
       </property>
       <property name="gridStyle">
-       <enum>Qt::PenStyle::SolidLine</enum>
+       <enum>Qt::SolidLine</enum>
       </property>
       <attribute name="horizontalHeaderHighlightSections">
        <bool>false</bool>
@@ -196,10 +196,7 @@
        </rect>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Shadow::Plain</enum>
+       <enum>QFrame::NoFrame</enum>
       </property>
       <widget class="QLabel" name="myRecord_SortLabel">
        <property name="geometry">
@@ -220,7 +217,7 @@
         <string>Sort by:</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
       <widget class="QComboBox" name="myRecord_SortBox">
@@ -316,7 +313,7 @@
         </font>
        </property>
        <property name="editTriggers">
-        <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+        <set>QAbstractItemView::NoEditTriggers</set>
        </property>
       </widget>
       <widget class="QLabel" name="myRecord_FilterRatingLabel">
@@ -373,7 +370,7 @@
         </font>
        </property>
        <property name="buttonSymbols">
-        <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+        <enum>QAbstractSpinBox::PlusMinus</enum>
        </property>
        <property name="prefix">
         <string>  Min: </string>
@@ -401,7 +398,7 @@
         </font>
        </property>
        <property name="buttonSymbols">
-        <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+        <enum>QAbstractSpinBox::PlusMinus</enum>
        </property>
        <property name="prefix">
         <string>  Min: </string>
@@ -426,7 +423,7 @@
         </font>
        </property>
        <property name="buttonSymbols">
-        <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+        <enum>QAbstractSpinBox::PlusMinus</enum>
        </property>
        <property name="prefix">
         <string>  Max: </string>
@@ -454,7 +451,7 @@
         </font>
        </property>
        <property name="buttonSymbols">
-        <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+        <enum>QAbstractSpinBox::PlusMinus</enum>
        </property>
        <property name="prefix">
         <string>  Max: </string>
@@ -507,7 +504,7 @@
         <string/>
        </property>
        <property name="alignment">
-        <set>Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignTop</set>
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
        </property>
       </widget>
       <widget class="QProgressBar" name="myRecord_DiscogsProgressBar">
@@ -617,22 +614,22 @@
        </sizepolicy>
       </property>
       <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
+       <enum>Qt::ScrollBarAlwaysOn</enum>
       </property>
       <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+       <enum>Qt::ScrollBarAlwaysOff</enum>
       </property>
       <property name="alternatingRowColors">
        <bool>true</bool>
       </property>
       <property name="selectionMode">
-       <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+       <enum>QAbstractItemView::SingleSelection</enum>
       </property>
       <property name="selectionBehavior">
-       <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+       <enum>QAbstractItemView::SelectRows</enum>
       </property>
       <property name="verticalScrollMode">
-       <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
       </property>
       <property name="showGrid">
        <bool>false</bool>
@@ -717,7 +714,7 @@
        <string/>
       </property>
       <property name="alignment">
-       <set>Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignTop</set>
+       <set>Qt::AlignHCenter|Qt::AlignTop</set>
       </property>
      </widget>
      <widget class="QFrame" name="searchRecord_RightAlignedFrame">
@@ -730,10 +727,7 @@
        </rect>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Shadow::Raised</enum>
+       <enum>QFrame::NoFrame</enum>
       </property>
       <widget class="QLineEdit" name="searchRecord_SearchBar">
        <property name="geometry">
@@ -804,7 +798,7 @@
         </font>
        </property>
        <property name="buttonSymbols">
-        <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+        <enum>QAbstractSpinBox::PlusMinus</enum>
        </property>
        <property name="prefix">
         <string>⠀</string>
@@ -879,7 +873,7 @@
         <number>1</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
+        <enum>Qt::Horizontal</enum>
        </property>
        <property name="invertedAppearance">
         <bool>false</bool>
@@ -888,7 +882,7 @@
         <bool>false</bool>
        </property>
        <property name="tickPosition">
-        <enum>QSlider::TickPosition::TicksBelow</enum>
+        <enum>QSlider::TicksBelow</enum>
        </property>
       </widget>
       <widget class="QPushButton" name="searchRecord_AddToMyRecordButton">
@@ -914,8 +908,8 @@ Collection</string>
       <widget class="QLabel" name="searchRecord_RatingNum12">
        <property name="geometry">
         <rect>
-         <x>542</x>
-         <y>370</y>
+         <x>541</x>
+         <y>367</y>
          <width>41</width>
          <height>19</height>
         </rect>
@@ -927,14 +921,14 @@ Collection</string>
         </font>
        </property>
        <property name="text">
-        <string>1    2</string>
+        <string>1   2</string>
        </property>
       </widget>
       <widget class="QLabel" name="searchRecord_RatingNum78">
        <property name="geometry">
         <rect>
          <x>649</x>
-         <y>370</y>
+         <y>367</y>
          <width>41</width>
          <height>19</height>
         </rect>
@@ -946,14 +940,14 @@ Collection</string>
         </font>
        </property>
        <property name="text">
-        <string>7    8</string>
+        <string>7   8</string>
        </property>
       </widget>
       <widget class="QLabel" name="searchRecord_RatingNum56">
        <property name="geometry">
         <rect>
          <x>613</x>
-         <y>370</y>
+         <y>367</y>
          <width>41</width>
          <height>19</height>
         </rect>
@@ -965,14 +959,14 @@ Collection</string>
         </font>
        </property>
        <property name="text">
-        <string>5    6</string>
+        <string>5   6</string>
        </property>
       </widget>
       <widget class="QLabel" name="searchRecord_RatingNum34">
        <property name="geometry">
         <rect>
          <x>577</x>
-         <y>370</y>
+         <y>367</y>
          <width>41</width>
          <height>19</height>
         </rect>
@@ -984,14 +978,14 @@ Collection</string>
         </font>
        </property>
        <property name="text">
-        <string>3    4</string>
+        <string>3   4</string>
        </property>
       </widget>
       <widget class="QLabel" name="searchRecord_RatingNum0">
        <property name="geometry">
         <rect>
-         <x>524</x>
-         <y>370</y>
+         <x>522</x>
+         <y>367</y>
          <width>31</width>
          <height>19</height>
         </rect>
@@ -1022,7 +1016,7 @@ Collection</string>
         </font>
        </property>
        <property name="text">
-        <string>9    10</string>
+        <string>9  10</string>
        </property>
       </widget>
       <widget class="QLabel" name="searchRecord_ResultsSpinLabel">
@@ -1050,7 +1044,7 @@ Collection</string>
       <widget class="QSpinBox" name="searchRecord_ResultsSpin">
        <property name="geometry">
         <rect>
-         <x>133</x>
+         <x>132</x>
          <y>5</y>
          <width>50</width>
          <height>29</height>
@@ -1099,10 +1093,7 @@ Collection</string>
      <string notr="true">border: 0;</string>
     </property>
     <property name="frameShape">
-     <enum>QFrame::Shape::StyledPanel</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Shadow::Raised</enum>
+     <enum>QFrame::NoFrame</enum>
     </property>
     <property name="lineWidth">
      <number>1</number>
@@ -1120,10 +1111,7 @@ Collection</string>
       </rect>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <widget class="QSlider" name="editRecord_RatingSlider">
       <property name="geometry">
@@ -1150,7 +1138,7 @@ Collection</string>
        <number>1</number>
       </property>
       <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
       <property name="invertedAppearance">
        <bool>false</bool>
@@ -1159,7 +1147,7 @@ Collection</string>
        <bool>false</bool>
       </property>
       <property name="tickPosition">
-       <enum>QSlider::TickPosition::TicksBelow</enum>
+       <enum>QSlider::TicksBelow</enum>
       </property>
      </widget>
      <widget class="QListWidget" name="editRecord_EditTagsList">
@@ -1172,10 +1160,10 @@ Collection</string>
        </rect>
       </property>
       <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+       <enum>Qt::ScrollBarAsNeeded</enum>
       </property>
       <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+       <enum>Qt::ScrollBarAsNeeded</enum>
       </property>
      </widget>
      <widget class="QLabel" name="editRecord_TagsLabel">
@@ -1219,7 +1207,7 @@ Collection</string>
      <widget class="QLabel" name="editRecord_RatingNum12">
       <property name="geometry">
        <rect>
-        <x>41</x>
+        <x>40</x>
         <y>430</y>
         <width>41</width>
         <height>19</height>
@@ -1232,7 +1220,7 @@ Collection</string>
        </font>
       </property>
       <property name="text">
-       <string>1    2</string>
+       <string>1   2</string>
       </property>
      </widget>
      <widget class="QPushButton" name="editRecord_ManageTagButton">
@@ -1324,6 +1312,9 @@ Collection</string>
       <property name="text">
        <string>Cover</string>
       </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
      </widget>
      <widget class="QLabel" name="editRecord_ArtistLabel">
       <property name="geometry">
@@ -1373,7 +1364,7 @@ Collection</string>
        </font>
       </property>
       <property name="buttonSymbols">
-       <enum>QAbstractSpinBox::ButtonSymbols::UpDownArrows</enum>
+       <enum>QAbstractSpinBox::UpDownArrows</enum>
       </property>
       <property name="prefix">
        <string>⠀</string>
@@ -1424,7 +1415,7 @@ Collection</string>
 estimated release</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignTop</set>
+       <set>Qt::AlignHCenter|Qt::AlignTop</set>
       </property>
      </widget>
      <widget class="QDateEdit" name="editRecord_AddedEdit">
@@ -1453,7 +1444,7 @@ estimated release</string>
        </datetime>
       </property>
       <property name="currentSection">
-       <enum>QDateTimeEdit::Section::DaySection</enum>
+       <enum>QDateTimeEdit::DaySection</enum>
       </property>
       <property name="displayFormat">
        <string>⠀yyyy-MM-dd</string>
@@ -1462,13 +1453,13 @@ estimated release</string>
        <number>2</number>
       </property>
       <property name="timeSpec">
-       <enum>Qt::TimeSpec::UTC</enum>
+       <enum>Qt::UTC</enum>
       </property>
       <property name="date">
        <date>
         <year>2000</year>
         <month>1</month>
-        <day>1</day>
+        <day>2</day>
        </date>
       </property>
      </widget>
@@ -1526,7 +1517,7 @@ estimated release</string>
        </font>
       </property>
       <property name="text">
-       <string>3    4</string>
+       <string>3   4</string>
       </property>
      </widget>
      <widget class="QLabel" name="editRecord_RatingNum56">
@@ -1545,7 +1536,7 @@ estimated release</string>
        </font>
       </property>
       <property name="text">
-       <string>5    6</string>
+       <string>5   6</string>
       </property>
      </widget>
      <widget class="QLabel" name="editRecord_RatingNum78">
@@ -1564,7 +1555,7 @@ estimated release</string>
        </font>
       </property>
       <property name="text">
-       <string>7    8</string>
+       <string>7   8</string>
       </property>
      </widget>
      <widget class="QLabel" name="editRecord_RatingNum910">
@@ -1583,13 +1574,13 @@ estimated release</string>
        </font>
       </property>
       <property name="text">
-       <string>9    10</string>
+       <string>9  10</string>
       </property>
      </widget>
      <widget class="QLabel" name="editRecord_RatingNum0">
       <property name="geometry">
        <rect>
-        <x>23</x>
+        <x>20</x>
         <y>430</y>
         <width>31</width>
         <height>19</height>
@@ -1614,7 +1605,7 @@ estimated release</string>
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>24</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">

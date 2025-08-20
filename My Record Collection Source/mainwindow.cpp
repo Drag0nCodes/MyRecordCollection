@@ -1344,7 +1344,7 @@ void MainWindow::on_actionImport_MRC_Collection_triggered() // Import a MRC reco
     }
 
     std::vector<Record> newRecs = json.getRecords(allMyRecords.size(), dirPath + "/records.json", true); // Get vector of imported records
-    QDir coverDir(QCoreApplication::applicationDirPath() + "/covers"); // Get directory of record covers
+    QDir coverDir(dirPath + "/covers"); // Get directory of new record covers
 
     QDir destCoversDir(QCoreApplication::applicationDirPath() + "/resources/user data/covers");
     if (!destCoversDir.exists()) { // Create covers directory if it doesn't exist
