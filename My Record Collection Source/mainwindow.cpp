@@ -191,7 +191,7 @@ void MainWindow::on_searchRecord_SearchBar_returnPressed() // Search last.fm rec
     }
 
     // Get search results and setup table
-    results = json.searchRecords(ui->searchRecord_SearchBar->text(), 10);
+    results = json.searchRecords(ui->searchRecord_SearchBar->text(), ui->searchRecord_ResultsSpin->value());
     ui->searchRecord_Table->setRowCount(results.size());
 
     if (!results.empty() && results[0].getRating() == -1) { // Network error with search records

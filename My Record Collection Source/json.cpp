@@ -289,8 +289,8 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist, bool release) 
                 if (label < position) return tags; // No genres on wiki page, return nothing
 
                 int genreSectionEnd = content.indexOf("\n|", position); // The end of the entire genre section
-                int genre = 0;
-                int source = 0;
+                int genre = 0; // Strings of "[["
+                int source = 0; // Strings of "=[[" usually indicate a link to a source/reference and not a genre
                 if (position > 0) {
                     while (position < genreSectionEnd && position != -1) {
                         int genreEndPos = content.indexOf("]]", position); // End of single genre
@@ -310,6 +310,10 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist, bool release) 
                             genre = content.mid(position, genreEndPos-position).toLower();
                         }
 
+                        if (content.mid(genreEndPos+2, 4).toLower() == "<ref") { // if there is a reference after the genre, go to end of reference
+                            position = content.indexOf("/", position);
+                        }
+
                         source = content.indexOf("=[[", position);
                         position = content.indexOf("[[", position) +2;
 
@@ -318,6 +322,7 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist, bool release) 
                         }
 
                         tags.push_back(ListTag(genre.replace("&nbsp;", " "))); // Add the genre tag to the vector that will be returned. If it has "&nbsp;" remove that,
+
                         }
                 }
             }

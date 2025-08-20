@@ -75,7 +75,7 @@ void ImportDiscogs::importSingle() {
     }
 
     // Find the record on last.fm to get the album cover
-    QString coverUrl = json->searchRecords(newName + " " + newArtist, 1).at(0).getCover(); // Search the record name and artist on last fm, the first result will (hopefully) be the correct album cover
+    QString coverUrl = json->searchRecords(newName, 1).at(0).getCover(); // Search the record name and artist on last fm, the first result will (hopefully) be the correct album cover
     bool copy = false;
     for (Record record : *allRecords){ // Check all my records to see if cover matches requested add
         QString searchPageRecordCover = coverUrl; // Copy the cover URL
