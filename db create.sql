@@ -1,0 +1,35 @@
+CREATE DATABASE mrc_db;
+USE mrc_db;
+
+CREATE TABLE User (
+    uuid CHAR(36) PRIMARY KEY,
+    username VARCHAR(32) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Record (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    added DATE NOT NULL,
+    artist VARCHAR(255),
+    cover VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
+    rating TINYINT,
+    release_year YEAR,
+    userUuid CHAR(36),
+    FOREIGN KEY (userUuid) REFERENCES User(uuid) ON DELETE CASCADE
+);
+
+CREATE TABLE Tag (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    userUuid CHAR(36),
+    FOREIGN KEY (userUuid) REFERENCES User(uuid) ON DELETE CASCADE
+);
+
+CREATE TABLE Tagged (
+    recordId INT,
+    tagId INT,
+    PRIMARY KEY (recordId, tagId),
+    FOREIGN KEY (recordId) REFERENCES Record(id) ON DELETE CASCADE,
+    FOREIGN KEY (tagId) REFERENCES Tag(id) ON DELETE CASCADE
+);
