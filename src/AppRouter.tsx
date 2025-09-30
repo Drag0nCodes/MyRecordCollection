@@ -79,9 +79,7 @@ export default function AppRouter() {
             </RedirectIfAuthed>
           }
         />
-      </Routes>
-      {/* Fallback: show a friendly 404 page for unknown client-side routes */}
-      <Routes>
+        {/* Fallback: show a friendly 404 page for unknown client-side routes */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       {/* Track page views on location change */}
