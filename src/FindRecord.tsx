@@ -17,7 +17,6 @@ import FindRecordSidebar, {
   type AlbumListItem,
 } from "./components/FindRecordSidebar";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
-import { flex, height, maxHeight } from "@mui/system";
 
 interface AlbumResult {
   name: string;

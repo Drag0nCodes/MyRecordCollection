@@ -19,12 +19,12 @@ app.use(cors({
 app.use(cookieParser());
 
 const PORT = process.env.PORT || 4000;
+const HOST = process.env.HOST || 'localhost';
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = "7d";
 
 // Helper to issue JWT
 function issueToken(userUuid) {
-  return jwt.sign({ userUuid }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign({ userUuid }, JWT_SECRET);
 }
 
 // Create a single shared pool (previously a new pool was created per request causing 'Too many connections')
@@ -369,6 +369,6 @@ app.get('/api/lastfm/album.search', requireAuth, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server listening on http://${HOST}:${PORT}`);
 });
