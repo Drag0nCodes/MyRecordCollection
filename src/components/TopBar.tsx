@@ -45,6 +45,13 @@ export default function TopBar({
     if (searchMode === "submit" && e.key === "Enter") {
       e.preventDefault();
       onSearchChange(text.trim());
+      // On mobile the keyboard's 'Next' can move focus to the next input.
+      // Blur the input after handling Enter so the keyboard hides and focus doesn't jump.
+      try {
+        (e.currentTarget as HTMLInputElement).blur();
+      } catch {
+        /* ignore */
+      }
     }
   };
 
@@ -83,6 +90,8 @@ export default function TopBar({
           value={text}
           onChange={handleSearchChange}
           onKeyDown={handleKeyDown}
+          type="search"
+          inputProps={{ enterKeyHint: "search" }}
         />
         {username && (
           <Box sx={{ mx: -1 }}>

@@ -8,6 +8,9 @@ import FindRecord from "./FindRecord";
 import Login from "./Login";
 import Register from "./Register";
 import RequireAuth from "./RequireAuth";
+import NotFound from "./NotFound";
+import { useLocation } from "react-router-dom";
+import { trackPage } from "./analytics";
 
 // Component that prevents authenticated users from seeing auth pages
 function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
@@ -37,10 +40,9 @@ export default function AppRouter() {
   // Use HashRouter for production (GitHub Pages) to avoid 404s on page reloads.
   // Keep BrowserRouter for development for nicer URLs.
   const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
-  // Only apply basename for BrowserRouter. HashRouter reads from the URL hash
-  // (e.g. '/#/mycollection') so applying the full repo basename causes a mismatch
-  // and prevents rendering on GitHub Pages.
-  const routerProps = Router === BrowserRouter ? { basename: import.meta.env.BASE_URL } : {};
+  // Only apply basename for BrowserRouter
+  const routerProps =
+    Router === BrowserRouter ? { basename: import.meta.env.BASE_URL } : {};
   return (
     <Router {...routerProps}>
       <Routes>
@@ -78,6 +80,20 @@ export default function AppRouter() {
           }
         />
       </Routes>
+      {/* Fallback: show a friendly 404 page for unknown client-side routes */}
+      <Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      {/* Track page views on location change */}
+      <RouteTracker />
     </Router>
   );
+}
+
+function RouteTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    trackPage(location.pathname + location.search + location.hash);
+  }, [location]);
+  return null;
 }

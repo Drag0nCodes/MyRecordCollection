@@ -14,10 +14,17 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
-  credentials: true
-}));
+// Configure CORS: in development reflect the incoming origin so the Vite dev server
+// (or other local frontends) can make credentialed requests. In production use the
+// configured FRONTEND_ORIGIN for stricter control.
+const corsOptions = {};
+if (process.env.NODE_ENV === 'production') {
+  corsOptions.origin = process.env.FRONTEND_ORIGIN;
+} else {
+  corsOptions.origin = (origin, callback) => callback(null, origin || true);
+}
+corsOptions.credentials = true;
+app.use(cors(corsOptions));
 app.use(cookieParser());
 
 const PORT = Number(process.env.PORT || 4000);
