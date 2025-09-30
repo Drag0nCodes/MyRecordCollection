@@ -32,6 +32,20 @@ export default function Login() {
       });
       const data = await res.json();
       if (data.success) {
+        try {
+          // fetch /api/me to get the userUuid (for analytics)
+          const meRes = await fetch(apiUrl("/api/me"), {
+            credentials: "include",
+          });
+          if (meRes.ok) {
+            const meJson = await meRes.json();
+            // dynamically import analytics to avoid SSR issues
+            const { setUserId } = await import("./analytics");
+            setUserId(meJson.userUuid);
+          }
+        } catch {
+          // ignore analytics errors
+        }
         navigate("/mycollection");
       } else {
         setError(data.error || "Login failed");

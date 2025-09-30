@@ -14,17 +14,10 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-// Configure CORS: in development reflect the incoming origin so the Vite dev server
-// (or other local frontends) can make credentialed requests. In production use the
-// configured FRONTEND_ORIGIN for stricter control.
-const corsOptions = {};
-if (process.env.NODE_ENV === 'production') {
-  corsOptions.origin = process.env.FRONTEND_ORIGIN;
-} else {
-  corsOptions.origin = (origin, callback) => callback(null, origin || true);
-}
-corsOptions.credentials = true;
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  credentials: true
+}));
 app.use(cookieParser());
 
 const PORT = Number(process.env.PORT || 4000);
@@ -200,7 +193,8 @@ app.get('/api/me', requireAuth, async (req, res) => {
     const pool = await getPool();
     const [rows] = await pool.execute('SELECT username FROM User WHERE uuid = ?', [req.userUuid]);
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
-    res.json({ username: rows[0].username });
+    // Also return the userUuid so clients can wire analytics user_id without decoding the token
+    res.json({ username: rows[0].username, userUuid: req.userUuid });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch user info' });
   }

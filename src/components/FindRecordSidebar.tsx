@@ -52,12 +52,21 @@ export default function FindRecordSidebar({
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
+      // Prevent mobile keyboards from treating Enter as 'Next' and focusing the next field.
+      e.preventDefault();
+      e.stopPropagation();
       const target = e.target as HTMLInputElement;
       const val = target.value.trim();
       if (val && !availableTags.includes(val)) {
         onAddNewTag(val);
       }
+      // Clear and blur to avoid focus jumping to the next input (release year)
       target.value = "";
+      try {
+        target.blur();
+      } catch {
+        /* ignore */
+      }
     }
   };
 
@@ -125,6 +134,7 @@ export default function FindRecordSidebar({
           size="small"
           onKeyDown={handleAddTag}
           sx={{ mb: 2 }}
+          inputProps={{ enterKeyHint: "done", autoComplete: "off" }}
         />
         <Typography variant="subtitle1" sx={{ mt: 1 }}>
           Rating

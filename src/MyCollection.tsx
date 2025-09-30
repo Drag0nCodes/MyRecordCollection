@@ -22,6 +22,7 @@ import { darkTheme } from "./theme";
 import { sampleRecords } from "./data/mockData";
 import { type Record, type Filters } from "./types";
 import { useNavigate } from "react-router-dom";
+import { setUserId } from "./analytics";
 
 // Import Components
 import TopBar from "./components/TopBar";
@@ -156,6 +157,9 @@ export default function MyCollection() {
       method: "POST",
       credentials: "include",
     });
+    try {
+      setUserId(undefined);
+    } catch {}
     navigate("/login");
   };
 

@@ -12,6 +12,7 @@ import Grid from "@mui/material/Grid";
 import { darkTheme } from "./theme";
 import TopBar from "./components/TopBar";
 import { useNavigate } from "react-router-dom";
+import { setUserId } from "./analytics";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import placeholderCover from "./assets/missingImg.jpg";
 import FindRecordSidebar, {
@@ -73,6 +74,9 @@ export default function FindRecord() {
       method: "POST",
       credentials: "include",
     });
+    try {
+      setUserId(undefined);
+    } catch {}
     navigate("/login");
   };
 

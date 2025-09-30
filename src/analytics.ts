@@ -36,3 +36,18 @@ export function trackEvent(name: string, params?: Record<string, unknown>) {
     console.log('trackEvent', name, params);
   }
 }
+
+export function setUserId(userUuid?: string) {
+  if (!userUuid) {
+    if ((window as any).gtag) {
+      (window as any).gtag('config', undefined, { user_id: undefined });
+    }
+    console.log('Cleared analytics user id');
+    return;
+  }
+  if ((window as any).gtag) {
+    (window as any).gtag('config', undefined, { user_id: userUuid });
+  } else {
+    console.log('setUserId', userUuid);
+  }
+}
