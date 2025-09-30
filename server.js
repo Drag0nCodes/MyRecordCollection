@@ -206,8 +206,9 @@ if (process.env.NODE_ENV === 'production') {
     const __dirname = path.dirname(__filename);
     const clientDist = path.join(__dirname, 'dist');
     app.use(express.static(clientDist));
-    // fallback to index.html for SPA client-side routing
-    app.get('*', (req, res) => {
+    // Don't let the SPA fallback swallow API requests - skip paths that start with /api
+    app.get('*', (req, res, next) => {
+      if (req.path && req.path.startsWith('/api')) return next();
       res.sendFile(path.join(clientDist, 'index.html'));
     });
     console.log('Serving static frontend from', clientDist);
