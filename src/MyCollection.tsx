@@ -27,7 +27,7 @@ import { useNavigate } from "react-router-dom";
 import TopBar from "./components/TopBar";
 import RecordTable from "./components/RecordTable";
 import FilterSidebar from "./components/FilterSidebar";
-import BottomBar from "./components/BottomBar";
+import ButtonBar from "./components/ButtonBar";
 import EditRecordDialog from "./components/EditRecordDialog";
 import ManageTagsDialog from "./components/ManageTagsDialog";
 
@@ -290,7 +290,7 @@ export default function MyCollection() {
       <CssBaseline />
       <Box
         sx={{
-          p: 2,
+          p: 1.5,
           height: "100vh",
           display: "flex",
           flexDirection: "column",
@@ -302,6 +302,15 @@ export default function MyCollection() {
             onLogout={handleLogout}
             title="My Collection"
             username={username}
+          />
+        </Box>
+
+        <Box sx={{ flex: "0 0 auto" }}>
+          <ButtonBar
+            onEditRecord={handleEditRecord}
+            onCreateRecord={handleCreateRecord}
+            onDeleteRecord={handleDeleteRecord}
+            editEnabled={!!selectedRecord}
           />
         </Box>
         <Grid
@@ -338,14 +347,6 @@ export default function MyCollection() {
             </Grid>
           )}
         </Grid>
-        <Box sx={{ flex: "0 0 auto" }}>
-          <BottomBar
-            onEditRecord={handleEditRecord}
-            onCreateRecord={handleCreateRecord}
-            onDeleteRecord={handleDeleteRecord}
-            editEnabled={!!selectedRecord}
-          />
-        </Box>
         <EditRecordDialog
           open={editDialogOpen}
           onClose={() => {

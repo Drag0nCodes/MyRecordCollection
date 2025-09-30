@@ -235,7 +235,12 @@ export default function FindRecord() {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Box
-        sx={{ p: 2, height: "100vh", display: "flex", flexDirection: "column" }}
+        sx={{
+          p: 1.5,
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
       >
         <TopBar
           title="Find Record"
@@ -245,6 +250,22 @@ export default function FindRecord() {
           searchMode="submit"
           searchPlaceholder="Search All Albums (By Title)"
         />
+        <Box
+          sx={{
+            flex: "0 0 auto",
+            textAlign: "left",
+          }}
+        >
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => navigate("/mycollection")}
+            sx={{ fontWeight: 700 }}
+            startIcon={<LibraryMusicIcon />}
+          >
+            My Collection
+          </Button>
+        </Box>
         <Grid
           container
           spacing={2}
@@ -343,25 +364,6 @@ export default function FindRecord() {
             )}
           </Grid>
         </Grid>
-        <Box
-          sx={{
-            flex: "0 0 auto",
-            borderTop: "1px solid #555",
-            mt: 2,
-            pt: 2,
-            textAlign: "left",
-          }}
-        >
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => navigate("/mycollection")}
-            sx={{ fontWeight: 700 }}
-            startIcon={<LibraryMusicIcon />}
-          >
-            My Collection
-          </Button>
-        </Box>
       </Box>
     </ThemeProvider>
   );

@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import "./LandingPage.css";
 import { darkTheme } from "./theme";
+import icon from "./assets/icon.png";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function LandingPage() {
         }}
       >
         <img
-          src="src/assets/icon.png"
+          src={icon}
           alt="My Record Collection Logo"
           width={150}
           height={150}

@@ -5,28 +5,25 @@ import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-interface BottomBarProps {
+interface ButtonBarProps {
   onEditRecord?: () => void;
   onCreateRecord?: () => void;
   onDeleteRecord?: () => void;
   editEnabled?: boolean; // indicates a record is selected
 }
 
-export default function BottomBar({
+export default function ButtonBar({
   onEditRecord,
   onCreateRecord,
   onDeleteRecord,
   editEnabled,
-}: BottomBarProps) {
+}: ButtonBarProps) {
   const navigate = useNavigate();
   return (
     <Box
       sx={{
         display: "flex",
         alignItems: "center",
-        mt: 2,
-        pt: 2,
-        borderTop: "1px solid #555",
       }}
     >
       <Box sx={{ display: "flex", gap: 1 }}>

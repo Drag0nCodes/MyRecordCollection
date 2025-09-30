@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 import apiUrl from "./api";
 import { Navigate } from "react-router-dom";
@@ -34,8 +34,11 @@ function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppRouter() {
+  // Use HashRouter for production (GitHub Pages) to avoid 404s on page reloads.
+  // Keep BrowserRouter for development for nicer URLs.
+  const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <Router basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route
@@ -71,6 +74,6 @@ export default function AppRouter() {
           }
         />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
