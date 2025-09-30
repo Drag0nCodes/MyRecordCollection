@@ -35,7 +35,7 @@ function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route
