@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node server.js",
+  "server": "node server.js",
+  "start": "node server.js",
     "build": "tsc -b && vite build",
+  "start:prod": "cross-env NODE_ENV=production node server.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

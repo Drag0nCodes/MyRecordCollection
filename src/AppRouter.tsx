@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
+import apiUrl from "./api";
 import { Navigate } from "react-router-dom";
 import LandingPage from "./LandingPage";
 import MyCollection from "./MyCollection";
@@ -17,7 +18,7 @@ function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/me", { credentials: "include" });
+        const res = await fetch(apiUrl("/api/me"), { credentials: "include" });
         if (!cancelled) setStatus(res.ok ? "authed" : "anon");
       } catch {
         if (!cancelled) setStatus("anon");

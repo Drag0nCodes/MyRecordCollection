@@ -3,6 +3,8 @@ import cors from "cors";
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -13,14 +15,21 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
   credentials: true
 }));
 app.use(cookieParser());
 
-const PORT = process.env.PORT || 4000;
-const HOST = process.env.HOST || 'localhost';
+const PORT = Number(process.env.PORT || 4000);
+// bind to 0.0.0.0 so the server is reachable from other machines (GCE VM)
+const HOST = process.env.HOST || '0.0.0.0';
 const JWT_SECRET = process.env.JWT_SECRET;
+
+// In production we require a JWT secret
+if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
+  console.error('Missing JWT_SECRET in production environment. Set JWT_SECRET and restart.');
+  process.exit(1);
+}
 
 // Helper to issue JWT
 function issueToken(userUuid) {
@@ -133,7 +142,7 @@ app.post('/api/register', async (req, res) => {
       [userUuid, username, hashedPassword]
     );
     const token = issueToken(userUuid);
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', maxAge: 7*24*60*60*1000 });
+  res.cookie('token', token, { httpOnly: true, sameSite: process.env.CROSS_SITE_COOKIES === 'true' ? 'none' : 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 7*24*60*60*1000 });
     res.json({ success: true });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
@@ -165,7 +174,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials.' });
     }
     const token = issueToken(user.uuid);
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', maxAge: 7*24*60*60*1000 });
+  res.cookie('token', token, { httpOnly: true, sameSite: process.env.CROSS_SITE_COOKIES === 'true' ? 'none' : 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 7*24*60*60*1000 });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Login failed.' });
@@ -175,7 +184,7 @@ app.post('/api/login', async (req, res) => {
 // Logout endpoint
 app.post('/api/logout', (req, res) => {
   console.log("Logging out...");
-  res.clearCookie('token', { httpOnly: true, sameSite: 'lax' });
+  res.clearCookie('token', { httpOnly: true, sameSite: process.env.CROSS_SITE_COOKIES === 'true' ? 'none' : 'lax', secure: process.env.NODE_ENV === 'production' });
   res.json({ success: true });
 });
 
@@ -189,6 +198,23 @@ app.get('/api/me', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user info' });
   }
 });
+
+// Serve static built frontend in production (Vite outputs to `dist`)
+if (process.env.NODE_ENV === 'production') {
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const clientDist = path.join(__dirname, 'dist');
+    app.use(express.static(clientDist));
+    // fallback to index.html for SPA client-side routing
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(clientDist, 'index.html'));
+    });
+    console.log('Serving static frontend from', clientDist);
+  } catch (e) {
+    console.warn('Could not enable static serving of frontend:', e && e.message);
+  }
+}
 
 // Create or update a record
 app.post('/api/records/update', requireAuth, async (req, res) => {

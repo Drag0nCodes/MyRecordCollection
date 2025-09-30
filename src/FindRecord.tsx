@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import apiUrl from "./api";
 import {
   ThemeProvider,
   CssBaseline,
@@ -49,8 +50,8 @@ export default function FindRecord() {
     const fetchBasic = async () => {
       try {
         const [meRes, tagsRes] = await Promise.all([
-          fetch("/api/me", { credentials: "include" }),
-          fetch("/api/tags", { credentials: "include" }),
+          fetch(apiUrl("/api/me"), { credentials: "include" }),
+          fetch(apiUrl("/api/tags"), { credentials: "include" }),
         ]);
         if (meRes.ok) {
           const data = await meRes.json();
@@ -68,7 +69,10 @@ export default function FindRecord() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("/api/logout", { method: "POST", credentials: "include" });
+    await fetch(apiUrl("/api/logout"), {
+      method: "POST",
+      credentials: "include",
+    });
     navigate("/login");
   };
 
@@ -82,7 +86,7 @@ export default function FindRecord() {
     setError(null);
     try {
       const res = await fetch(
-        `/api/lastfm/album.search?q=${encodeURIComponent(value)}`,
+        apiUrl(`/api/lastfm/album.search?q=${encodeURIComponent(value)}`),
         { credentials: "include" }
       );
       if (res.ok) {
@@ -158,7 +162,7 @@ export default function FindRecord() {
         release: releaseYear,
         dateAdded: new Date().toISOString().slice(0, 10),
       };
-      const res = await fetch("/api/records/create", {
+      const res = await fetch(apiUrl("/api/records/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

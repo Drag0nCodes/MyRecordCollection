@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import apiUrl from "./api";
 import {
   Box,
   Typography,
@@ -23,7 +24,7 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch(apiUrl("/api/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

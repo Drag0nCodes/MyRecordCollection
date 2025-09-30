@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import apiUrl from "./api";
 import {
   ThemeProvider,
   CssBaseline,
@@ -118,8 +119,8 @@ export default function MyCollection() {
     const fetchData = async () => {
       try {
         const [recRes, tagsRes] = await Promise.all([
-          fetch("/api/records"),
-          fetch("/api/tags"),
+          fetch(apiUrl("/api/records"), { credentials: "include" }),
+          fetch(apiUrl("/api/tags"), { credentials: "include" }),
         ]);
         if (recRes.ok) {
           const recJson = await recRes.json();
@@ -140,7 +141,7 @@ export default function MyCollection() {
   useEffect(() => {
     const fetchUsername = async () => {
       try {
-        const res = await fetch("/api/me", { credentials: "include" });
+        const res = await fetch(apiUrl("/api/me"), { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setUsername(data.username);
@@ -151,7 +152,7 @@ export default function MyCollection() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("/api/logout", {
+    await fetch(apiUrl("/api/logout"), {
       method: "POST",
       credentials: "include",
     });
@@ -199,7 +200,7 @@ export default function MyCollection() {
     if (!selectedRecord) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch("/api/records/delete", {
+      const res = await fetch(apiUrl("/api/records/delete"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -239,7 +240,7 @@ export default function MyCollection() {
     try {
       let updated: Record | null = null;
       if (editMode === "edit" && rec.id !== -1) {
-        const res = await fetch("/api/records/update", {
+        const res = await fetch(apiUrl("/api/records/update"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -254,7 +255,7 @@ export default function MyCollection() {
           setSelectedRecord(updated);
         }
       } else if (editMode === "create") {
-        const res = await fetch("/api/records/create", {
+        const res = await fetch(apiUrl("/api/records/create"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

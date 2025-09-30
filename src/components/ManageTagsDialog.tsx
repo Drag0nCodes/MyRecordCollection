@@ -1,4 +1,5 @@
 import { useState } from "react";
+import apiUrl from "../api";
 import {
   Dialog,
   DialogTitle,
@@ -65,7 +66,7 @@ export default function ManageTagsDialog({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/tags/create", {
+      const res = await fetch(apiUrl("/api/tags/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -103,7 +104,7 @@ export default function ManageTagsDialog({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/tags/rename", {
+      const res = await fetch(apiUrl("/api/tags/rename"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -138,7 +139,7 @@ export default function ManageTagsDialog({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/tags/delete", {
+      const res = await fetch(apiUrl("/api/tags/delete"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
