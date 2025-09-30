@@ -1,4 +1,6 @@
 name: Build and Deploy to GitHub Pages
+permissions:
+  contents: write
 on:
   push:
     branches: [2.0.0beta] # replace with your default branch (or create a branch trigger you use)
@@ -9,6 +11,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # ensure the action can push back using the GITHUB_TOKEN
+          persist-credentials: true
 
       - name: Use Node
         uses: actions/setup-node@v4
@@ -29,3 +34,4 @@ jobs:
           publish_dir: ./dist
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          allow_empty_commit: true
