@@ -13,6 +13,7 @@ import { darkTheme } from "./theme";
 import TopBar from "./components/TopBar";
 import { useNavigate } from "react-router-dom";
 import { setUserId } from "./analytics";
+import { wikiGenres } from "./wiki";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import placeholderCover from "./assets/missingImg.jpg";
 import FindRecordSidebar, {
@@ -38,6 +39,7 @@ export default function FindRecord() {
   const [error, setError] = useState<string | null>(null);
   // Sidebar / add-to-collection state
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [wikiTags, setWikiTags] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [rating, setRating] = useState<number>(0);
   const [releaseYear, setReleaseYear] = useState<number>(
@@ -292,7 +294,38 @@ export default function FindRecord() {
                 density="comfortable"
                 hideFooter
                 rowHeight={90}
-                onRowClick={(p) => setSelectedAlbumId(p.id as string)}
+                onRowClick={async (p) => {
+                  const id = p.id as string;
+                  // clear previous wiki suggestions immediately
+                  setWikiTags([]);
+                  setSelectedAlbumId(id);
+                  try {
+                    const selectedRow = rows.find((r) => r.id === id);
+                    if (!selectedRow) return;
+                    // fetch wiki genres (include release year as first item)
+                    const genres = await wikiGenres(
+                      selectedRow.record,
+                      selectedRow.artist,
+                      true
+                    );
+                    if (genres && genres.length > 0) {
+                      // If the first value looks like a release year (4-digit), use it
+                      const first = genres[0];
+                      const yearNum =
+                        first && /^\d{4}$/.test(first) ? Number(first) : null;
+                      if (yearNum && yearNum >= 1800 && yearNum <= 2100) {
+                        setReleaseYear(yearNum);
+                        setWikiTags(genres.slice(1).filter((g) => !!g));
+                      } else {
+                        setWikiTags(genres.filter((g) => !!g));
+                      }
+                    } else {
+                      setWikiTags([]);
+                    }
+                  } catch (err) {
+                    setWikiTags([]);
+                  }
+                }}
                 getRowClassName={(params) =>
                   params.id === selectedAlbumId ? "selected-row" : ""
                 }
@@ -354,6 +387,7 @@ export default function FindRecord() {
               selectedTags={selectedTags}
               onToggleTag={handleToggleTag}
               onAddNewTag={handleAddNewTag}
+              wikiTags={wikiTags}
               rating={rating}
               onRatingChange={setRating}
               releaseYear={releaseYear}

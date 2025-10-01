@@ -3,6 +3,7 @@ import {
   Typography,
   Box,
   List,
+  ListSubheader,
   ListItem,
   ListItemButton,
   ListItemIcon,
@@ -26,6 +27,9 @@ interface FindRecordSidebarProps {
   selectedTags: string[];
   onToggleTag: (tag: string) => void;
   onAddNewTag: (tag: string) => void;
+  // Wiki-sourced tag suggestions displayed separately
+  wikiTags?: string[];
+
   rating: number;
   onRatingChange: (value: number) => void;
   releaseYear: number;
@@ -39,6 +43,7 @@ export default function FindRecordSidebar({
   selectedTags,
   onToggleTag,
   onAddNewTag,
+  wikiTags,
   rating,
   onRatingChange,
   releaseYear,
@@ -52,23 +57,20 @@ export default function FindRecordSidebar({
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      // Prevent mobile keyboards from treating Enter as 'Next' and focusing the next field.
       e.preventDefault();
-      e.stopPropagation();
       const target = e.target as HTMLInputElement;
       const val = target.value.trim();
       if (val && !availableTags.includes(val)) {
         onAddNewTag(val);
       }
-      // Clear and blur to avoid focus jumping to the next input (release year)
       target.value = "";
       try {
         target.blur();
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     }
   };
+
+  const suggestedCount = (wikiTags && wikiTags.length) || 0;
 
   return (
     <Paper
@@ -95,40 +97,92 @@ export default function FindRecordSidebar({
         <Box
           sx={{
             flexGrow: 0,
-            maxHeight: 300,
             overflowY: "auto",
             border: "1px solid grey",
             borderRadius: 2,
+            minHeight: 200,
             my: 1,
           }}
         >
-          <List dense>
-            {availableTags.map((tag) => (
-              <ListItem disablePadding key={tag}>
-                <ListItemButton
-                  dense
-                  onClick={() => onToggleTag(tag)}
-                  sx={{ py: 0 }}
-                >
-                  <ListItemIcon sx={{ minWidth: 35 }}>
-                    <Checkbox
-                      edge="start"
-                      checked={selectedTags.includes(tag)}
-                      tabIndex={-1}
-                      disableRipple
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary={tag} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            {availableTags.length === 0 && (
-              <ListItem>
-                <ListItemText primary="No tags yet" />
-              </ListItem>
+          <List dense sx={{ p: 0 }} subheader={<li />}>
+            {wikiTags && wikiTags.length > 0 && (
+              <li>
+                <ul style={{ padding: 0, margin: 0 }}>
+                  <ListSubheader
+                    component="div"
+                    sx={{
+                      position: "sticky",
+                      top: 0,
+                      bgcolor: "#2f2f2f",
+                      zIndex: 1,
+                    }}
+                  >
+                    Suggested Tags
+                  </ListSubheader>
+                  {wikiTags.map((tag) => (
+                    <ListItem disablePadding key={`wiki-${tag}`}>
+                      <ListItemButton
+                        dense
+                        onClick={() => onToggleTag(tag)}
+                        sx={{ py: 0 }}
+                      >
+                        <ListItemIcon sx={{ minWidth: 35 }}>
+                          <Checkbox
+                            edge="start"
+                            checked={selectedTags.includes(tag)}
+                            tabIndex={-1}
+                            disableRipple
+                          />
+                        </ListItemIcon>
+                        <ListItemText primary={tag} />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </ul>
+              </li>
             )}
+
+            <li>
+              <ul style={{ padding: 0, margin: 0 }}>
+                <ListSubheader
+                  component="div"
+                  sx={{
+                    position: "sticky",
+                    bgcolor: "#2f2f2f",
+                    zIndex: 1,
+                  }}
+                >
+                  Existing Tags
+                </ListSubheader>
+                {availableTags.map((tag) => (
+                  <ListItem disablePadding key={tag}>
+                    <ListItemButton
+                      dense
+                      onClick={() => onToggleTag(tag)}
+                      sx={{ py: 0 }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 35 }}>
+                        <Checkbox
+                          edge="start"
+                          checked={selectedTags.includes(tag)}
+                          tabIndex={-1}
+                          disableRipple
+                        />
+                      </ListItemIcon>
+                      <ListItemText primary={tag} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+                {availableTags.length === 0 && (
+                  <ListItem>
+                    <ListItemText primary="No tags yet" />
+                  </ListItem>
+                )}
+              </ul>
+            </li>
           </List>
         </Box>
+
         <TextField
           placeholder="Add New Tag"
           size="small"
@@ -136,9 +190,7 @@ export default function FindRecordSidebar({
           sx={{ mb: 2 }}
           inputProps={{ enterKeyHint: "done", autoComplete: "off" }}
         />
-        <Typography variant="subtitle1" sx={{ mt: 1 }}>
-          Rating
-        </Typography>
+        <Typography variant="subtitle1">Rating</Typography>
         <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
           <Slider
             value={rating}
@@ -165,7 +217,7 @@ export default function FindRecordSidebar({
           size="small"
           onChange={(e) => onReleaseYearChange(Number(e.target.value))}
           sx={{ mb: 2, width: "60%" }}
-          inputProps={{ min: 1877, max: 2100 }}
+          slotProps={{ input: { inputProps: { min: 1877, max: 2100 } } }}
         />
       </Box>
       <Box sx={{ mt: 1 }}>

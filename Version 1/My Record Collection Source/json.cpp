@@ -289,7 +289,6 @@ std::vector<ListTag> Json::wikiTags(QString name, QString artist, bool release) 
                 if (label < position) return tags; // No genres on wiki page, return nothing
 
                 int genreSectionEnd = content.indexOf("\n|", position); // The end of the entire genre section
-                int genre = 0; // Strings of "[["
                 int source = 0; // Strings of "=[[" usually indicate a link to a source/reference and not a genre
                 if (position > 0) {
                     while (position < genreSectionEnd && position != -1) {

@@ -4,8 +4,8 @@ export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     background: {
-      default: '#303030',
-      paper: '#353535',
+      default: '#202020',
+      paper: '#242424',
     },
     primary: {
       main: '#1e73ff', // MRC blue

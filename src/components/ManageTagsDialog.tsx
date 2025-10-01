@@ -176,8 +176,10 @@ export default function ManageTagsDialog({
         fullWidth
         maxWidth="xs"
       >
-        <DialogTitle>Manage Tags</DialogTitle>
-        <DialogContent dividers>
+        <DialogTitle sx={{ bgcolor: "background.paper" }}>
+          Manage Tags
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: "background.paper" }} dividers>
           <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
             <TextField
               label="New Tag"
@@ -293,7 +295,7 @@ export default function ManageTagsDialog({
             </Alert>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ bgcolor: "background.paper" }}>
           <Button
             onClick={handleClose}
             disabled={loading}

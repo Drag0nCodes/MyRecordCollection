@@ -369,15 +369,17 @@ export default function MyCollection() {
           open={deleteDialogOpen}
           onClose={() => !deleteLoading && setDeleteDialogOpen(false)}
         >
-          <DialogTitle>Delete Record</DialogTitle>
-          <DialogContent>
+          <DialogTitle sx={{ bgcolor: "background.paper" }}>
+            Delete Record
+          </DialogTitle>
+          <DialogContent sx={{ bgcolor: "background.paper" }}>
             <DialogContentText>
               {`Are you sure you want to permanently delete "${
                 selectedRecord?.record || ""
               }"? This action cannot be undone.`}
             </DialogContentText>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ bgcolor: "background.paper" }}>
             <Button
               onClick={() => setDeleteDialogOpen(false)}
               disabled={deleteLoading}

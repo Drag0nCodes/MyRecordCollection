@@ -91,6 +91,11 @@ export default function FilterSidebar({
                 </ListItemButton>
               </ListItem>
             ))}
+            {(tags ?? []).length === 0 && (
+              <ListItem>
+                <ListItemText primary="No tags yet" />
+              </ListItem>
+            )}
           </List>
         </Box>
         <Button
