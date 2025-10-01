@@ -29,7 +29,6 @@ interface FindRecordSidebarProps {
   onAddNewTag: (tag: string) => void;
   // Wiki-sourced tag suggestions displayed separately
   wikiTags?: string[];
-
   rating: number;
   onRatingChange: (value: number) => void;
   releaseYear: number;
@@ -69,8 +68,6 @@ export default function FindRecordSidebar({
       } catch {}
     }
   };
-
-  const suggestedCount = (wikiTags && wikiTags.length) || 0;
 
   return (
     <Paper
