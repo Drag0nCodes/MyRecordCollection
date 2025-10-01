@@ -40,6 +40,7 @@ export default function FindRecord() {
   // Sidebar / add-to-collection state
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [wikiTags, setWikiTags] = useState<string[]>([]);
+  const [wikiLoading, setWikiLoading] = useState<boolean>(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [rating, setRating] = useState<number>(0);
   const [releaseYear, setReleaseYear] = useState<number>(
@@ -299,6 +300,7 @@ export default function FindRecord() {
                   // clear previous wiki suggestions immediately
                   setWikiTags([]);
                   setSelectedAlbumId(id);
+                  setWikiLoading(true);
                   try {
                     const selectedRow = rows.find((r) => r.id === id);
                     if (!selectedRow) return;
@@ -324,6 +326,8 @@ export default function FindRecord() {
                     }
                   } catch (err) {
                     setWikiTags([]);
+                  } finally {
+                    setWikiLoading(false);
                   }
                 }}
                 getRowClassName={(params) =>
@@ -388,6 +392,7 @@ export default function FindRecord() {
               onToggleTag={handleToggleTag}
               onAddNewTag={handleAddNewTag}
               wikiTags={wikiTags}
+              wikiLoading={wikiLoading}
               rating={rating}
               onRatingChange={setRating}
               releaseYear={releaseYear}

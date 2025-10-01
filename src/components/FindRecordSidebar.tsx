@@ -12,6 +12,7 @@ import {
   TextField,
   Button,
   Slider,
+  CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
@@ -29,6 +30,8 @@ interface FindRecordSidebarProps {
   onAddNewTag: (tag: string) => void;
   // Wiki-sourced tag suggestions displayed separately
   wikiTags?: string[];
+  // Whether wiki suggestions are currently loading
+  wikiLoading?: boolean;
   rating: number;
   onRatingChange: (value: number) => void;
   releaseYear: number;
@@ -43,6 +46,7 @@ export default function FindRecordSidebar({
   onToggleTag,
   onAddNewTag,
   wikiTags,
+  wikiLoading,
   rating,
   onRatingChange,
   releaseYear,
@@ -90,7 +94,13 @@ export default function FindRecordSidebar({
           flexDirection: "column",
         }}
       >
-        <Typography variant="subtitle1">Add Tags</Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{ display: "flex", alignItems: "center" }}
+        >
+          Add Tags
+          {wikiLoading && <CircularProgress size={16} sx={{ ml: 1 }} />}
+        </Typography>
         <Box
           sx={{
             flexGrow: 0,
@@ -205,8 +215,12 @@ export default function FindRecordSidebar({
             }}
           />
         </Box>
-        <Typography variant="subtitle1" sx={{ mt: 1 }}>
-          Release Year
+        <Typography
+          variant="subtitle1"
+          sx={{ display: "flex", alignItems: "center", mt: 1 }}
+        >
+          Add Tags
+          {wikiLoading && <CircularProgress size={16} sx={{ ml: 1 }} />}
         </Typography>
         <TextField
           value={releaseYear}
