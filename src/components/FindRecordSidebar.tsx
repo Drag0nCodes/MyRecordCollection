@@ -124,7 +124,7 @@ export default function FindRecordSidebar({
                       zIndex: 1,
                     }}
                   >
-                    Suggested Tags
+                    Suggested
                   </ListSubheader>
                   {wikiTags.map((tag) => (
                     <ListItem disablePadding key={`wiki-${tag}`}>
@@ -159,7 +159,7 @@ export default function FindRecordSidebar({
                     zIndex: 1,
                   }}
                 >
-                  Existing Tags
+                  Existing
                 </ListSubheader>
                 {availableTags.map((tag) => (
                   <ListItem disablePadding key={tag}>
