@@ -3,8 +3,6 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig(() => ({
-  // When deploying to GitHub Pages under a subpath, set the base to that path
-  base: '/MyRecordCollection/',
   plugins: [react()],
   server: {
     proxy: {
