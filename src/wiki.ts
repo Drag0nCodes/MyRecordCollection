@@ -77,7 +77,7 @@ export async function wikiGenres(name: string, artist: string, release = false):
       const midLineIdx = content.indexOf('|', position);
 
       if (source < position && source > 0) {
-        source = content.indexOf('=[[', source);
+        source = content.indexOf('=[[', position);
         position = content.indexOf('[[', position);
         continue;
       }
