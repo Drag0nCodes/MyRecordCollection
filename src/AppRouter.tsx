@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import apiUrl from "./api";
 import { Navigate } from "react-router-dom";
 import LandingPage from "./LandingPage";
-import MyCollection from "./MyCollection";
+import Collection from "./Collection";
 import FindRecord from "./FindRecord";
 import Login from "./Login";
 import Register from "./Register";
@@ -51,7 +51,15 @@ export default function AppRouter() {
           path="/mycollection"
           element={
             <RequireAuth>
-              <MyCollection />
+              <Collection tableName="My Collection" title="My Collection" />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <RequireAuth>
+              <Collection tableName="Wishlist" title="Wishlist" />
             </RequireAuth>
           }
         />

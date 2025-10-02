@@ -15,6 +15,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 export interface AlbumListItem {
   id: string;
@@ -38,6 +39,7 @@ interface FindRecordSidebarProps {
   onReleaseYearChange: (value: number) => void;
   canAdd: boolean;
   onAddRecord: () => void;
+  onWishlistRecord: () => void;
 }
 
 export default function FindRecordSidebar({
@@ -53,6 +55,7 @@ export default function FindRecordSidebar({
   onReleaseYearChange,
   canAdd,
   onAddRecord,
+  onWishlistRecord,
 }: FindRecordSidebarProps) {
   const handleSlider = (_: Event, val: number | number[]) => {
     onRatingChange(val as number);
@@ -219,7 +222,7 @@ export default function FindRecordSidebar({
           variant="subtitle1"
           sx={{ display: "flex", alignItems: "center", mt: 1 }}
         >
-          Add Tags
+          Release
           {wikiLoading && <CircularProgress size={16} sx={{ ml: 1 }} />}
         </Typography>
         <TextField
@@ -230,6 +233,18 @@ export default function FindRecordSidebar({
           sx={{ mb: 2, width: "60%" }}
           slotProps={{ input: { inputProps: { min: 1877, max: 2100 } } }}
         />
+      </Box>
+      <Box sx={{ mt: 1 }}>
+        <Button
+          disabled={!canAdd}
+          variant="outlined"
+          fullWidth
+          onClick={onWishlistRecord}
+          sx={{ fontWeight: 700 }}
+          endIcon={<FavoriteIcon />}
+        >
+          Add to Wishlist
+        </Button>
       </Box>
       <Box sx={{ mt: 1 }}>
         <Button

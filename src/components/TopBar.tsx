@@ -6,9 +6,16 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
   Grid,
 } from "@mui/material";
 import AccountCircle from "@mui/icons-material/AccountCircle";
+import LogoutIcon from "@mui/icons-material/Logout";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
+import { useNavigate } from "react-router-dom";
 
 interface TopBarProps {
   onSearchChange: (value: string) => void;
@@ -41,6 +48,8 @@ export default function TopBar({
     }
   };
 
+  const navigate = useNavigate();
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (searchMode === "submit" && e.key === "Enter") {
       e.preventDefault();
@@ -72,7 +81,15 @@ export default function TopBar({
 
   return (
     <Grid>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: 0.5,
+          gap: 1,
+          mt: -0.5,
+        }}
+      >
         <Typography
           variant="h4"
           sx={{
@@ -125,14 +142,32 @@ export default function TopBar({
                 sx={{
                   // Target the disabled state and increase its opacity
                   "&.Mui-disabled": {
-                    opacity: 0.75, // The default is around 0.38
+                    opacity: 0.85, // The default is around 0.38
                   },
                 }}
               >
-                User: {username}
+                Hello, {username}
               </MenuItem>
+              <MenuItem onClick={() => navigate("/mycollection")}>
+                <ListItemIcon>
+                  <LibraryMusicIcon />
+                </ListItemIcon>
+                <ListItemText>My Collection</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => navigate("/wishlist")}>
+                <ListItemIcon>
+                  <FavoriteIcon />
+                </ListItemIcon>
+                <ListItemText>Wishlist</ListItemText>
+              </MenuItem>
+              <Divider />
               {onLogout && (
-                <MenuItem onClick={handleLogoutClick}>Logout</MenuItem>
+                <MenuItem onClick={handleLogoutClick}>
+                  <ListItemIcon>
+                    <LogoutIcon />
+                  </ListItemIcon>
+                  <ListItemText>Logout</ListItemText>
+                </MenuItem>
               )}
             </Menu>
           </Box>

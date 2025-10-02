@@ -17,11 +17,12 @@ import {
   Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import FilterListIcon from "@mui/icons-material/FilterList";
+import FilterListAltIcon from "@mui/icons-material/FilterListAlt";
 import { darkTheme } from "./theme";
 import { sampleRecords } from "./data/mockData";
 import { type Record, type Filters } from "./types";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { setUserId } from "./analytics";
 
 // Import Components
@@ -32,13 +33,18 @@ import ButtonBar from "./components/ButtonBar";
 import EditRecordDialog from "./components/EditRecordDialog";
 import ManageTagsDialog from "./components/ManageTagsDialog";
 
+interface CollectionProps {
+  tableName: string;
+  title?: string;
+}
+
 const initialFilters: Filters = {
   tags: [],
   rating: { min: 0, max: 10 },
   release: { min: 1877, max: 2100 },
 };
 
-export default function MyCollection() {
+export default function Collection({ tableName, title }: CollectionProps) {
   const [records, setRecords] = useState<Record[]>(sampleRecords);
   const [filteredRecords, setFilteredRecords] =
     useState<Record[]>(sampleRecords);
@@ -50,6 +56,7 @@ export default function MyCollection() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isLargeScreen = useMediaQuery("(min-width:1200px)");
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState<string>("");
 
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
@@ -120,13 +127,17 @@ export default function MyCollection() {
     const fetchData = async () => {
       try {
         const [recRes, tagsRes] = await Promise.all([
-          fetch(apiUrl("/api/records"), { credentials: "include" }),
+          fetch(apiUrl(`/api/records?table=${encodeURIComponent(tableName)}`), {
+            credentials: "include",
+          }),
           fetch(apiUrl("/api/tags"), { credentials: "include" }),
         ]);
         if (recRes.ok) {
           const recJson = await recRes.json();
           setRecords(recJson);
           setFilteredRecords(recJson);
+          setSelectedRecord(null);
+          setLastRealSelectedRecord(null);
         }
         if (tagsRes.ok) {
           const tagsJson = await tagsRes.json();
@@ -137,7 +148,7 @@ export default function MyCollection() {
       }
     };
     fetchData();
-  }, []);
+  }, [tableName]);
 
   useEffect(() => {
     const fetchUsername = async () => {
@@ -151,6 +162,22 @@ export default function MyCollection() {
     };
     fetchUsername();
   }, []);
+
+  // If navigated here with a message (e.g., after adding a record from FindRecord), show snackbar
+  useEffect(() => {
+    if (
+      location &&
+      (location as any).state &&
+      (location as any).state.message
+    ) {
+      const msg = (location as any).state.message;
+      setSnackbar({ open: true, message: msg, severity: "success" });
+      // Clear history state so reloads/back navigation won't re-show the message
+      try {
+        window.history.replaceState({}, document.title);
+      } catch {}
+    }
+  }, [location]);
 
   const handleLogout = async () => {
     await fetch(apiUrl("/api/logout"), {
@@ -257,13 +284,22 @@ export default function MyCollection() {
           );
           // Keep the selectedRecord in sync with the saved changes
           setSelectedRecord(updated);
+        } else {
+          const problem = await res.json().catch(() => ({}));
+          setSnackbar({
+            open: true,
+            message: problem.error || `Failed to save record (${res.status})`,
+            severity: "error",
+          });
+          return;
         }
       } else if (editMode === "create") {
+        const createPayload = { ...rec, tableName };
         const res = await fetch(apiUrl("/api/records/create"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(rec),
+          body: JSON.stringify(createPayload),
         });
         if (res.ok) {
           updated = await res.json();
@@ -271,6 +307,14 @@ export default function MyCollection() {
           // Select the newly created record so editing it shows the latest data
           setSelectedRecord(updated);
           setLastRealSelectedRecord(updated);
+        } else {
+          const problem = await res.json().catch(() => ({}));
+          setSnackbar({
+            open: true,
+            message: problem.error || `Failed to create record (${res.status})`,
+            severity: "error",
+          });
+          return;
         }
       }
 
@@ -284,8 +328,19 @@ export default function MyCollection() {
       }
 
       setEditDialogOpen(false);
+      if (updated) {
+        setSnackbar({
+          open: true,
+          message: editMode === "create" ? "Record added" : "Record saved",
+          severity: "success",
+        });
+      }
     } catch (err) {
-      alert("Failed to save record");
+      setSnackbar({
+        open: true,
+        message: "Failed to save record",
+        severity: "error",
+      });
     }
   };
 
@@ -304,7 +359,7 @@ export default function MyCollection() {
           <TopBar
             onSearchChange={setSearchTerm}
             onLogout={handleLogout}
-            title="My Collection"
+            title={title ?? tableName}
             username={username}
           />
         </Box>
@@ -431,7 +486,7 @@ export default function MyCollection() {
             }}
             onClick={() => setSidebarOpen(true)}
           >
-            <FilterListIcon fontSize="large" />
+            <FilterListAltIcon fontSize="large" />
           </IconButton>
         )}
 

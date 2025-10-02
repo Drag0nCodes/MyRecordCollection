@@ -54,6 +54,14 @@ function getPool() {
   return _pool;
 }
 
+async function getUserTableId(pool, userUuid, tableName) {
+  const [rows] = await pool.execute(
+    `SELECT id FROM RecTable WHERE userUuid = ? AND name = ? LIMIT 1`,
+    [userUuid, tableName]
+  );
+  return rows.length > 0 ? rows[0].id : null;
+}
+
 // Graceful shutdown to release pool connections
 async function shutdown() {
   if (_pool) {
@@ -85,26 +93,41 @@ function requireAuth(req, res, next) {
 
 app.get("/api/records", requireAuth, async (req, res) => {
   console.log("Fetching records...");
+  const tableName = typeof req.query.table === "string" ? req.query.table : null;
+  if (!tableName) {
+    return res.status(400).json({ error: "table query parameter required" });
+  }
   try {
     const pool = await getPool();
-    const [rows] = await pool.query(
-      `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded
-       FROM Record r WHERE r.userUuid = ?`,
-      [req.userUuid]
-    );
-    // Fetch tags for each record
-    const [tagRows] = await pool.query(
-      `SELECT t.name, tg.recordId FROM Tag t JOIN Tagged tg ON t.id = tg.tagId WHERE t.userUuid = ?`,
-      [req.userUuid]
-    );
-    const tagsByRecord = {};
-    for (const tr of tagRows) {
-      const rid = tr.recordId;
-      tagsByRecord[rid] = tagsByRecord[rid] || [];
-      tagsByRecord[rid].push(tr.name);
+    const tableId = await getUserTableId(pool, req.userUuid, tableName);
+    if (!tableId) {
+      return res.status(404).json({ error: "Collection not found" });
     }
+
+    const [rows] = await pool.query(
+      `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded, r.tableId
+       FROM Record r WHERE r.userUuid = ? AND r.tableId = ?`,
+      [req.userUuid, tableId]
+    );
+
+    const recordIds = rows.map((r) => r.id);
+    const tagsByRecord = {};
+    if (recordIds.length > 0) {
+      const placeholders = recordIds.map(() => "?").join(", ");
+      const [tagRows] = await pool.query(
+        `SELECT t.name, tg.recordId FROM Tag t JOIN Tagged tg ON t.id = tg.tagId WHERE tg.recordId IN (${placeholders})`,
+        recordIds
+      );
+      for (const tr of tagRows) {
+        const rid = tr.recordId;
+        tagsByRecord[rid] = tagsByRecord[rid] || [];
+        tagsByRecord[rid].push(tr.name);
+      }
+    }
+
     const out = rows.map((r) => ({
       ...r,
+      tableId: r.tableId,
       tags: tagsByRecord[r.id] || [],
     }));
     res.json(out);
@@ -133,6 +156,18 @@ app.post('/api/register', async (req, res) => {
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required.' });
   }
+  if (username.length < 3 || username.length > 30) {
+    return res.status(400).json({ error: 'Username must be 3-30 characters.' });
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    return res.status(400).json({ error: 'Username must contain only letters, numbers, and underscores.' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  }
+  if (!/(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(password)) {
+    return res.status(400).json({ error: 'Password must contain at least one letter, one number, and one special character.' });
+  }
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const userUuid = uuidv4();
@@ -140,6 +175,10 @@ app.post('/api/register', async (req, res) => {
     await pool.execute(
       'INSERT INTO User (uuid, username, password) VALUES (?, ?, ?)',
       [userUuid, username, hashedPassword]
+    );
+    await pool.execute(
+      `INSERT INTO RecTable (name, userUuid) VALUES (?, ?), (?, ?)`,
+      ["My Collection", userUuid, "Wishlist", userUuid]
     );
     const token = issueToken(userUuid);
   res.cookie('token', token, { httpOnly: true, sameSite: process.env.CROSS_SITE_COOKIES === 'true' ? 'none' : 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 7*24*60*60*1000 });
@@ -223,12 +262,17 @@ app.post('/api/records/update', requireAuth, async (req, res) => {
   console.log("Updating record...");
   const { id, record, artist, cover, rating, tags, release } = req.body;
   if (!id || !record) return res.status(400).json({ error: 'Missing id or record name' });
+  // Validate release year
+  const releaseNum = Number(release);
+  if (!Number.isInteger(releaseNum) || releaseNum < 1877 || releaseNum > 2100) {
+    return res.status(400).json({ error: 'Invalid release year' });
+  }
   try {
     const pool = await getPool();
     // Update main record
     await pool.execute(
       `UPDATE Record SET name = ?, artist = ?, cover = ?, rating = ?, release_year = ? WHERE id = ? AND userUuid = ?`,
-      [record, artist, cover, rating, release, id, req.userUuid]
+      [record, artist, cover, rating, releaseNum, id, req.userUuid]
     );
     // Remove old tags
     await pool.execute(`DELETE FROM Tagged WHERE recordId = ?`, [id]);
@@ -246,7 +290,7 @@ app.post('/api/records/update', requireAuth, async (req, res) => {
     }
     // Return updated record
     const [rows] = await pool.execute(
-      `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded FROM Record r WHERE r.id = ? AND r.userUuid = ?`,
+      `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded, r.tableId FROM Record r WHERE r.id = ? AND r.userUuid = ?`,
       [id, req.userUuid]
     );
     const updated = rows[0];
@@ -264,13 +308,25 @@ app.post('/api/records/update', requireAuth, async (req, res) => {
 
 app.post('/api/records/create', requireAuth, async (req, res) => {
   console.log("Creating record...");
-  const { record, artist, cover, rating, tags, release } = req.body;
+  const { record, artist, cover, rating, tags, release, tableName } = req.body;
   if (!record) return res.status(400).json({ error: 'Missing record name' });
+  if (!tableName || typeof tableName !== 'string') {
+    return res.status(400).json({ error: 'tableName is required' });
+  }
+  // Validate release year
+  const releaseNum = Number(release);
+  if (!Number.isInteger(releaseNum) || releaseNum < 1877 || releaseNum > 2100) {
+    return res.status(400).json({ error: 'invalid release year' });
+  }
   try {
     const pool = await getPool();
+    const tableId = await getUserTableId(pool, req.userUuid, tableName);
+    if (!tableId) {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
     const [result] = await pool.execute(
-      `INSERT INTO Record (name, artist, cover, rating, release_year, userUuid, added) VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      [record, artist, cover, rating, release, req.userUuid]
+      `INSERT INTO Record (name, artist, cover, rating, release_year, tableId, userUuid, added) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [record, artist, cover, rating, releaseNum, tableId, req.userUuid]
     );
     const newId = result.insertId;
     // Add tags (create if missing)
@@ -287,7 +343,7 @@ app.post('/api/records/create', requireAuth, async (req, res) => {
     }
     // Return new record
     const [rows] = await pool.execute(
-      `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded FROM Record r WHERE r.id = ? AND r.userUuid = ?`,
+      `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded, r.tableId FROM Record r WHERE r.id = ? AND r.userUuid = ?`,
       [newId, req.userUuid]
     );
     const created = rows[0];

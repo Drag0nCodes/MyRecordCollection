@@ -7,6 +7,13 @@ CREATE TABLE User (
     password VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE RecTable (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    userUuid CHAR(36),
+    FOREIGN KEY (userUuid) REFERENCES User(uuid) ON DELETE CASCADE
+);
+
 CREATE TABLE Record (
     id INT AUTO_INCREMENT PRIMARY KEY,
     added DATE NOT NULL,
@@ -16,7 +23,9 @@ CREATE TABLE Record (
     rating TINYINT,
     release_year YEAR,
     userUuid CHAR(36),
-    FOREIGN KEY (userUuid) REFERENCES User(uuid) ON DELETE CASCADE
+    tableId INT,
+    FOREIGN KEY (userUuid) REFERENCES User(uuid) ON DELETE CASCADE,
+    FOREIGN KEY (tableId) REFERENCES RecTable(id) ON DELETE CASCADE
 );
 
 CREATE TABLE Tag (

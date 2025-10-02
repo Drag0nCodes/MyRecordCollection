@@ -4,9 +4,9 @@ import {
   ThemeProvider,
   CssBaseline,
   Box,
-  Button,
   CircularProgress,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { darkTheme } from "./theme";
@@ -19,7 +19,6 @@ import placeholderCover from "./assets/missingImg.jpg";
 import FindRecordSidebar, {
   type AlbumListItem,
 } from "./components/FindRecordSidebar";
-import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 
 interface AlbumResult {
   name: string;
@@ -28,6 +27,9 @@ interface AlbumResult {
   listeners?: string;
   image?: { ["#text"]: string; size: string }[];
 }
+
+const DEFAULT_COLLECTION_NAME = "My Collection";
+const WISHLIST_COLLECTION_NAME = "Wishlist";
 
 export default function FindRecord() {
   const [results, setResults] = useState<AlbumResult[]>([]);
@@ -48,6 +50,15 @@ export default function FindRecord() {
   );
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -152,7 +163,11 @@ export default function FindRecord() {
     setSelectedTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
   };
 
-  const handleAddRecord = async () => {
+  const submitRecord = async (
+    tableName: string,
+    redirectPath: string,
+    successMessage: string
+  ) => {
     if (!selectedAlbumId) return;
     const selectedRow = rows.find((r) => r.id === selectedAlbumId);
     if (!selectedRow) return;
@@ -168,6 +183,7 @@ export default function FindRecord() {
         tags: selectedTags,
         release: releaseYear,
         dateAdded: new Date().toISOString().slice(0, 10),
+        tableName,
       };
       const res = await fetch(apiUrl("/api/records/create"), {
         method: "POST",
@@ -176,18 +192,31 @@ export default function FindRecord() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        // Navigate back to collection after successful add
-        navigate("/mycollection");
+        // Navigate back to collection after successful add and show a toast there
+        navigate(redirectPath, { state: { message: successMessage } });
       } else {
         const problem = await res.json().catch(() => ({}));
-        setAddError(problem.error || `Failed to add record (${res.status})`);
+        const msg = problem.error || `Failed to add record (${res.status})`;
+        setAddError(msg);
+        setSnackbar({ open: true, message: msg, severity: "error" });
       }
     } catch (e) {
       setAddError("Network error adding record");
+      setSnackbar({
+        open: true,
+        message: "Network error adding record",
+        severity: "error",
+      });
     } finally {
       setAdding(false);
     }
   };
+
+  const handleAddRecord = async () =>
+    submitRecord(DEFAULT_COLLECTION_NAME, "/mycollection", "Record added");
+
+  const handleAddWishlistRecord = async () =>
+    submitRecord(WISHLIST_COLLECTION_NAME, "/wishlist", "Added to wishlist");
 
   const columns: GridColDef[] = [
     {
@@ -257,22 +286,6 @@ export default function FindRecord() {
           searchMode="submit"
           searchPlaceholder="Search All Albums (By Title)"
         />
-        <Box
-          sx={{
-            flex: "0 0 auto",
-            textAlign: "left",
-          }}
-        >
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => navigate("/mycollection")}
-            sx={{ fontWeight: 700 }}
-            startIcon={<LibraryMusicIcon />}
-          >
-            My Collection
-          </Button>
-        </Box>
         <Grid
           container
           spacing={2}
@@ -399,6 +412,7 @@ export default function FindRecord() {
               onReleaseYearChange={setReleaseYear}
               canAdd={!!selectedAlbumId && !adding}
               onAddRecord={handleAddRecord}
+              onWishlistRecord={handleAddWishlistRecord}
             />
             {addError && (
               <Alert severity="error" sx={{ mt: 1 }}>
@@ -407,6 +421,23 @@ export default function FindRecord() {
             )}
           </Grid>
         </Grid>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={(_, reason) => {
+            if (reason !== "clickaway")
+              setSnackbar((s) => ({ ...s, open: false }));
+          }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            severity={snackbar.severity}
+            variant="filled"
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </ThemeProvider>
   );

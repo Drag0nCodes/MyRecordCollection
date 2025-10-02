@@ -7,6 +7,7 @@ export interface Record {
   tags: string[];
   release: number;
   dateAdded: string;
+  tableId?: number;
 }
 
 export interface Filters {
