@@ -62,6 +62,7 @@ export async function wikiGenres(name: string, artist: string, release = false):
       position = arrowEnd + 3;
     }
     let source = 0;
+    let sourceSpace = 0;
 
     // Move to first [[ after position
     position = content.indexOf('[[', position);
@@ -76,9 +77,11 @@ export async function wikiGenres(name: string, artist: string, release = false):
       if (genreEndPos === -1 || genreEndPos > nextSec) break;
       const midLineIdx = content.indexOf('|', position);
 
-      if (source < position && source > 0) {
+      if ((source < position && source > 0) || (sourceSpace < position && sourceSpace > 0)) {
         source = content.indexOf('=[[', position);
+        sourceSpace = content.indexOf('= [[', position);
         position = content.indexOf('[[', position);
+        if (position !== -1) position += 2;
         continue;
       }
 
@@ -100,6 +103,7 @@ export async function wikiGenres(name: string, artist: string, release = false):
       }
       
       source = content.indexOf('=[[', position);
+      sourceSpace = content.indexOf('= [[', position);
       position = content.indexOf('[[', position);
       if (position !== -1) position += 2;
 
