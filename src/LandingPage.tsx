@@ -266,69 +266,6 @@ export default function LandingPage() {
 
         <Container maxWidth="lg" sx={{ py: { xs: 8, md: 10 } }}>
           <Stack spacing={6}>
-            <Box>
-              <Typography variant="overline" color="primary">
-                Highlights
-              </Typography>
-              <Typography variant="h4" fontWeight={700} gutterBottom>
-                Everything you need to stay on top of your collection
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                From lightning-fast imports to tag management and intelligent
-                filters, every feature is built with collectors in mind.
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                display: "grid",
-                gap: 3,
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "repeat(2, minmax(0, 1fr))",
-                  md: "repeat(3, minmax(0, 1fr))",
-                },
-              }}
-            >
-              {featureHighlights.map(({ Icon, title, description }) => (
-                <Box
-                  key={title}
-                  sx={{
-                    p: 3,
-                    borderRadius: 3,
-                    backgroundColor: "background.paper",
-                    border: (theme) => `1px solid ${theme.palette.divider}`,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2,
-                      display: "grid",
-                      placeItems: "center",
-                      backgroundColor: "primary.main",
-                      color: "primary.contrastText",
-                      boxShadow: (theme) =>
-                        `0 12px 24px ${theme.palette.primary.main}1f`,
-                    }}
-                  >
-                    <Icon fontSize="medium" />
-                  </Box>
-                  <Typography variant="h6" fontWeight={600}>
-                    {title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {description}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-
             <Box
               sx={{
                 position: "relative",
@@ -504,6 +441,69 @@ export default function LandingPage() {
                   />
                 ))}
               </Stack>
+            </Box>
+
+            <Box>
+              <Typography variant="overline" color="primary">
+                Highlights
+              </Typography>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                Everything you need to stay on top of your collection
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                From lightning-fast imports to tag management and intelligent
+                filters, every feature is built with collectors in mind.
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                display: "grid",
+                gap: 3,
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, minmax(0, 1fr))",
+                  md: "repeat(3, minmax(0, 1fr))",
+                },
+              }}
+            >
+              {featureHighlights.map(({ Icon, title, description }) => (
+                <Box
+                  key={title}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    backgroundColor: "background.paper",
+                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      display: "grid",
+                      placeItems: "center",
+                      backgroundColor: "primary.main",
+                      color: "primary.contrastText",
+                      boxShadow: (theme) =>
+                        `0 12px 24px ${theme.palette.primary.main}1f`,
+                    }}
+                  >
+                    <Icon fontSize="medium" />
+                  </Box>
+                  <Typography variant="h6" fontWeight={600}>
+                    {title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {description}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
 
             <Divider sx={{ borderColor: "rgba(255,255,255,0.08)" }} />

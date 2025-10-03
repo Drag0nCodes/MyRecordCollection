@@ -122,7 +122,7 @@ export default function Settings() {
       <CssBaseline />
       <Box
         sx={{
-          p: 1.5,
+          p: { md: 1.5, xs: 1 },
           height: "100vh",
           display: "flex",
           flexDirection: "column",
