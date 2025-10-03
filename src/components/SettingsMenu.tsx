@@ -1,9 +1,4 @@
-import {
-  List,
-  ListItemButton,
-  ListItemText,
-  ListSubheader,
-} from "@mui/material";
+import { List, ListItemButton, ListItemText } from "@mui/material";
 
 export interface SettingsMenuOption {
   id: string;

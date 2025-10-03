@@ -139,7 +139,8 @@ export default function LandingPage() {
     },
   ];
 
-  const workflow = [
+  {
+    /*const workflow = [
     {
       heading: "Import",
       copy: "Drop in your Discogs export or add records manually. We prevent duplicates and grab cover art for you.",
@@ -152,7 +153,8 @@ export default function LandingPage() {
       heading: "Rediscover",
       copy: "Use quick search, filters, and a beautiful table view to find the next record you can't wait to play.",
     },
-  ];
+  ];*/
+  }
 
   return (
     <ThemeProvider theme={darkTheme}>
