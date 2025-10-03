@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,8 +12,10 @@ import {
   Chip,
   Autocomplete,
   Typography,
+  Stack,
 } from "@mui/material";
 import { type Record } from "../types"; // Assuming types.ts is in the parent directory
+import { wikiGenres } from "../wiki";
 
 // --- COMPONENT PROPS ---
 interface EditRecordDialogProps {
@@ -34,12 +36,28 @@ export default function EditRecordDialog({
 }: EditRecordDialogProps) {
   const [editedRecord, setEditedRecord] = useState<Record | null>(null);
   const [imageUrl, setImageUrl] = useState("");
+  const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
+  const [fetchingRecommendedTags, setFetchingRecommendedTags] =
+    useState<boolean>(false);
+  const lastFetchKeyRef = useRef<string | null>(null);
+  const pendingFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // When the dialog opens or the record prop changes, reset the internal state
   useEffect(() => {
     if (record) {
       setEditedRecord(record);
       setImageUrl(record.cover || "");
+    } else {
+      setEditedRecord(null);
+      setImageUrl("");
+    }
+
+    setRecommendedTags([]);
+    setFetchingRecommendedTags(false);
+    lastFetchKeyRef.current = null;
+    if (pendingFetchRef.current) {
+      window.clearTimeout(pendingFetchRef.current);
+      pendingFetchRef.current = null;
     }
   }, [record, open]);
 
@@ -79,6 +97,80 @@ export default function EditRecordDialog({
     }
   };
 
+  useEffect(() => {
+    if (!open || !editedRecord) return;
+
+    const title = editedRecord.record?.trim();
+    const artist = editedRecord.artist?.trim();
+
+    if (!title || !artist || title.length < 2 || artist.length < 2) {
+      setRecommendedTags([]);
+      lastFetchKeyRef.current = null;
+      return;
+    }
+
+    const fetchKey = `${artist.toLowerCase()}::${title.toLowerCase()}`;
+    if (lastFetchKeyRef.current === fetchKey) {
+      return;
+    }
+
+    if (pendingFetchRef.current) {
+      clearTimeout(pendingFetchRef.current);
+      pendingFetchRef.current = null;
+    }
+
+    let isActive = true;
+
+    pendingFetchRef.current = setTimeout(() => {
+      setFetchingRecommendedTags(true);
+      wikiGenres(title, artist, false)
+        .then((tags) => {
+          if (!isActive) return;
+          const normalized = Array.from(
+            new Set(
+              tags
+                .map((tag) => tag.trim())
+                .filter(Boolean)
+                .map((tag) => tag.replace(/\s+/g, " "))
+            )
+          ).slice(0, 12);
+          lastFetchKeyRef.current = fetchKey;
+          setRecommendedTags(normalized);
+        })
+        .catch(() => {
+          if (!isActive) return;
+          lastFetchKeyRef.current = fetchKey;
+          setRecommendedTags([]);
+        })
+        .finally(() => {
+          if (!isActive) return;
+          setFetchingRecommendedTags(false);
+          pendingFetchRef.current = null;
+        });
+    }, 400);
+
+    return () => {
+      isActive = false;
+      if (pendingFetchRef.current) {
+        clearTimeout(pendingFetchRef.current);
+        pendingFetchRef.current = null;
+      }
+    };
+  }, [open, editedRecord]);
+
+  const handleAddRecommendedTag = (tag: string) => {
+    setEditedRecord((prev) => {
+      if (!prev) return prev;
+      const normalized = tag.trim();
+      if (!normalized) return prev;
+      const exists = prev.tags.some(
+        (existing) => existing.toLowerCase() === normalized.toLowerCase()
+      );
+      if (exists) return prev;
+      return { ...prev, tags: [...prev.tags, normalized] };
+    });
+  };
+
   const handleSaveChanges = () => {
     if (editedRecord) {
       onSave(editedRecord);
@@ -89,6 +181,10 @@ export default function EditRecordDialog({
   if (!editedRecord) {
     return null;
   }
+
+  const existingTagsLower = new Set(
+    editedRecord.tags.map((tag) => tag.toLowerCase())
+  );
 
   return (
     <Dialog
@@ -205,10 +301,9 @@ export default function EditRecordDialog({
                     aria-label="rating"
                     valueLabelDisplay="auto"
                     step={1}
-                    marks
                     min={0}
                     max={10}
-                    sx={{ flex: 1, p: "auto" }}
+                    sx={{ flex: 1, p: "auto", mr: 1 }}
                   />
                 </Box>
               </Grid>
@@ -228,6 +323,7 @@ export default function EditRecordDialog({
                 "& .MuiAutocomplete-inputRoot": {
                   flexWrap: "wrap",
                   gap: "4px",
+                  alignItems: "flex-start",
                 },
                 "& .MuiChip-root": { margin: "0px" },
                 // ensure the text input doesn't expand to push chips apart
@@ -235,6 +331,10 @@ export default function EditRecordDialog({
                 // make the Autocomplete input blend with the dialog background
                 "& .MuiOutlinedInput-root": {
                   backgroundColor: "background.paper",
+                  alignItems: "flex-start",
+                  py: 1,
+                  minHeight: 40,
+                  height: "auto",
                 },
               }}
               renderTags={(value: readonly string[], getTagProps) =>
@@ -259,6 +359,75 @@ export default function EditRecordDialog({
                 />
               )}
             />
+
+            <Box sx={{ mt: 2 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "block",
+                  fontWeight: 600,
+                  letterSpacing: 0.5,
+                  textTransform: "uppercase",
+                }}
+              >
+                Suggested tags
+              </Typography>
+              {fetchingRecommendedTags && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: 0.75 }}
+                >
+                  Fetching suggestions...
+                </Typography>
+              )}
+              {!fetchingRecommendedTags && recommendedTags.length === 0 && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: 0.75 }}
+                >
+                  We’ll suggest tags automatically once both title and artist
+                  are filled.
+                </Typography>
+              )}
+              {recommendedTags.length > 0 && (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  useFlexGap
+                  flexWrap="wrap"
+                  sx={{ mt: 1 }}
+                >
+                  {recommendedTags.map((tag) => {
+                    const normalizedTag = tag.trim();
+                    const normalizedLower = normalizedTag.toLowerCase();
+                    const alreadyAdded = existingTagsLower.has(normalizedLower);
+                    return (
+                      <Chip
+                        key={tag}
+                        label={normalizedTag}
+                        size="small"
+                        variant={alreadyAdded ? "filled" : "outlined"}
+                        color={alreadyAdded ? "primary" : "default"}
+                        onClick={() => {
+                          if (!alreadyAdded) {
+                            handleAddRecommendedTag(normalizedTag);
+                          }
+                        }}
+                        disabled={alreadyAdded}
+                        sx={{
+                          cursor: alreadyAdded ? "default" : "pointer",
+                          p: 0.7,
+                          py: 1.9,
+                        }}
+                      />
+                    );
+                  })}
+                </Stack>
+              )}
+            </Box>
           </Grid>
         </Grid>
       </DialogContent>

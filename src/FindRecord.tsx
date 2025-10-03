@@ -34,6 +34,7 @@ const WISHLIST_COLLECTION_NAME = "Wishlist";
 export default function FindRecord() {
   const [results, setResults] = useState<AlbumResult[]>([]);
   const [username, setUsername] = useState<string>("");
+  const [displayName, setDisplayName] = useState<string>("");
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | undefined>(
     undefined
   );
@@ -71,6 +72,7 @@ export default function FindRecord() {
         if (meRes.ok) {
           const data = await meRes.json();
           setUsername(data.username);
+          setDisplayName(data.displayName || "");
         }
         if (tagsRes.ok) {
           const tagJson = await tagsRes.json();
@@ -283,6 +285,7 @@ export default function FindRecord() {
           onSearchChange={handleSearchSubmit}
           onLogout={handleLogout}
           username={username}
+          displayName={displayName}
           searchMode="submit"
           searchPlaceholder="Search All Albums (By Title)"
         />

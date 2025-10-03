@@ -24,6 +24,7 @@ const PORT = Number(process.env.PORT || 4000);
 // bind to 0.0.0.0 so the server is reachable from other machines (GCE VM)
 const HOST = process.env.HOST || '0.0.0.0';
 const JWT_SECRET = process.env.JWT_SECRET;
+const DEFAULT_COLLECTION_NAME = "My Collection";
 
 // In production we require a JWT secret
 if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
@@ -60,6 +61,61 @@ async function getUserTableId(pool, userUuid, tableName) {
     [userUuid, tableName]
   );
   return rows.length > 0 ? rows[0].id : null;
+}
+
+async function fetchLastFmCover(artist, record) {
+  const apiKey = process.env.LASTFM_API_KEY;
+  if (!apiKey) return null;
+  const query = `${record}`.trim(); // search by record title only per request
+  if (!query) return null;
+  const url = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(
+    query
+  )}&api_key=${apiKey}&format=json&limit=5`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    const albums = data?.results?.albummatches?.album;
+    if (!Array.isArray(albums) || albums.length === 0) return null;
+
+    // normalize target artist for comparison
+    const targetArtist = (artist || "").toLowerCase().trim();
+
+    // helper to extract extralarge (or best fallback) from album image array
+    const pickExtralarge = (album) => {
+      const images = Array.isArray(album?.image) ? album.image : [];
+      // find extralarge first
+      const extral = images.find((img) => img && img.size === 'extralarge' && img['#text']);
+      if (extral && extral['#text']) return extral['#text'];
+      // fallback to largest available (prefer mega, then large, then medium, then small)
+      const order = ['extralarge', 'large', 'medium', 'small'];
+      for (const sz of order) {
+        const found = images.find((img) => img && img.size === sz && img['#text']);
+        if (found && found['#text']) return found['#text'];
+      }
+      return null;
+    };
+
+    // Try to find an album where the artist attribute matches (case-insensitive)
+    if (targetArtist) {
+      for (const album of albums) {
+        const aArtist = (album?.artist || "").toLowerCase().trim();
+        if (aArtist && aArtist === targetArtist) {
+          const urlText = pickExtralarge(album);
+          if (urlText) return urlText;
+        }
+      }
+    }
+
+    // No exact artist match found — use the first album's cover (prefer extralarge)
+    const firstCover = pickExtralarge(albums[0]);
+    return firstCover || null;
+  } catch (err) {
+    console.warn('Last.fm cover lookup failed', err);
+    return null;
+  }
 }
 
 // Graceful shutdown to release pool connections
@@ -152,7 +208,7 @@ app.get("/api/tags", requireAuth, async (req, res) => {
 // Register endpoint
 app.post('/api/register', async (req, res) => {
   console.log("Registering user...");
-  const { username, password } = req.body;
+  const { username, password, displayName: rawDisplayName } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required.' });
   }
@@ -171,10 +227,14 @@ app.post('/api/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const userUuid = uuidv4();
+    const displayName =
+      typeof rawDisplayName === "string" && rawDisplayName.trim()
+        ? rawDisplayName.trim().slice(0, 50)
+        : username;
     const pool = await getPool();
     await pool.execute(
-      'INSERT INTO User (uuid, username, password) VALUES (?, ?, ?)',
-      [userUuid, username, hashedPassword]
+      'INSERT INTO User (uuid, username, displayName, password) VALUES (?, ?, ?, ?)',
+      [userUuid, username, displayName, hashedPassword]
     );
     await pool.execute(
       `INSERT INTO RecTable (name, userUuid) VALUES (?, ?), (?, ?)`,
@@ -230,12 +290,112 @@ app.post('/api/logout', (req, res) => {
 app.get('/api/me', requireAuth, async (req, res) => {
   try {
     const pool = await getPool();
-    const [rows] = await pool.execute('SELECT username FROM User WHERE uuid = ?', [req.userUuid]);
+    const [rows] = await pool.execute('SELECT username, displayName FROM User WHERE uuid = ?', [req.userUuid]);
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
     // Also return the userUuid so clients can wire analytics user_id without decoding the token
-    res.json({ username: rows[0].username, userUuid: req.userUuid });
+    res.json({ username: rows[0].username, displayName: rows[0].displayName, userUuid: req.userUuid });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch user info' });
+  }
+});
+
+app.patch('/api/profile', requireAuth, async (req, res) => {
+  const { username: newUsername, displayName: rawDisplayName } = req.body || {};
+  if (!newUsername && !rawDisplayName) {
+    return res.status(400).json({ error: 'Nothing to update' });
+  }
+
+  if (newUsername) {
+    if (typeof newUsername !== 'string' || newUsername.trim().length < 3 || newUsername.trim().length > 30) {
+      return res.status(400).json({ error: 'Username must be 3-30 characters.' });
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) {
+      return res.status(400).json({ error: 'Username must contain only letters, numbers, and underscores.' });
+    }
+  }
+
+  let displayName;
+  if (rawDisplayName !== undefined) {
+    if (typeof rawDisplayName !== 'string' || !rawDisplayName.trim()) {
+      return res.status(400).json({ error: 'Display name cannot be empty.' });
+    }
+    displayName = rawDisplayName.trim().slice(0, 50);
+  }
+
+  try {
+    const pool = await getPool();
+    if (newUsername) {
+      const [existing] = await pool.execute(
+        'SELECT uuid FROM User WHERE username = ? AND uuid <> ? LIMIT 1',
+        [newUsername, req.userUuid]
+      );
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'Username already taken.' });
+      }
+    }
+
+    const fields = [];
+    const params = [];
+    if (newUsername) {
+      fields.push('username = ?');
+      params.push(newUsername);
+    }
+    if (displayName !== undefined) {
+      fields.push('displayName = ?');
+      params.push(displayName);
+    }
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'Nothing to update' });
+    }
+    params.push(req.userUuid);
+    await pool.execute(
+      `UPDATE User SET ${fields.join(', ')} WHERE uuid = ?`,
+      params
+    );
+
+    const [rows] = await pool.execute(
+      'SELECT username, displayName FROM User WHERE uuid = ?',
+      [req.userUuid]
+    );
+    res.json({ success: true, user: rows[0] });
+  } catch (err) {
+    console.error('Profile update failed', err);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+app.post('/api/profile/password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body || {};
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return res.status(400).json({ error: 'All password fields are required.' });
+  }
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ error: 'New passwords do not match.' });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  }
+  if (!/(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(newPassword)) {
+    return res.status(400).json({ error: 'Password must contain at least one letter, one number, and one special character.' });
+  }
+
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute('SELECT password FROM User WHERE uuid = ?', [req.userUuid]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const hash = rows[0].password;
+    const matches = await bcrypt.compare(currentPassword, hash);
+    if (!matches) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await pool.execute('UPDATE User SET password = ? WHERE uuid = ?', [newHash, req.userUuid]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Password change failed', err);
+    res.status(500).json({ error: 'Failed to change password' });
   }
 });
 
@@ -430,6 +590,160 @@ app.post('/api/records/delete', requireAuth, async (req, res) => {
   }
 });
 
+app.post('/api/import/discogs', requireAuth, async (req, res) => {
+  console.log('Importing Discogs collection...');
+  const { records, tableName } = req.body || {};
+  if (!Array.isArray(records) || records.length === 0) {
+    return res.status(400).json({ error: 'records array is required' });
+  }
+  const targetTable =
+    typeof tableName === 'string' && tableName.trim()
+      ? tableName.trim()
+      : DEFAULT_COLLECTION_NAME;
+
+  try {
+    const pool = await getPool();
+    const tableId = await getUserTableId(pool, req.userUuid, targetTable);
+    if (!tableId) {
+      return res.status(404).json({ error: `Collection '${targetTable}' not found` });
+    }
+
+    let created = 0;
+    let skipped = 0;
+    let withoutCover = 0;
+    const tagCache = new Map();
+
+    for (const raw of records) {
+      if (!raw || typeof raw !== 'object') {
+        skipped += 1;
+        continue;
+      }
+      const recordName = typeof raw.record === 'string' ? raw.record.trim() : '';
+      const artist = typeof raw.artist === 'string' ? raw.artist.trim() : '';
+      if (!recordName || !artist) {
+        skipped += 1;
+        continue;
+      }
+
+      const releaseNum = Number.parseInt(raw.release, 10);
+      let release = Number.isInteger(releaseNum) ? releaseNum : 1900;
+      if (release < 1877 || release > 2100) {
+        release = 1900;
+      }
+
+      const ratingNum = Number(raw.rating);
+      let rating = Number.isFinite(ratingNum) ? Math.round(ratingNum) : 0;
+      if (rating < 0) rating = 0;
+      if (rating > 10) rating = 10;
+
+      const dateVal = typeof raw.dateAdded === 'string' ? raw.dateAdded.trim() : '';
+      const dateAdded = /^\d{4}-\d{2}-\d{2}$/.test(dateVal) ? dateVal : null;
+
+      const tagsArray = Array.isArray(raw.tags) ? raw.tags : [];
+      const cleanTags = Array.from(
+        new Set(
+          tagsArray
+            .filter((tag) => typeof tag === 'string')
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        )
+      );
+
+      const [existingRows] = await pool.execute(
+        `SELECT id FROM Record WHERE userUuid = ? AND tableId = ? AND LOWER(name) = ? AND LOWER(artist) = ? LIMIT 1`,
+        [req.userUuid, tableId, recordName.toLowerCase(), artist.toLowerCase()]
+      );
+      if (existingRows.length > 0) {
+        skipped += 1;
+        continue;
+      }
+
+      const cover = await fetchLastFmCover(artist, recordName);
+      if (!cover) {
+        withoutCover += 1;
+      }
+
+      const addedDate = dateAdded || new Date().toISOString().slice(0, 10);
+      const [insertResult] = await pool.execute(
+        `INSERT INTO Record (name, artist, cover, rating, release_year, tableId, userUuid, added) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [recordName, artist, cover || null, rating, release, tableId, req.userUuid, addedDate]
+      );
+      const newRecordId = insertResult.insertId;
+      created += 1;
+
+      for (const tagName of cleanTags) {
+        const cacheKey = tagName.toLowerCase();
+        let tagId = tagCache.get(cacheKey);
+        if (!tagId) {
+          const [tagRows] = await pool.execute(
+            `SELECT id FROM Tag WHERE name = ? AND userUuid = ? LIMIT 1`,
+            [tagName, req.userUuid]
+          );
+          if (tagRows.length > 0) {
+            tagId = tagRows[0].id;
+          } else {
+            const [tagInsert] = await pool.execute(
+              `INSERT INTO Tag (name, userUuid) VALUES (?, ?)`,
+              [tagName, req.userUuid]
+            );
+            tagId = tagInsert.insertId;
+          }
+          tagCache.set(cacheKey, tagId);
+        }
+        await pool.execute(
+          `INSERT IGNORE INTO Tagged (recordId, tagId) VALUES (?, ?)`,
+          [newRecordId, tagId]
+        );
+      }
+    }
+
+    res.json({ success: true, created, skipped, withoutCover });
+  } catch (err) {
+    console.error('Discogs import failed', err);
+    res.status(500).json({ error: 'Failed to import Discogs collection' });
+  }
+});
+
+// Delete all records in a user's collection (table)
+app.post('/api/records/clear', requireAuth, async (req, res) => {
+  const { tableName } = req.body || {};
+  const targetTable = typeof tableName === 'string' && tableName.trim() ? tableName.trim() : DEFAULT_COLLECTION_NAME;
+  try {
+    const pool = await getPool();
+    const tableId = await getUserTableId(pool, req.userUuid, targetTable);
+    if (!tableId) {
+      return res.status(404).json({ error: `Collection '${targetTable}' not found` });
+    }
+    const [result] = await pool.execute(`DELETE FROM Record WHERE userUuid = ? AND tableId = ?`, [req.userUuid, tableId]);
+    const deleted = result.affectedRows || 0;
+    res.json({ success: true, deleted });
+  } catch (err) {
+    console.error('Failed to clear collection', err);
+    res.status(500).json({ error: 'Failed to clear collection' });
+  }
+});
+
+// Delete all tags for the user (and associated Tagged rows)
+app.post('/api/tags/clear', requireAuth, async (req, res) => {
+  try {
+    const pool = await getPool();
+    const [tagRows] = await pool.execute(`SELECT id FROM Tag WHERE userUuid = ?`, [req.userUuid]);
+    const ids = (tagRows || []).map((r) => r.id).filter(Boolean);
+    if (ids.length === 0) {
+      return res.json({ success: true, tagsDeleted: 0, taggedDeleted: 0 });
+    }
+    const placeholders = ids.map(() => '?').join(',');
+    const [taggedDel] = await pool.execute(`DELETE FROM Tagged WHERE tagId IN (${placeholders})`, ids);
+    const taggedDeleted = taggedDel.affectedRows || 0;
+    const [tagDel] = await pool.execute(`DELETE FROM Tag WHERE id IN (${placeholders})`, ids);
+    const tagsDeleted = tagDel.affectedRows || 0;
+    res.json({ success: true, tagsDeleted, taggedDeleted });
+  } catch (err) {
+    console.error('Failed to clear tags', err);
+    res.status(500).json({ error: 'Failed to clear tags' });
+  }
+});
+
 // Proxy to Last.fm album.search (requires LASTFM_API_KEY in env)
 app.get('/api/lastfm/album.search', requireAuth, async (req, res) => {
   console.log("Proxying Last.fm album.search...");
@@ -438,7 +752,7 @@ app.get('/api/lastfm/album.search', requireAuth, async (req, res) => {
   const apiKey = process.env.LASTFM_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Missing LASTFM_API_KEY on server' });
   try {
-    const url = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(q)}&api_key=${apiKey}&format=json&limit=50`;
+    const url = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(q)}&api_key=${apiKey}&format=json&limit=10`;
     const r = await fetch(url);
     if (!r.ok) {
       const body = await r.text();

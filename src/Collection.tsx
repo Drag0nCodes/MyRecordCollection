@@ -58,6 +58,7 @@ export default function Collection({ tableName, title }: CollectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [username, setUsername] = useState<string>("");
+  const [displayName, setDisplayName] = useState<string>("");
 
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   // Track the last actual (persisted) selected record so we can restore after cancelling a create
@@ -157,6 +158,7 @@ export default function Collection({ tableName, title }: CollectionProps) {
         if (res.ok) {
           const data = await res.json();
           setUsername(data.username);
+          setDisplayName(data.displayName || "");
         }
       } catch {}
     };
@@ -361,6 +363,7 @@ export default function Collection({ tableName, title }: CollectionProps) {
             onLogout={handleLogout}
             title={title ?? tableName}
             username={username}
+            displayName={displayName}
           />
         </Box>
 

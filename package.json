@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-  "server": "node server.js",
-  "start": "node server.js",
+    "server": "node server.js",
+    "start": "node server.js",
     "build": "tsc -b && vite build",
-  "start:prod": "cross-env NODE_ENV=production node server.js",
+    "start:prod": "cross-env NODE_ENV=production node server.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -28,6 +28,7 @@
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.0",
     "node-fetch": "^3.3.2",
+    "papaparse": "^5.5.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.3",

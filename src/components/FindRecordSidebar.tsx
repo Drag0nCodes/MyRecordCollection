@@ -230,7 +230,7 @@ export default function FindRecordSidebar({
           type="number"
           size="small"
           onChange={(e) => onReleaseYearChange(Number(e.target.value))}
-          sx={{ mb: 2, width: "60%" }}
+          sx={{ mb: 1, width: "60%" }}
           slotProps={{ input: { inputProps: { min: 1877, max: 2100 } } }}
         />
       </Box>

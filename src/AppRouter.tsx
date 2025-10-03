@@ -9,6 +9,7 @@ import Login from "./Login";
 import Register from "./Register";
 import RequireAuth from "./RequireAuth";
 import NotFound from "./NotFound";
+import Settings from "./Settings";
 import { useLocation } from "react-router-dom";
 import { trackPage } from "./analytics";
 
@@ -68,6 +69,14 @@ export default function AppRouter() {
           element={
             <RequireAuth>
               <FindRecord />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth>
+              <Settings />
             </RequireAuth>
           }
         />

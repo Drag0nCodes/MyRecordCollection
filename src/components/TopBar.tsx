@@ -15,26 +15,31 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useNavigate } from "react-router-dom";
 
 interface TopBarProps {
-  onSearchChange: (value: string) => void;
+  onSearchChange?: (value: string) => void;
   onLogout?: () => void;
   title: string;
   username?: string;
+  displayName?: string;
   /** When set to 'submit', only fire onSearchChange when user presses Enter */
   searchMode?: "change" | "submit";
   /** Optional placeholder override */
   searchPlaceholder?: string;
+  searchBar?: boolean;
 }
 
 export default function TopBar({
-  onSearchChange,
+  onSearchChange = () => {},
   onLogout,
   title,
   username,
+  displayName,
   searchMode = "change",
   searchPlaceholder,
+  searchBar = true,
 }: TopBarProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -100,16 +105,18 @@ export default function TopBar({
         >
           {title}
         </Typography>
-        <TextField
-          variant="outlined"
-          placeholder={searchPlaceholder || "Search My Collection"}
-          sx={{ width: 300 }}
-          value={text}
-          onChange={handleSearchChange}
-          onKeyDown={handleKeyDown}
-          type="search"
-          inputProps={{ enterKeyHint: "search" }}
-        />
+        {searchBar && (
+          <TextField
+            variant="outlined"
+            placeholder={searchPlaceholder || "Search My Collection"}
+            sx={{ width: 300 }}
+            value={text}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+            type="search"
+            inputProps={{ enterKeyHint: "search" }}
+          />
+        )}
         {username && (
           <Box sx={{ mx: -1 }}>
             <IconButton
@@ -146,7 +153,7 @@ export default function TopBar({
                   },
                 }}
               >
-                Hello, {username}
+                Hello, {displayName || username}
               </MenuItem>
               <MenuItem onClick={() => navigate("/mycollection")}>
                 <ListItemIcon>
@@ -161,6 +168,17 @@ export default function TopBar({
                 <ListItemText>Wishlist</ListItemText>
               </MenuItem>
               <Divider />
+              <MenuItem
+                onClick={() => {
+                  navigate("/settings");
+                  handleMenuClose();
+                }}
+              >
+                <ListItemIcon>
+                  <SettingsIcon />
+                </ListItemIcon>
+                <ListItemText>Settings</ListItemText>
+              </MenuItem>
               {onLogout && (
                 <MenuItem onClick={handleLogoutClick}>
                   <ListItemIcon>

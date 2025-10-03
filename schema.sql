@@ -4,7 +4,8 @@ USE mrc_db;
 CREATE TABLE User (
     uuid CHAR(36) PRIMARY KEY,
     username VARCHAR(32) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
+    displayName VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
 );
 
 CREATE TABLE RecTable (

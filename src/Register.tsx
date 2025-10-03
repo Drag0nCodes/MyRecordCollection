@@ -8,7 +8,11 @@ import {
   CssBaseline,
   TextField,
   Alert,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useNavigate, Link } from "react-router-dom";
 import { darkTheme } from "./theme";
 
@@ -18,15 +22,54 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [error, setError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [password2Error, setPassword2Error] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const usernameRegex = /^[a-zA-Z0-9_]+$/;
+  const passwordRegex = /(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9])/;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (password !== password2) {
-      setError("Passwords do not match");
-      return;
+    // Validate username
+    let hasError = false;
+    if (username.trim().length < 3 || username.trim().length > 30) {
+      setUsernameError("Username must be between 3 and 30 characters");
+      hasError = true;
+    } else if (!usernameRegex.test(username)) {
+      setUsernameError(
+        "Username may only contain letters, numbers, and underscores"
+      );
+      hasError = true;
+    } else {
+      setUsernameError("");
     }
+
+    // Validate password
+    if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters");
+      hasError = true;
+    } else if (!passwordRegex.test(password)) {
+      setPasswordError(
+        "Password must include a letter, a number, and a special character"
+      );
+      hasError = true;
+    } else {
+      setPasswordError("");
+    }
+
+    if (password !== password2) {
+      setPassword2Error("Passwords do not match");
+      hasError = true;
+    } else {
+      setPassword2Error("");
+    }
+
+    if (hasError) return;
     setLoading(true);
     try {
       const res = await fetch(apiUrl("/api/register"), {
@@ -121,28 +164,90 @@ export default function Register() {
               margin="normal"
               size="small"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                // live-validate
+                if (e.target.value.trim().length < 3) {
+                  setUsernameError("Username must be at least 3 characters");
+                } else if (!usernameRegex.test(e.target.value)) {
+                  setUsernameError(
+                    "Username may only contain letters, numbers, and underscores"
+                  );
+                } else {
+                  setUsernameError("");
+                }
+              }}
+              error={!!usernameError}
+              helperText={usernameError}
               required
             />
             <TextField
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               fullWidth
               size="small"
               margin="normal"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (e.target.value.length < 8) {
+                  setPasswordError("Password must be at least 8 characters");
+                } else if (!passwordRegex.test(e.target.value)) {
+                  setPasswordError(
+                    "Password must include a letter, a number, and a special character"
+                  );
+                } else {
+                  setPasswordError("");
+                }
+              }}
+              error={!!passwordError}
+              helperText={passwordError}
               required
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword((s) => !s)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <TextField
               label="Retype Password"
-              type="password"
+              type={showPassword2 ? "text" : "password"}
               fullWidth
               size="small"
               margin="normal"
               value={password2}
-              onChange={(e) => setPassword2(e.target.value)}
+              onChange={(e) => {
+                setPassword2(e.target.value);
+                if (password !== e.target.value) {
+                  setPassword2Error("Passwords do not match");
+                } else {
+                  setPassword2Error("");
+                }
+              }}
+              error={!!password2Error}
+              helperText={password2Error}
               required
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword2((s) => !s)}
+                      edge="end"
+                    >
+                      {showPassword2 ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             {error && (
               <Alert severity="error" sx={{ mt: 2 }}>
