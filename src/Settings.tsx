@@ -141,8 +141,10 @@ export default function Settings() {
         sx={{
           p: { md: 1.5, xs: 1 },
           height: "100vh",
+          boxSizing: "border-box",
           display: "flex",
           flexDirection: "column",
+          overflow: "hidden",
         }}
       >
         <TopBar
@@ -169,35 +171,47 @@ export default function Settings() {
         <Grid
           container
           spacing={2}
-          sx={{ flex: 1, minHeight: 0 }}
+          sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}
           columns={{ xs: 12, md: 12, lg: 12 }}
         >
           {isLargeScreen && (
-            <Grid size={{ lg: 2, md: 3 }} sx={{ display: "flex" }}>
+            <Grid
+              size={{ lg: 2, md: 3 }}
+              sx={{ display: "flex", minHeight: 0, height: "100%" }}
+            >
               <Paper
                 sx={{
-                  p: 2,
+                  p: 1,
                   width: "100%",
                   borderRadius: 2,
                   display: "flex",
                   flexDirection: "column",
                   gap: 1,
+                  flex: 1,
                 }}
               >
-                {menu}
+                <Box sx={{ flex: 1, overflowY: "auto", p: 1 }}>{menu}</Box>
               </Paper>
             </Grid>
           )}
-          <Grid size={{ lg: 10, md: 9, xs: 12 }} sx={{ display: "flex" }}>
+          <Grid
+            size={{ lg: 10, md: 9, xs: 12 }}
+            sx={{ display: "flex", minHeight: 0, height: "100%" }}
+          >
             <Paper
               sx={{
-                p: 2,
+                p: 1,
                 width: "100%",
                 borderRadius: 2,
-                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
+                flex: 1,
               }}
             >
-              {currentContent}
+              <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+                {currentContent}
+              </Box>
             </Paper>
           </Grid>
         </Grid>
