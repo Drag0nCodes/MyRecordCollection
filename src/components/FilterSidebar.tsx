@@ -11,7 +11,6 @@ import {
   TextField,
   Button,
 } from "@mui/material";
-import { allTags } from "../data/mockData";
 import { type Filters } from "../types";
 import ReplayOutlinedIcon from "@mui/icons-material/ReplayOutlined";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -71,7 +70,7 @@ export default function FilterSidebar({
           }}
         >
           <List dense>
-            {(tags ?? allTags).map((tag: string) => (
+            {(tags ?? []).map((tag: string) => (
               <ListItem disablePadding key={tag}>
                 <ListItemButton
                   dense
