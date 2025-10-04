@@ -351,13 +351,15 @@ app.get("/api/profile/recent", requireAuth, async (req, res) => {
     }
 
     const pool = await getPool();
+    // Only include records that are in the user's default collection (RecTable.name = DEFAULT_COLLECTION_NAME)
     const [rows] = await pool.query(
       `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded, r.tableId
        FROM Record r
-       WHERE r.userUuid = ?
+       JOIN RecTable t ON r.tableId = t.id
+       WHERE r.userUuid = ? AND t.name = ?
        ORDER BY r.added DESC
        LIMIT ?`,
-      [req.userUuid, limit]
+      [req.userUuid, DEFAULT_COLLECTION_NAME, limit]
     );
 
     const recordIds = rows.map((row) => row.id);
