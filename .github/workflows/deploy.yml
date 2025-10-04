@@ -32,7 +32,6 @@ jobs:
       - name: Create CNAME for custom domain
         run: |
           echo "myrecordcollection.app" > ./dist/CNAME
-        # ensure the file is present and readable for the deploy step
         shell: bash
 
       - name: Deploy to GitHub Pages

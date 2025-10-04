@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import apiUrl from "../api";
 import {
   Dialog,
   DialogTitle,
@@ -41,7 +42,7 @@ export default function MoveRecordDialog({
     setError(null);
     setSelected("");
     setLoadingCollections(true);
-    fetch("/api/collections", { credentials: "include" })
+    fetch(apiUrl("/api/collections"), { credentials: "include" })
       .then(async (r) => {
         if (!r.ok) throw new Error("Failed to load collections");
         const data = await r.json();
@@ -56,7 +57,7 @@ export default function MoveRecordDialog({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/records/move", {
+      const res = await fetch(apiUrl("/api/records/move"), {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
