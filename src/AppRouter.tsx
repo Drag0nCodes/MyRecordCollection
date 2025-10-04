@@ -9,6 +9,7 @@ import Register from "./Register";
 import RequireAuth from "./RequireAuth";
 import NotFound from "./NotFound";
 import Settings from "./Settings";
+import Profile from "./Profile";
 import { useLocation } from "react-router-dom";
 import { trackPage } from "./analytics";
 import { loadUserInfo } from "./userInfo";
@@ -73,6 +74,14 @@ export default function AppRouter() {
           element={
             <RequireAuth>
               <Settings />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <Profile />
             </RequireAuth>
           }
         />

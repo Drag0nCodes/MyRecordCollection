@@ -8,6 +8,7 @@ export interface Record {
   release: number;
   dateAdded: string;
   tableId?: number;
+  collectionName?: string | null;
 }
 
 export interface Filters {
@@ -87,4 +88,9 @@ export interface UserInfo {
   username: string;
   displayName: string | null;
   userUuid: string;
+}
+
+export interface ProfileHighlights {
+  recordIds: number[];
+  records: Record[];
 }

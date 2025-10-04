@@ -25,6 +25,10 @@ const PORT = Number(process.env.PORT || 4000);
 const HOST = process.env.HOST || '0.0.0.0';
 const JWT_SECRET = process.env.JWT_SECRET;
 const DEFAULT_COLLECTION_NAME = "My Collection";
+const MAX_PROFILE_HIGHLIGHTS = 4;
+const PROFILE_HIGHLIGHT_CANDIDATE_LIMIT = 25;
+const PROFILE_RECENT_DEFAULT_LIMIT = 4;
+const PROFILE_RECENT_MAX_LIMIT = 20;
 
 const RECORD_TABLE_COLUMN_KEYS = [
   "cover",
@@ -89,6 +93,85 @@ function normalizeRecordTablePreferences(raw) {
   normalized.columnVisibility.record = true;
 
   return normalized;
+}
+
+function normalizeProfileHighlightIds(raw) {
+  if (!raw) return [];
+  let source = raw;
+  if (typeof source === "string") {
+    try {
+      source = JSON.parse(source);
+    } catch {
+      source = null;
+    }
+  }
+
+  if (!Array.isArray(source)) return [];
+
+  const normalized = [];
+  const seen = new Set();
+  for (const value of source) {
+    const id = Number(value);
+    if (!Number.isInteger(id) || id <= 0) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    normalized.push(id);
+    if (normalized.length >= MAX_PROFILE_HIGHLIGHTS) break;
+  }
+  return normalized;
+}
+
+async function getProfileHighlightIds(pool, userUuid) {
+  const [rows] = await pool.execute(
+    `SELECT profileHighlights FROM UserSettings WHERE userUuid = ? LIMIT 1`,
+    [userUuid]
+  );
+  if (!rows || rows.length === 0) return [];
+  return normalizeProfileHighlightIds(rows[0].profileHighlights);
+}
+
+async function fetchRecordsWithTagsByIds(pool, userUuid, recordIds) {
+  if (!Array.isArray(recordIds) || recordIds.length === 0) {
+    return [];
+  }
+
+  const placeholders = recordIds.map(() => "?").join(", ");
+  const params = [userUuid, ...recordIds];
+  const [rows] = await pool.query(
+    `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded, r.tableId, t.name as collectionName
+     FROM Record r
+     LEFT JOIN RecTable t ON r.tableId = t.id
+     WHERE r.userUuid = ? AND r.id IN (${placeholders})`,
+    params
+  );
+
+  if (!rows || rows.length === 0) return [];
+
+  const foundIds = rows.map((row) => row.id);
+  const tagsByRecord = {};
+  const [tagRows] = await pool.query(
+    `SELECT t.name, tg.recordId FROM Tag t JOIN Tagged tg ON t.id = tg.tagId WHERE tg.recordId IN (${foundIds
+      .map(() => "?")
+      .join(", ")})`,
+    foundIds
+  );
+  for (const tr of tagRows) {
+    const rid = tr.recordId;
+    tagsByRecord[rid] = tagsByRecord[rid] || [];
+    tagsByRecord[rid].push(tr.name);
+  }
+
+  const recordMap = new Map();
+  for (const row of rows) {
+    recordMap.set(row.id, {
+      ...row,
+      tags: tagsByRecord[row.id] || [],
+    });
+  }
+
+  return recordIds
+    .map((id) => recordMap.get(id))
+    .filter((value) => value !== undefined);
 }
 
 // In production we require a JWT secret
@@ -254,6 +337,57 @@ app.get("/api/records", requireAuth, async (req, res) => {
     res.json(out);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+app.get("/api/profile/recent", requireAuth, async (req, res) => {
+  console.log("Fetching recent profile records...");
+  try {
+    const rawLimit = Number(req.query.limit);
+    let limit = PROFILE_RECENT_DEFAULT_LIMIT;
+    if (Number.isInteger(rawLimit) && rawLimit > 0) {
+      limit = Math.min(rawLimit, PROFILE_RECENT_MAX_LIMIT);
+    }
+
+    const pool = await getPool();
+    const [rows] = await pool.query(
+      `SELECT r.id, r.name as record, r.artist, r.cover, r.rating, r.release_year as 'release', r.added as dateAdded, r.tableId
+       FROM Record r
+       WHERE r.userUuid = ?
+       ORDER BY r.added DESC
+       LIMIT ?`,
+      [req.userUuid, limit]
+    );
+
+    const recordIds = rows.map((row) => row.id);
+    const tagsByRecord = {};
+    if (recordIds.length > 0) {
+      const placeholders = recordIds.map(() => "?").join(", ");
+      const [tagRows] = await pool.query(
+        `SELECT t.name, tg.recordId
+         FROM Tag t
+         JOIN Tagged tg ON t.id = tg.tagId
+         WHERE tg.recordId IN (${placeholders})`,
+        recordIds
+      );
+      for (const tagRow of tagRows) {
+        const recordId = tagRow.recordId;
+        if (!tagsByRecord[recordId]) {
+          tagsByRecord[recordId] = [];
+        }
+        tagsByRecord[recordId].push(tagRow.name);
+      }
+    }
+
+    const response = rows.map((row) => ({
+      ...row,
+      tags: tagsByRecord[row.id] || [],
+    }));
+
+    res.json(response);
+  } catch (err) {
+    console.error("Failed to load recent profile records", err);
     res.status(500).json({ error: "DB error" });
   }
 });
@@ -897,6 +1031,106 @@ app.post('/api/preferences/record-table', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Failed to save record table preferences', err);
     res.status(500).json({ error: 'Failed to save record table preferences' });
+  }
+});
+
+app.get('/api/profile/highlights', requireAuth, async (req, res) => {
+  console.log('Fetching profile highlights...');
+  try {
+    const pool = await getPool();
+    const highlightIds = await getProfileHighlightIds(pool, req.userUuid);
+    if (highlightIds.length === 0) {
+      return res.json({ recordIds: [], records: [] });
+    }
+
+    const records = await fetchRecordsWithTagsByIds(pool, req.userUuid, highlightIds);
+    const foundIds = records.map((r) => r.id);
+    if (foundIds.length !== highlightIds.length) {
+      // Persist cleaned list without missing records
+      await pool.execute(
+        `INSERT INTO UserSettings (userUuid, recordTablePrefs, profileHighlights)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE profileHighlights = VALUES(profileHighlights)`,
+        [
+          req.userUuid,
+          JSON.stringify(createDefaultRecordTablePreferences()),
+          JSON.stringify(foundIds),
+        ]
+      );
+    }
+
+    res.json({ recordIds: foundIds, records });
+  } catch (err) {
+    console.error('Failed to fetch profile highlights', err);
+    res.status(500).json({ error: 'Failed to fetch profile highlights' });
+  }
+});
+
+app.post('/api/profile/highlights', requireAuth, async (req, res) => {
+  console.log('Updating profile highlights...');
+  try {
+    const rawIds = Array.isArray(req.body?.recordIds) ? req.body.recordIds : [];
+    const normalizedIds = normalizeProfileHighlightIds(rawIds);
+
+    const pool = await getPool();
+    if (normalizedIds.length > 0) {
+      const placeholders = normalizedIds.map(() => '?').join(', ');
+      const params = [req.userUuid, ...normalizedIds];
+      const [rows] = await pool.query(
+        `SELECT id FROM Record WHERE userUuid = ? AND id IN (${placeholders})`,
+        params
+      );
+      const foundIds = new Set(rows.map((row) => row.id));
+      const missing = normalizedIds.filter((id) => !foundIds.has(id));
+      if (missing.length > 0) {
+        return res.status(400).json({ error: 'One or more records are invalid' });
+      }
+    }
+
+    await pool.execute(
+      `INSERT INTO UserSettings (userUuid, recordTablePrefs, profileHighlights)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE profileHighlights = VALUES(profileHighlights)`,
+      [
+        req.userUuid,
+        JSON.stringify(createDefaultRecordTablePreferences()),
+        JSON.stringify(normalizedIds),
+      ]
+    );
+
+    res.json({ success: true, recordIds: normalizedIds });
+  } catch (err) {
+    console.error('Failed to update profile highlights', err);
+    res.status(500).json({ error: 'Failed to update profile highlights' });
+  }
+});
+
+app.get('/api/profile/highlights/candidates', requireAuth, async (req, res) => {
+  console.log('Searching highlight candidates...');
+  const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  try {
+    const pool = await getPool();
+    const params = [req.userUuid];
+    let whereClause = '';
+    if (query) {
+      params.push(`%${query}%`, `%${query}%`);
+      whereClause = 'AND (r.name LIKE ? OR r.artist LIKE ?)';
+    }
+
+    const [rows] = await pool.query(
+      `SELECT r.id, r.name as record, r.artist, r.cover, r.tableId, t.name as collectionName
+       FROM Record r
+       LEFT JOIN RecTable t ON r.tableId = t.id
+       WHERE r.userUuid = ? ${whereClause}
+       ORDER BY r.added DESC
+       LIMIT ${PROFILE_HIGHLIGHT_CANDIDATE_LIMIT}`,
+      params
+    );
+
+    res.json({ records: rows || [] });
+  } catch (err) {
+    console.error('Failed to search highlight candidates', err);
+    res.status(500).json({ error: 'Failed to search highlight candidates' });
   }
 });
 

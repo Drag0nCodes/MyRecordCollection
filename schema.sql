@@ -47,5 +47,6 @@ CREATE TABLE Tagged (
 CREATE TABLE UserSettings (
     userUuid CHAR(36) PRIMARY KEY,
     recordTablePrefs JSON NOT NULL,
+    profileHighlights JSON,
     FOREIGN KEY (userUuid) REFERENCES User(uuid) ON DELETE CASCADE
 );

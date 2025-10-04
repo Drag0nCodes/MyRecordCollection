@@ -227,6 +227,7 @@ export default function FindRecord() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
+        await res.json().catch(() => null);
         // Navigate back to collection after successful add and show a toast there
         navigate(redirectPath, { state: { message: successMessage } });
       } else {

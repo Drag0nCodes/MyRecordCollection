@@ -177,7 +177,7 @@ export default function Settings() {
           {isLargeScreen && (
             <Grid
               size={{ lg: 2, md: 3 }}
-              sx={{ display: "flex", minHeight: 0, height: "100%", pb: 1 }}
+              sx={{ display: "flex", minHeight: 0, height: "100%", pb: 2 }}
             >
               <Paper
                 sx={{
@@ -196,7 +196,7 @@ export default function Settings() {
           )}
           <Grid
             size={{ lg: 10, md: 9, xs: 12 }}
-            sx={{ display: "flex", minHeight: 0, height: "100%", pb: 1 }}
+            sx={{ display: "flex", minHeight: 0, height: "100%", pb: 2 }}
           >
             <Paper
               sx={{

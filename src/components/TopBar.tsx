@@ -155,6 +155,18 @@ export default function TopBar({
               >
                 Hello, {displayName || username}
               </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  navigate("/profile");
+                  handleMenuClose();
+                }}
+              >
+                <ListItemIcon>
+                  <AccountCircle />
+                </ListItemIcon>
+                <ListItemText>Profile</ListItemText>
+              </MenuItem>
+              <Divider sx={{ my: 0.5 }} />
               <MenuItem onClick={() => navigate("/mycollection")}>
                 <ListItemIcon>
                   <LibraryMusicIcon />
