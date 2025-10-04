@@ -548,7 +548,7 @@ export default function CollectionSettings() {
                       disabled={prefsLoading || savingPrefs}
                     />
                   }
-                  label={`Show ${column.label}`}
+                  label={`${column.label}`}
                   sx={{
                     minWidth: { xs: "50%", sm: "33%" },
                     m: 0,
