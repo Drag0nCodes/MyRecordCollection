@@ -1,6 +1,7 @@
 import {
   type ChangeEvent,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -16,17 +17,23 @@ import {
   DialogContentText,
   DialogTitle,
   Divider,
+  FormControl,
   FormControlLabel,
+  FormGroup,
+  InputLabel,
   LinearProgress,
   List,
   ListItem,
   ListItemText,
+  MenuItem,
   Paper,
+  Select,
   Snackbar,
   Stack,
   Switch,
   Typography,
 } from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
@@ -34,6 +41,21 @@ import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import Papa, { type ParseResult } from "papaparse";
 import apiUrl from "../../api";
 import { wikiGenres } from "../../wiki";
+import {
+  getCachedRecordTablePreferences,
+  loadRecordTablePreferences,
+  setCachedRecordTablePreferences,
+} from "../../preferences";
+import {
+  createDefaultColumnVisibility,
+  createDefaultRecordTablePreferences,
+  RECORD_TABLE_COLUMNS,
+  SORTABLE_RECORD_TABLE_COLUMNS,
+  type ColumnVisibilityMap,
+  type RecordTableColumnKey,
+  type RecordTablePreferences,
+  type RecordTableSortPreference,
+} from "../../types";
 
 const DEFAULT_COLLECTION = "My Collection";
 const MIN_RELEASE_YEAR = 1877;
@@ -139,6 +161,8 @@ function parseDiscogsRows(rows: DiscogsCsvRow[]): ParsedDiscogsRecord[] {
 }
 
 export default function CollectionSettings() {
+  const cachedRecordTablePreferences = getCachedRecordTablePreferences();
+  const hadCachedPreferences = Boolean(cachedRecordTablePreferences);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [parsedRecords, setParsedRecords] = useState<ParsedDiscogsRecord[]>([]);
@@ -161,11 +185,186 @@ export default function CollectionSettings() {
     "collection" | "tags" | "wishlist" | null
   >(null);
   const [clearingWishlist, setClearingWishlist] = useState(false);
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityMap>(
+    () =>
+      cachedRecordTablePreferences
+        ? { ...cachedRecordTablePreferences.columnVisibility }
+        : createDefaultColumnVisibility()
+  );
+  const [defaultSortPref, setDefaultSortPref] =
+    useState<RecordTableSortPreference>(() =>
+      cachedRecordTablePreferences
+        ? { ...cachedRecordTablePreferences.defaultSort }
+        : createDefaultRecordTablePreferences().defaultSort
+    );
+  const [prefsLoading, setPrefsLoading] = useState(!hadCachedPreferences);
+  const [savingPrefs, setSavingPrefs] = useState(false);
 
   const sampleRecords = useMemo(
     () => parsedRecords.slice(0, 5),
     [parsedRecords]
   );
+
+  const applyDefaultPreferences = useCallback(() => {
+    const defaults = createDefaultRecordTablePreferences();
+    setColumnVisibility({ ...defaults.columnVisibility });
+    setDefaultSortPref({ ...defaults.defaultSort });
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    loadRecordTablePreferences(!hadCachedPreferences)
+      .then((prefs) => {
+        if (!active) return;
+        setColumnVisibility({ ...prefs.columnVisibility });
+        setDefaultSortPref({ ...prefs.defaultSort });
+      })
+      .catch((err) => {
+        if (active) {
+          console.error("Failed to load record table preferences", err);
+          applyDefaultPreferences();
+        }
+      })
+      .finally(() => {
+        if (active) setPrefsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [applyDefaultPreferences, hadCachedPreferences]);
+
+  const handleToggleColumn =
+    (key: RecordTableColumnKey) => (event: ChangeEvent<HTMLInputElement>) => {
+      if (key === "record") {
+        setSnackbar({
+          open: true,
+          message: "The Record column is always shown.",
+          severity: "info",
+        });
+        return;
+      }
+      const checked = event.target.checked;
+      if (!checked) {
+        const visibleCount =
+          Object.values(columnVisibility).filter(Boolean).length;
+        if (visibleCount <= 1) {
+          setSnackbar({
+            open: true,
+            message: "At least one column must remain visible.",
+            severity: "error",
+          });
+          return;
+        }
+      }
+      setColumnVisibility((prev) => ({
+        ...prev,
+        [key]: checked,
+      }));
+    };
+
+  const handleSortColumnChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value as RecordTableSortPreference["field"];
+    if (!SORTABLE_RECORD_TABLE_COLUMNS.some((col) => col.key === value)) {
+      return;
+    }
+
+    setDefaultSortPref((prev) => ({ field: value, order: prev.order }));
+
+    if (!columnVisibility[value]) {
+      setColumnVisibility((prev) => ({ ...prev, [value]: true }));
+      const columnLabel =
+        RECORD_TABLE_COLUMNS.find((col) => col.key === value)?.label || value;
+      setSnackbar({
+        open: true,
+        message: `${columnLabel} was made visible so it can be used for sorting.`,
+        severity: "info",
+      });
+    }
+  };
+
+  const handleSortOrderChange = (event: SelectChangeEvent<string>) => {
+    const nextOrder = event.target.value === "asc" ? "asc" : "desc";
+    setDefaultSortPref((prev) => ({ ...prev, order: nextOrder }));
+  };
+
+  const handleResetPreferences = () => {
+    applyDefaultPreferences();
+    setSnackbar({
+      open: true,
+      message: "Record table preferences reset to defaults.",
+      severity: "info",
+    });
+  };
+
+  const handleSavePreferences = async () => {
+    if (savingPrefs) return;
+    setSavingPrefs(true);
+    try {
+      const payloadVisibility: ColumnVisibilityMap = {
+        ...columnVisibility,
+        record: true,
+      };
+      const res = await fetch(apiUrl("/api/preferences/record-table"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          columnVisibility: payloadVisibility,
+          defaultSort: defaultSortPref,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = data?.error || "Failed to save preferences";
+        setSnackbar({ open: true, message, severity: "error" });
+        return;
+      }
+
+      if (data?.preferences) {
+        const prefs = data.preferences as RecordTablePreferences;
+        const newVisibility = createDefaultColumnVisibility();
+        if (prefs.columnVisibility) {
+          for (const column of RECORD_TABLE_COLUMNS) {
+            const raw = (prefs.columnVisibility as ColumnVisibilityMap)[
+              column.key
+            ];
+            if (typeof raw === "boolean") {
+              newVisibility[column.key] = raw;
+            }
+          }
+        }
+        newVisibility.record = true;
+
+        let newSort = { ...defaultSortPref };
+        if (prefs.defaultSort) {
+          newSort = { ...prefs.defaultSort };
+        }
+
+        setColumnVisibility(newVisibility);
+        setDefaultSortPref(newSort);
+        setCachedRecordTablePreferences({
+          columnVisibility: newVisibility,
+          defaultSort: newSort,
+        });
+      }
+
+      setSnackbar({
+        open: true,
+        message: "Record table preferences saved",
+        severity: "success",
+      });
+    } catch {
+      setSnackbar({
+        open: true,
+        message: "Network error saving preferences",
+        severity: "error",
+      });
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
 
   const handleFileParsed = useCallback((rows: DiscogsCsvRow[]) => {
     const parsed = parseDiscogsRows(rows);
@@ -318,6 +517,106 @@ export default function CollectionSettings() {
           everything in one go.
         </Typography>
       </Box>
+
+      <Paper
+        variant="outlined"
+        sx={{ p: 3, borderRadius: 2, backgroundColor: "background.paper" }}
+      >
+        <Stack spacing={2}>
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Record table display
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Choose which columns appear by default when you open a collection,
+              and pick the column that should be pre-sorted.
+            </Typography>
+          </Box>
+          {prefsLoading && <LinearProgress sx={{ mt: 1 }} />}
+          <Typography variant="caption" color="text.secondary">
+            The Record column is always visible.
+          </Typography>
+          <FormGroup row sx={{ flexWrap: "wrap" }}>
+            {RECORD_TABLE_COLUMNS.filter((column) => column.hideable).map(
+              (column) => (
+                <FormControlLabel
+                  key={column.key}
+                  control={
+                    <Switch
+                      checked={columnVisibility[column.key]}
+                      onChange={handleToggleColumn(column.key)}
+                      disabled={prefsLoading || savingPrefs}
+                    />
+                  }
+                  label={`Show ${column.label}`}
+                  sx={{
+                    minWidth: { xs: "50%", sm: "33%" },
+                    m: 0,
+                    mb: 1,
+                  }}
+                />
+              )
+            )}
+          </FormGroup>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            alignItems={{ xs: "stretch", sm: "flex-end" }}
+          >
+            <FormControl fullWidth size="small">
+              <InputLabel id="default-sort-column-label">
+                Default sort column
+              </InputLabel>
+              <Select
+                labelId="default-sort-column-label"
+                value={defaultSortPref.field}
+                label="Default sort column"
+                onChange={handleSortColumnChange}
+                disabled={prefsLoading || savingPrefs}
+              >
+                {SORTABLE_RECORD_TABLE_COLUMNS.map((column) => (
+                  <MenuItem key={column.key} value={column.key}>
+                    {column.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth size="small">
+              <InputLabel id="default-sort-order-label">Sort order</InputLabel>
+              <Select
+                labelId="default-sort-order-label"
+                value={defaultSortPref.order}
+                label="Sort order"
+                onChange={handleSortOrderChange}
+                disabled={prefsLoading || savingPrefs}
+              >
+                <MenuItem value="asc">Ascending</MenuItem>
+                <MenuItem value="desc">Descending</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            justifyContent="flex-end"
+          >
+            <Button
+              variant="outlined"
+              onClick={handleResetPreferences}
+              disabled={prefsLoading || savingPrefs}
+            >
+              Reset to defaults
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSavePreferences}
+              disabled={prefsLoading || savingPrefs}
+            >
+              {savingPrefs ? "Saving..." : "Save preferences"}
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
 
       <Paper
         variant="outlined"

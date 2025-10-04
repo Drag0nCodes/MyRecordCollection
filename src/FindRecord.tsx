@@ -19,6 +19,12 @@ import placeholderCover from "./assets/missingImg.jpg";
 import FindRecordSidebar, {
   type AlbumListItem,
 } from "./components/FindRecordSidebar";
+import {
+  clearUserInfoCache,
+  getCachedUserInfo,
+  loadUserInfo,
+} from "./userInfo";
+import { clearRecordTablePreferencesCache } from "./preferences";
 
 interface AlbumResult {
   name: string;
@@ -33,8 +39,11 @@ const WISHLIST_COLLECTION_NAME = "Wishlist";
 
 export default function FindRecord() {
   const [results, setResults] = useState<AlbumResult[]>([]);
-  const [username, setUsername] = useState<string>("");
-  const [displayName, setDisplayName] = useState<string>("");
+  const cachedUser = getCachedUserInfo();
+  const [username, setUsername] = useState<string>(cachedUser?.username ?? "");
+  const [displayName, setDisplayName] = useState<string>(
+    cachedUser?.displayName ?? ""
+  );
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | undefined>(
     undefined
   );
@@ -63,33 +72,57 @@ export default function FindRecord() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchBasic = async () => {
-      try {
-        const [meRes, tagsRes] = await Promise.all([
-          fetch(apiUrl("/api/me"), { credentials: "include" }),
-          fetch(apiUrl("/api/tags"), { credentials: "include" }),
-        ]);
-        if (meRes.ok) {
-          const data = await meRes.json();
-          setUsername(data.username);
-          setDisplayName(data.displayName || "");
-        }
-        if (tagsRes.ok) {
-          const tagJson = await tagsRes.json();
-          setAvailableTags(tagJson);
-        }
-      } catch {
-        /* ignore */
+    let cancelled = false;
+
+    (async () => {
+      const [info, tags] = await Promise.all([
+        loadUserInfo(),
+        (async () => {
+          try {
+            const res = await fetch(apiUrl("/api/tags"), {
+              credentials: "include",
+            });
+            if (!res.ok) {
+              return null;
+            }
+            return (await res.json()) as string[];
+          } catch {
+            return null;
+          }
+        })(),
+      ]);
+
+      if (cancelled) return;
+
+      if (!info) {
+        navigate("/login");
+        return;
       }
+
+      setUsername(info.username);
+      setDisplayName(info.displayName ?? "");
+      try {
+        setUserId(info.userUuid);
+      } catch {
+        /* ignore analytics errors */
+      }
+      if (Array.isArray(tags)) {
+        setAvailableTags(tags);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    fetchBasic();
-  }, []);
+  }, [navigate]);
 
   const handleLogout = async () => {
     await fetch(apiUrl("/api/logout"), {
       method: "POST",
       credentials: "include",
     });
+    clearRecordTablePreferencesCache();
+    clearUserInfoCache();
     try {
       setUserId(undefined);
     } catch {}

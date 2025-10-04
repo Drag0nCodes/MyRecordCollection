@@ -15,6 +15,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useNavigate, Link } from "react-router-dom";
 import { darkTheme } from "./theme";
+import { loadUserInfo } from "./userInfo";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -81,13 +82,10 @@ export default function Register() {
       const data = await res.json();
       if (data.success) {
         try {
-          const meRes = await fetch(apiUrl("/api/me"), {
-            credentials: "include",
-          });
-          if (meRes.ok) {
-            const meJson = await meRes.json();
+          const info = await loadUserInfo(true);
+          if (info) {
             const { setUserId } = await import("./analytics");
-            setUserId(meJson.userUuid);
+            setUserId(info.userUuid);
           }
         } catch {
           // ignore analytics failures

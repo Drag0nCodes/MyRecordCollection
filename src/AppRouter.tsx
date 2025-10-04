@@ -1,6 +1,5 @@
 import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
-import apiUrl from "./api";
 import { Navigate } from "react-router-dom";
 import LandingPage from "./LandingPage";
 import Collection from "./Collection";
@@ -12,6 +11,7 @@ import NotFound from "./NotFound";
 import Settings from "./Settings";
 import { useLocation } from "react-router-dom";
 import { trackPage } from "./analytics";
+import { loadUserInfo } from "./userInfo";
 
 // Component that prevents authenticated users from seeing auth pages
 function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
@@ -21,12 +21,8 @@ function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const res = await fetch(apiUrl("/api/me"), { credentials: "include" });
-        if (!cancelled) setStatus(res.ok ? "authed" : "anon");
-      } catch {
-        if (!cancelled) setStatus("anon");
-      }
+      const info = await loadUserInfo();
+      if (!cancelled) setStatus(info ? "authed" : "anon");
     })();
     return () => {
       cancelled = true;

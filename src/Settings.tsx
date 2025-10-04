@@ -11,6 +11,13 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { setUserId } from "./analytics";
+import {
+  clearUserInfoCache,
+  getCachedUserInfo,
+  loadUserInfo,
+  setCachedUserInfo,
+} from "./userInfo";
+import { clearRecordTablePreferencesCache } from "./preferences";
 import { useNavigate } from "react-router-dom";
 import { darkTheme } from "./theme";
 import { useMediaQuery } from "@mui/material";
@@ -31,8 +38,12 @@ const MENU_OPTIONS: SettingsMenuOption[] = [
 
 export default function Settings() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState<string>("");
-  const [displayName, setDisplayName] = useState<string>("");
+  const cachedUser = getCachedUserInfo();
+  const [username, setUsername] = useState<string>(cachedUser?.username ?? "");
+  const [displayName, setDisplayName] = useState<string>(
+    cachedUser?.displayName ?? ""
+  );
+  const [userUuid, setUserUuid] = useState<string>(cachedUser?.userUuid ?? "");
   const [selectedSection, setSelectedSection] = useState<string>(
     MENU_OPTIONS[0].id
   );
@@ -41,29 +52,24 @@ export default function Settings() {
 
   useEffect(() => {
     let cancelled = false;
+
     (async () => {
+      const info = await loadUserInfo();
+      if (cancelled) return;
+      if (!info) {
+        navigate("/login");
+        return;
+      }
+      setUsername(info.username);
+      setDisplayName(info.displayName ?? "");
+      setUserUuid(info.userUuid);
       try {
-        const res = await fetch(apiUrl("/api/me"), {
-          credentials: "include",
-        });
-        if (!res.ok) {
-          if (!cancelled && res.status === 401) navigate("/login");
-          return;
-        }
-        const data = await res.json();
-        if (!cancelled) {
-          setUsername(data.username ?? "");
-          setDisplayName(data.displayName ?? "");
-          try {
-            setUserId(data.userUuid);
-          } catch {
-            /* ignore analytics errors */
-          }
-        }
+        setUserId(info.userUuid);
       } catch {
-        if (!cancelled) navigate("/login");
+        /* ignore analytics errors */
       }
     })();
+
     return () => {
       cancelled = true;
     };
@@ -74,6 +80,8 @@ export default function Settings() {
       method: "POST",
       credentials: "include",
     });
+    clearRecordTablePreferencesCache();
+    clearUserInfoCache();
     try {
       setUserId(undefined);
     } catch {
@@ -95,6 +103,15 @@ export default function Settings() {
             }) => {
               setUsername(newUsername);
               setDisplayName(newDisplayName);
+              const uuid = userUuid || cachedUser?.userUuid || "";
+              if (uuid) {
+                setCachedUserInfo({
+                  username: newUsername,
+                  displayName: newDisplayName,
+                  userUuid: uuid,
+                });
+                setUserUuid(uuid);
+              }
             }}
           />
         );

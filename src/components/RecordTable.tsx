@@ -1,5 +1,10 @@
+import { useMemo } from "react";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { type Record } from "../types";
+import {
+  type Record,
+  type ColumnVisibilityMap,
+  type RecordTableSortPreference,
+} from "../types";
 import placeholderCover from "../assets/missingImg.jpg";
 
 // Clean column definitions with wrapping via cellClassName
@@ -31,7 +36,7 @@ const columns: GridColDef[] = [
     field: "record",
     headerName: "Record",
     flex: 1.5,
-    minWidth: 200,
+    minWidth: 120,
     hideable: false,
     cellClassName: "wrapCell",
     renderCell: (params) => (
@@ -44,8 +49,7 @@ const columns: GridColDef[] = [
     field: "artist",
     headerName: "Artist",
     flex: 1.25,
-    minWidth: 100,
-    hideable: false,
+    minWidth: 90,
     cellClassName: "wrapCell",
     renderCell: (params) => (
       <div className="wrapText" style={{ width: "100%" }}>
@@ -58,7 +62,7 @@ const columns: GridColDef[] = [
     headerName: "Rating",
     type: "number",
     flex: 0.5,
-    minWidth: 90,
+    minWidth: 80,
     filterable: false,
     align: "left",
     headerAlign: "left",
@@ -69,7 +73,6 @@ const columns: GridColDef[] = [
     flex: 1.5,
     minWidth: 120,
     sortable: false,
-    hideable: false,
     filterable: false,
     valueGetter: (value: string[]) => value.join(", "),
     cellClassName: "wrapCell",
@@ -84,7 +87,7 @@ const columns: GridColDef[] = [
     headerName: "Release",
     type: "number",
     flex: 0.5,
-    minWidth: 100,
+    minWidth: 80,
     align: "left",
     headerAlign: "left",
     filterable: false,
@@ -97,8 +100,8 @@ const columns: GridColDef[] = [
   {
     field: "dateAdded",
     headerName: "Date Added",
-    flex: 1,
-    minWidth: 110,
+    flex: 0.75,
+    minWidth: 100,
     renderCell: (params) => {
       const val = params.value;
       if (typeof val === "string") return val.slice(0, 10);
@@ -111,12 +114,16 @@ interface RecordTableProps {
   records: Record[];
   selectedId?: number;
   onSelect?: (record: Record | null) => void;
+  initialColumnVisibility?: ColumnVisibilityMap;
+  defaultSort?: RecordTableSortPreference;
 }
 
 export default function RecordTable({
   records,
   selectedId,
   onSelect,
+  initialColumnVisibility,
+  defaultSort,
 }: RecordTableProps) {
   const handleRowClick = (params: any) => {
     onSelect?.(params.row as Record);
@@ -125,15 +132,42 @@ export default function RecordTable({
   const getRowClassName = (params: any) =>
     params.id == selectedId ? "selected-row" : "";
 
-  const initialState = {
-    sorting: { sortModel: [{ field: "rating", sort: "desc" }] },
-  } as any;
+  const gridInitialState = useMemo(() => {
+    const state: any = {};
+
+    if (defaultSort) {
+      state.sorting = {
+        sortModel: [{ field: defaultSort.field, sort: defaultSort.order }],
+      };
+    }
+
+    if (initialColumnVisibility) {
+      state.columns = {
+        columnVisibilityModel: { ...initialColumnVisibility },
+      };
+    }
+
+    return Object.keys(state).length > 0 ? state : undefined;
+  }, [defaultSort, initialColumnVisibility]);
+
+  const gridKey = useMemo(() => {
+    const visibilityPart = initialColumnVisibility
+      ? Object.entries(initialColumnVisibility)
+          .map(([key, val]) => `${key}:${val ? 1 : 0}`)
+          .join("|")
+      : "";
+    const sortPart = defaultSort
+      ? `${defaultSort.field}:${defaultSort.order}`
+      : "";
+    return `${visibilityPart}::${sortPart}`;
+  }, [initialColumnVisibility, defaultSort]);
 
   return (
     <DataGrid
+      key={gridKey}
       rows={records}
       columns={columns}
-      initialState={initialState}
+      initialState={gridInitialState}
       density="comfortable"
       rowHeight={90}
       getRowId={(row) => row.id}

@@ -43,3 +43,9 @@ CREATE TABLE Tagged (
     FOREIGN KEY (recordId) REFERENCES Record(id) ON DELETE CASCADE,
     FOREIGN KEY (tagId) REFERENCES Tag(id) ON DELETE CASCADE
 );
+
+CREATE TABLE UserSettings (
+    userUuid CHAR(36) PRIMARY KEY,
+    recordTablePrefs JSON NOT NULL,
+    FOREIGN KEY (userUuid) REFERENCES User(uuid) ON DELETE CASCADE
+);

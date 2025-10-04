@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  origin: process.env.FRONTEND_ORIGIN || 'http://0.0.0.0:5173',
   credentials: true
 }));
 app.use(cookieParser());
@@ -25,6 +25,71 @@ const PORT = Number(process.env.PORT || 4000);
 const HOST = process.env.HOST || '0.0.0.0';
 const JWT_SECRET = process.env.JWT_SECRET;
 const DEFAULT_COLLECTION_NAME = "My Collection";
+
+const RECORD_TABLE_COLUMN_KEYS = [
+  "cover",
+  "record",
+  "artist",
+  "rating",
+  "tags",
+  "release",
+  "dateAdded",
+];
+const SORTABLE_RECORD_TABLE_COLUMN_KEYS = [
+  "record",
+  "artist",
+  "rating",
+  "release",
+  "dateAdded",
+];
+
+function createDefaultRecordTablePreferences() {
+  return {
+    columnVisibility: {
+      cover: true,
+      record: true,
+      artist: true,
+      rating: true,
+      tags: true,
+      release: true,
+      dateAdded: true,
+    },
+    defaultSort: { field: "rating", order: "desc" },
+  };
+}
+
+function normalizeRecordTablePreferences(raw) {
+  const defaults = createDefaultRecordTablePreferences();
+  const normalized = {
+    columnVisibility: { ...defaults.columnVisibility },
+    defaultSort: { ...defaults.defaultSort },
+  };
+
+  if (raw && typeof raw === "object") {
+    if (raw.columnVisibility && typeof raw.columnVisibility === "object") {
+      for (const key of RECORD_TABLE_COLUMN_KEYS) {
+        if (typeof raw.columnVisibility[key] === "boolean") {
+          normalized.columnVisibility[key] = raw.columnVisibility[key];
+        }
+      }
+    }
+
+    const sort = raw.defaultSort;
+    if (
+      sort &&
+      typeof sort === "object" &&
+      typeof sort.field === "string" &&
+      SORTABLE_RECORD_TABLE_COLUMN_KEYS.includes(sort.field) &&
+      (sort.order === "asc" || sort.order === "desc")
+    ) {
+      normalized.defaultSort = { field: sort.field, order: sort.order };
+    }
+  }
+
+  normalized.columnVisibility.record = true;
+
+  return normalized;
+}
 
 // In production we require a JWT secret
 if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
@@ -288,6 +353,7 @@ app.post('/api/logout', (req, res) => {
 });
 
 app.get('/api/me', requireAuth, async (req, res) => {
+  console.log("Fetching user info...");
   try {
     const pool = await getPool();
     const [rows] = await pool.execute('SELECT username, displayName FROM User WHERE uuid = ?', [req.userUuid]);
@@ -300,6 +366,7 @@ app.get('/api/me', requireAuth, async (req, res) => {
 });
 
 app.patch('/api/profile', requireAuth, async (req, res) => {
+  console.log("Updating profile...");
   const { username: newUsername, displayName: rawDisplayName } = req.body || {};
   if (!newUsername && !rawDisplayName) {
     return res.status(400).json({ error: 'Nothing to update' });
@@ -365,6 +432,7 @@ app.patch('/api/profile', requireAuth, async (req, res) => {
 });
 
 app.post('/api/profile/password', requireAuth, async (req, res) => {
+  console.log("Changing password...");
   const { currentPassword, newPassword, confirmPassword } = req.body || {};
   if (!currentPassword || !newPassword || !confirmPassword) {
     return res.status(400).json({ error: 'All password fields are required.' });
@@ -429,12 +497,15 @@ app.post('/api/records/update', requireAuth, async (req, res) => {
   }
   try {
     const pool = await getPool();
-    // Update main record
-    await pool.execute(
+    // Update main record and ensure it belongs to the authenticated user.
+    const [updateResult] = await pool.execute(
       `UPDATE Record SET name = ?, artist = ?, cover = ?, rating = ?, release_year = ? WHERE id = ? AND userUuid = ?`,
       [record, artist, cover, rating, releaseNum, id, req.userUuid]
     );
-    // Remove old tags
+    if (!updateResult || updateResult.affectedRows === 0) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
+    // Remove old tags for this record (safe because we own the record)
     await pool.execute(`DELETE FROM Tagged WHERE recordId = ?`, [id]);
     // Add new tags (create if missing)
     for (const tagName of tags || []) {
@@ -521,6 +592,7 @@ app.post('/api/records/create', requireAuth, async (req, res) => {
 
 // Tag management endpoints
 app.post('/api/tags/create', requireAuth, async (req, res) => {
+  console.log('Creating tag...');
   const { name } = req.body;
   if (!name || !name.trim()) return res.status(400).json({ error: 'Tag name required' });
   try {
@@ -538,6 +610,7 @@ app.post('/api/tags/create', requireAuth, async (req, res) => {
 });
 
 app.post('/api/tags/rename', requireAuth, async (req, res) => {
+  console.log('Renaming tag...');
   const { oldName, newName } = req.body;
   if (!oldName || !newName) return res.status(400).json({ error: 'oldName and newName required' });
   try {
@@ -556,15 +629,16 @@ app.post('/api/tags/rename', requireAuth, async (req, res) => {
 });
 
 app.post('/api/tags/delete', requireAuth, async (req, res) => {
+  console.log('Deleting tag...');
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Tag name required' });
   try {
     const pool = await getPool();
-    const [tagRows] = await pool.execute(`SELECT id FROM Tag WHERE name = ? AND userUuid = ?`, [name, req.userUuid]);
-    if (tagRows.length === 0) return res.status(404).json({ error: 'Tag not found' });
-    const tagId = tagRows[0].id;
-    await pool.execute(`DELETE FROM Tagged WHERE tagId = ?`, [tagId]);
-    await pool.execute(`DELETE FROM Tag WHERE id = ? AND userUuid = ?`, [tagId, req.userUuid]);
+    // Deleting the Tag row will cascade to Tagged via the DB's ON DELETE CASCADE.
+    const [delResult] = await pool.execute(`DELETE FROM Tag WHERE name = ? AND userUuid = ?`, [name, req.userUuid]);
+    if (!delResult || delResult.affectedRows === 0) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
     const [rows] = await pool.execute(`SELECT name FROM Tag WHERE userUuid = ? ORDER BY name`, [req.userUuid]);
     res.json({ tags: rows.map(r => r.name) });
   } catch (err) {
@@ -579,10 +653,12 @@ app.post('/api/records/delete', requireAuth, async (req, res) => {
   if (!id) return res.status(400).json({ error: 'Missing id' });
   try {
     const pool = await getPool();
-    // Ensure record belongs to user
-    const [rows] = await pool.execute(`SELECT id FROM Record WHERE id = ? AND userUuid = ?`, [id, req.userUuid]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Record not found' });
-    await pool.execute(`DELETE FROM Record WHERE id = ? AND userUuid = ?`, [id, req.userUuid]);
+    // Single DELETE ensures we only remove a record owned by this user.
+    const [result] = await pool.execute(`DELETE FROM Record WHERE id = ? AND userUuid = ?`, [id, req.userUuid]);
+    // result is an OkPacket with affectedRows
+    if (!result || result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -706,6 +782,7 @@ app.post('/api/import/discogs', requireAuth, async (req, res) => {
 
 // Delete all records in a user's collection (table)
 app.post('/api/records/clear', requireAuth, async (req, res) => {
+  console.log('Clearing collection...');
   const { tableName } = req.body || {};
   const targetTable = typeof tableName === 'string' && tableName.trim() ? tableName.trim() : DEFAULT_COLLECTION_NAME;
   try {
@@ -725,19 +802,28 @@ app.post('/api/records/clear', requireAuth, async (req, res) => {
 
 // Delete all tags for the user (and associated Tagged rows)
 app.post('/api/tags/clear', requireAuth, async (req, res) => {
+  console.log('Clearing all tags...');
   try {
     const pool = await getPool();
-    const [tagRows] = await pool.execute(`SELECT id FROM Tag WHERE userUuid = ?`, [req.userUuid]);
-    const ids = (tagRows || []).map((r) => r.id).filter(Boolean);
-    if (ids.length === 0) {
-      return res.json({ success: true, tagsDeleted: 0, taggedDeleted: 0 });
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      // Count how many Tagged rows will be removed when we delete the user's tags
+      const [countRows] = await conn.execute(
+        `SELECT COUNT(tgd.recordId) AS cnt FROM Tagged tgd JOIN Tag tg ON tgd.tagId = tg.id WHERE tg.userUuid = ?`,
+        [req.userUuid]
+      );
+      const taggedDeleted = (countRows && countRows[0] && countRows[0].cnt) ? Number(countRows[0].cnt) : 0;
+      const [tagDel] = await conn.execute(`DELETE FROM Tag WHERE userUuid = ?`, [req.userUuid]);
+      const tagsDeleted = tagDel.affectedRows || 0;
+      await conn.commit();
+      res.json({ success: true, tagsDeleted, taggedDeleted });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
     }
-    const placeholders = ids.map(() => '?').join(',');
-    const [taggedDel] = await pool.execute(`DELETE FROM Tagged WHERE tagId IN (${placeholders})`, ids);
-    const taggedDeleted = taggedDel.affectedRows || 0;
-    const [tagDel] = await pool.execute(`DELETE FROM Tag WHERE id IN (${placeholders})`, ids);
-    const tagsDeleted = tagDel.affectedRows || 0;
-    res.json({ success: true, tagsDeleted, taggedDeleted });
   } catch (err) {
     console.error('Failed to clear tags', err);
     res.status(500).json({ error: 'Failed to clear tags' });
@@ -764,6 +850,106 @@ app.get('/api/lastfm/album.search', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Last.fm proxy error', err);
     res.status(500).json({ error: 'Failed to query Last.fm' });
+  }
+});
+
+app.get('/api/preferences/record-table', requireAuth, async (req, res) => {
+  console.log('Fetching record table preferences...');
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(
+      `SELECT recordTablePrefs FROM UserSettings WHERE userUuid = ? LIMIT 1`,
+      [req.userUuid]
+    );
+    if (rows.length === 0 || !rows[0].recordTablePrefs) {
+      return res.json(createDefaultRecordTablePreferences());
+    }
+
+    let stored = rows[0].recordTablePrefs;
+    if (typeof stored === "string") {
+      try {
+        stored = JSON.parse(stored);
+      } catch {
+        stored = null;
+      }
+    }
+
+    const normalized = normalizeRecordTablePreferences(stored);
+    res.json(normalized);
+  } catch (err) {
+    console.error('Failed to fetch record table preferences', err);
+    res.status(500).json({ error: 'Failed to fetch record table preferences' });
+  }
+});
+
+app.post('/api/preferences/record-table', requireAuth, async (req, res) => {
+  console.log('Saving record table preferences...');
+  try {
+    const normalized = normalizeRecordTablePreferences(req.body || {});
+    const pool = await getPool();
+    await pool.execute(
+      `INSERT INTO UserSettings (userUuid, recordTablePrefs)
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE recordTablePrefs = VALUES(recordTablePrefs)`,
+      [req.userUuid, JSON.stringify(normalized)]
+    );
+    res.json({ success: true, preferences: normalized });
+  } catch (err) {
+    console.error('Failed to save record table preferences', err);
+    res.status(500).json({ error: 'Failed to save record table preferences' });
+  }
+});
+
+// List user's collections (RecTable names)
+app.get('/api/collections', requireAuth, async (req, res) => {
+  console.log('Listing collections...');
+  try {
+    const pool = await getPool();
+    const [rows] = await pool.execute(`SELECT name FROM RecTable WHERE userUuid = ? ORDER BY name`, [req.userUuid]);
+    res.json({ collections: rows.map(r => r.name) });
+  } catch (err) {
+    console.error('Failed to list collections', err);
+    res.status(500).json({ error: 'Failed to list collections' });
+  }
+});
+
+// Move a record to a different collection (RecTable)
+app.post('/api/records/move', requireAuth, async (req, res) => {
+  console.log('Moving record to different collection...');
+  const { id, targetTableName } = req.body || {};
+  if (!id || !targetTableName || typeof targetTableName !== 'string') {
+    return res.status(400).json({ error: 'id and targetTableName required' });
+  }
+  try {
+    const pool = await getPool();
+    // Fetch current record to ensure ownership and get its current tableId
+    const [currentRows] = await pool.execute(
+      `SELECT id, tableId, name as record, artist FROM Record WHERE id = ? AND userUuid = ? LIMIT 1`,
+      [id, req.userUuid]
+    );
+    if (currentRows.length === 0) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
+    // Resolve destination table id
+    const destTableId = await getUserTableId(pool, req.userUuid, targetTableName.trim());
+    if (!destTableId) {
+      return res.status(404).json({ error: 'Destination collection not found' });
+    }
+    if (destTableId === currentRows[0].tableId) {
+      return res.status(400).json({ error: 'Record is already in that collection' });
+    }
+    const [updateResult] = await pool.execute(
+      `UPDATE Record SET tableId = ? WHERE id = ? AND userUuid = ?`,
+      [destTableId, id, req.userUuid]
+    );
+    if (!updateResult || updateResult.affectedRows === 0) {
+      return res.status(404).json({ error: 'Failed to move record' });
+    }
+    // Return minimal info; client can remove from current list
+    res.json({ success: true, message: `Moved record to '${targetTableName}'`, recordId: id, targetTableName });
+  } catch (err) {
+    console.error('Failed to move record', err);
+    res.status(500).json({ error: 'Failed to move record' });
   }
 });
 

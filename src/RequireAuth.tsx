@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import apiUrl from "./api";
 import { useNavigate } from "react-router-dom";
+import { loadUserInfo } from "./userInfo";
 
 export default function RequireAuth({
   children,
@@ -11,12 +11,8 @@ export default function RequireAuth({
 
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const res = await fetch(apiUrl("/api/me"), { credentials: "include" });
-        if (!res.ok) {
-          navigate("/login");
-        }
-      } catch {
+      const info = await loadUserInfo();
+      if (!info) {
         navigate("/login");
       }
     };

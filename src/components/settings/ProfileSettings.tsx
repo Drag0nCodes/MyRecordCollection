@@ -235,11 +235,11 @@ export default function ProfileSettings({
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       <Box>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h4" gutterBottom>
           Profile Settings
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Update your username, display name, or change your password.
+        <Typography variant="h6" sx={{ mb: 1.5 }}>
+          Change Username or Display Name
         </Typography>
 
         <Stack spacing={2}>

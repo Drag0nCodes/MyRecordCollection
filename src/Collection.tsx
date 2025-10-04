@@ -19,8 +19,24 @@ import {
 import Grid from "@mui/material/Grid";
 import FilterListAltIcon from "@mui/icons-material/FilterListAlt";
 import { darkTheme } from "./theme";
-import { sampleRecords } from "./data/mockData";
-import { type Record, type Filters } from "./types";
+import {
+  type Record,
+  type Filters,
+  type ColumnVisibilityMap,
+  type RecordTableSortPreference,
+  createDefaultColumnVisibility,
+  createDefaultRecordTablePreferences,
+} from "./types";
+import {
+  clearRecordTablePreferencesCache,
+  getCachedRecordTablePreferences,
+  loadRecordTablePreferences,
+} from "./preferences";
+import {
+  clearUserInfoCache,
+  getCachedUserInfo,
+  loadUserInfo,
+} from "./userInfo";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { setUserId } from "./analytics";
@@ -30,6 +46,7 @@ import TopBar from "./components/TopBar";
 import RecordTable from "./components/RecordTable";
 import FilterSidebar from "./components/FilterSidebar";
 import ButtonBar from "./components/ButtonBar";
+import MoveRecordDialog from "./components/MoveRecordDialog";
 import EditRecordDialog from "./components/EditRecordDialog";
 import ManageTagsDialog from "./components/ManageTagsDialog";
 
@@ -45,9 +62,10 @@ const initialFilters: Filters = {
 };
 
 export default function Collection({ tableName, title }: CollectionProps) {
-  const [records, setRecords] = useState<Record[]>(sampleRecords);
-  const [filteredRecords, setFilteredRecords] =
-    useState<Record[]>(sampleRecords);
+  const cachedRecordTablePreferences = getCachedRecordTablePreferences();
+  const cachedUserInfo = getCachedUserInfo();
+  const [records, setRecords] = useState<Record[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<Record[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
 
   // State for controlling the UI
@@ -57,8 +75,12 @@ export default function Collection({ tableName, title }: CollectionProps) {
   const isLargeScreen = useMediaQuery("(min-width:1200px)");
   const navigate = useNavigate();
   const location = useLocation();
-  const [username, setUsername] = useState<string>("");
-  const [displayName, setDisplayName] = useState<string>("");
+  const [username, setUsername] = useState<string>(
+    cachedUserInfo?.username ?? ""
+  );
+  const [displayName, setDisplayName] = useState<string>(
+    cachedUserInfo?.displayName ?? ""
+  );
 
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   // Track the last actual (persisted) selected record so we can restore after cancelling a create
@@ -68,6 +90,7 @@ export default function Collection({ tableName, title }: CollectionProps) {
   const [editMode, setEditMode] = useState<"edit" | "create">("edit");
   // Deletion dialog & snackbar
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -75,6 +98,18 @@ export default function Collection({ tableName, title }: CollectionProps) {
     severity: "success" | "error";
   }>({ open: false, message: "", severity: "success" });
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityMap>(
+    () =>
+      cachedRecordTablePreferences
+        ? { ...cachedRecordTablePreferences.columnVisibility }
+        : createDefaultColumnVisibility()
+  );
+  const [defaultSortPref, setDefaultSortPref] =
+    useState<RecordTableSortPreference>(() =>
+      cachedRecordTablePreferences
+        ? { ...cachedRecordTablePreferences.defaultSort }
+        : createDefaultRecordTablePreferences().defaultSort
+    );
 
   const handleFilterChange = (newFilters: Partial<Filters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -125,45 +160,89 @@ export default function Collection({ tableName, title }: CollectionProps) {
 
   // Fetch records and tags from API when app mounts
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
       try {
-        const [recRes, tagsRes] = await Promise.all([
-          fetch(apiUrl(`/api/records?table=${encodeURIComponent(tableName)}`), {
-            credentials: "include",
-          }),
-          fetch(apiUrl("/api/tags"), { credentials: "include" }),
+        const [recordData, tagData, prefs] = await Promise.all([
+          (async () => {
+            const res = await fetch(
+              apiUrl(`/api/records?table=${encodeURIComponent(tableName)}`),
+              { credentials: "include" }
+            );
+            if (!res.ok) {
+              console.error("Failed to fetch records", res.status);
+              return null;
+            }
+            return (await res.json()) as Record[];
+          })(),
+          (async () => {
+            const res = await fetch(apiUrl("/api/tags"), {
+              credentials: "include",
+            });
+            if (!res.ok) {
+              console.error("Failed to fetch tags", res.status);
+              return null;
+            }
+            return (await res.json()) as string[];
+          })(),
+          loadRecordTablePreferences(),
         ]);
-        if (recRes.ok) {
-          const recJson = await recRes.json();
-          setRecords(recJson);
-          setFilteredRecords(recJson);
+
+        if (cancelled) return;
+
+        if (recordData) {
+          setRecords(recordData);
+          setFilteredRecords(recordData);
           setSelectedRecord(null);
           setLastRealSelectedRecord(null);
         }
-        if (tagsRes.ok) {
-          const tagsJson = await tagsRes.json();
-          setAllTags(tagsJson);
+
+        if (tagData) {
+          setAllTags(tagData);
+        }
+
+        if (prefs) {
+          setColumnVisibility({ ...prefs.columnVisibility });
+          setDefaultSortPref({ ...prefs.defaultSort });
         }
       } catch (err) {
-        console.error("Failed to fetch API data", err);
+        if (!cancelled) {
+          console.error("Failed to fetch collection data", err);
+        }
       }
     };
+
     fetchData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [tableName]);
 
   useEffect(() => {
-    const fetchUsername = async () => {
+    let cancelled = false;
+
+    (async () => {
+      const info = await loadUserInfo();
+      if (cancelled) return;
+      if (!info) {
+        navigate("/login");
+        return;
+      }
+      setUsername(info.username);
+      setDisplayName(info.displayName ?? "");
       try {
-        const res = await fetch(apiUrl("/api/me"), { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          setUsername(data.username);
-          setDisplayName(data.displayName || "");
-        }
-      } catch {}
+        setUserId(info.userUuid);
+      } catch {
+        /* ignore analytics errors */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    fetchUsername();
-  }, []);
+  }, [navigate]);
 
   // If navigated here with a message (e.g., after adding a record from FindRecord), show snackbar
   useEffect(() => {
@@ -186,6 +265,8 @@ export default function Collection({ tableName, title }: CollectionProps) {
       method: "POST",
       credentials: "include",
     });
+    clearRecordTablePreferencesCache();
+    clearUserInfoCache();
     try {
       setUserId(undefined);
     } catch {}
@@ -266,6 +347,32 @@ export default function Collection({ tableName, title }: CollectionProps) {
       setDeleteLoading(false);
       setDeleteDialogOpen(false);
     }
+  };
+
+  const handleMoveRecord = () => {
+    if (!selectedRecord) return;
+    setMoveDialogOpen(true);
+  };
+
+  const handleRecordMoved = (
+    targetCollection: string,
+    serverMessage?: string
+  ) => {
+    // Remove from current list (since it's moving out of the current table)
+    if (selectedRecord) {
+      setRecords((prev) => prev.filter((r) => r.id !== selectedRecord.id));
+      setFilteredRecords((prev) =>
+        prev.filter((r) => r.id !== selectedRecord.id)
+      );
+      setSelectedRecord(null);
+      setLastRealSelectedRecord(null);
+    }
+    setSnackbar({
+      open: true,
+      message: serverMessage || `Record moved to ${targetCollection}`,
+      severity: "success",
+    });
+    setMoveDialogOpen(false);
   };
 
   // Save handler for dialog
@@ -372,6 +479,7 @@ export default function Collection({ tableName, title }: CollectionProps) {
             onEditRecord={handleEditRecord}
             onCreateRecord={handleCreateRecord}
             onDeleteRecord={handleDeleteRecord}
+            onMoveRecord={handleMoveRecord}
             editEnabled={!!selectedRecord}
           />
         </Box>
@@ -395,6 +503,8 @@ export default function Collection({ tableName, title }: CollectionProps) {
               records={filteredRecords}
               selectedId={selectedRecord?.id}
               onSelect={handleSelectRecord}
+              initialColumnVisibility={columnVisibility}
+              defaultSort={defaultSortPref}
             />
           </Grid>
           {isLargeScreen && (
@@ -579,6 +689,13 @@ export default function Collection({ tableName, title }: CollectionProps) {
                 : prev
             );
           }}
+        />
+        <MoveRecordDialog
+          open={moveDialogOpen}
+          recordId={selectedRecord?.id ?? null}
+          currentCollection={tableName}
+          onClose={() => setMoveDialogOpen(false)}
+          onMoved={handleRecordMoved}
         />
       </Box>
     </ThemeProvider>

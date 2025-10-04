@@ -185,7 +185,6 @@ export default function LandingPage() {
                   <Chip
                     label="Version 2.0 Beta"
                     color="primary"
-                    variant="outlined"
                     sx={{ alignSelf: { xs: "center", md: "flex-start" } }}
                   />
                   <Typography
